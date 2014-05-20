@@ -29,19 +29,6 @@ void main() {
   writeln(queryResults.dataAs!(string, string, string, bool)(0));
 }
 
-class PrestoClientException : Exception {
-  this(string msg) {
-    super(msg);
-  }
-}
-
-class WrongTypeException(Expected) : PrestoClientException {
-  this(string received = "bad runtime type") {
-    super("Expected " ~ text(typeid(Expected)) ~ " received " ~ received);
-  }
-
-}
-
 struct QueryResults {
   this(JSONValue rawResult) {
     id_ = rawResult["id"].str;
@@ -70,8 +57,11 @@ struct QueryResults {
     const(JSONValue) data() const nothrow { return data_; }
     QueryStats stats() const nothrow { return stats_; }
 
+    //TODO: Remove this function and make a range class that does this
     Tuple!TList dataAs(TList...)(uint row) const {
+      //Static/runtime checks:
       static assert(isJSONTypeList!TList, "Types must be bool/long/double/string");
+
       if (TList.length != columns.length) {
         //TODO: Rethink things - may not want/need all the types.
         // This is especially painful in that it introduces a runtime error if ever the query
@@ -80,37 +70,44 @@ struct QueryResults {
       }
 
       auto jsonRow = data_.array[row];
-      writeln(jsonRow);
+      requireMatchingTypes!TList(jsonRow);
 
+      //The actual work:
       Tuple!TList result;
       foreach (i, T; TList) {
-        if (!typeMatchesColumnTypeName!T(columns[i].type)
-            || !typeMatchesJSONType!T(jsonRow[i].type)) {
-          throw new WrongTypeException!T;
-        }
-      }
-
-      foreach (i, T; TList) {
         auto elt = jsonRow.array[i];
-        static if (is(T == bool)) {
-          if (elt.type == JSON_TYPE.TRUE) {
-            result[i] = true;
-          } else {
-            result[i] = false;
-          }
-        } else static if (is(T == long)) {
-          result[i] = elt.integer;
-        } else static if (is(T == double)) {
-          result[i] = elt.floating;
-        } else {
-          result[i] = elt.str;
-        }
+        result[i] = jsonValueAs!T(elt);
       }
 
       return result;
     }
   }
 private:
+  auto jsonValueAs(T)(JSONValue elt) const {
+    static if (is(T == bool)) {
+      if (elt.type == JSON_TYPE.TRUE) {
+        return true;
+      } else {
+        return false;
+      }
+    } else static if (is(T == long)) {
+      return elt.integer;
+    } else static if (is(T == double)) {
+      return elt.floating;
+    } else {
+      return elt.str;
+    }
+  }
+
+  const void requireMatchingTypes(TList...)(JSONValue jsonRow) {
+    foreach (i, T; TList) {
+      if (!typeMatchesColumnTypeName!T(columns[i].type)
+          || !typeMatchesJSONType!T(jsonRow[i].type)) {
+        throw new WrongTypeException!T;
+      }
+    }
+  }
+
   static pure const nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
     static if (is(T == bool)) {
       return jsonType == JSON_TYPE.TRUE || jsonType == JSON_TYPE.FALSE;
@@ -156,15 +153,11 @@ private:
   string partialCancelURI_;
   string nextURI_;
   Column[] columns_;
-  //  JSONRow[] data_;
   JSONValue data_;
   //data
   QueryStats stats_;
   //error
 }
-
-//alias JSONType = Algebraic(bool, long, double, string);
-//alias JSONRow = JSONType[];
 
 struct QueryStats {
   this(JSONValue rawResult) {
@@ -182,4 +175,17 @@ string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy strin
     return default_;
   }
   return src[propertyName].str;
+}
+
+class PrestoClientException : Exception {
+  this(string msg) {
+    super(msg);
+  }
+}
+
+class WrongTypeException(Expected) : PrestoClientException {
+  this(string received = "bad runtime type") {
+    super("Expected " ~ text(typeid(Expected)) ~ " received " ~ received);
+  }
+
 }
