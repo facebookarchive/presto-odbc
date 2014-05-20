@@ -83,7 +83,7 @@ struct QueryResults {
     return result;
   }
 private:
-  auto jsonValueAs(T)(JSONValue elt) const {
+  T jsonValueAs(T)(JSONValue elt) const {
     static if (is(T == bool)) {
       if (elt.type == JSON_TYPE.TRUE) {
         return true;
