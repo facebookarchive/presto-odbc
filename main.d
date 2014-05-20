@@ -56,31 +56,31 @@ struct QueryResults {
     const(Column)[] columns() const nothrow { return columns_; }
     const(JSONValue) data() const nothrow { return data_; }
     QueryStats stats() const nothrow { return stats_; }
+  }
 
-    //TODO: Remove this function and make a range class that does this
-    Tuple!TList dataAs(TList...)(uint row) const {
-      //Static/runtime checks:
-      static assert(isJSONTypeList!TList, "Types must be bool/long/double/string");
+  //TODO: Remove this function and make a range class that does this
+  Tuple!TList dataAs(TList...)(uint row) const {
+    //Static/runtime checks:
+    static assert(isJSONTypeList!TList, "Types must be bool/long/double/string");
 
-      if (TList.length != columns.length) {
-        //TODO: Rethink things - may not want/need all the types.
-        // This is especially painful in that it introduces a runtime error if ever the query
-        // changes what it returns in any way.
-        throw new PrestoClientException("Wrong number of types");
-      }
-
-      auto jsonRow = data_.array[row];
-      requireMatchingTypes!TList(jsonRow);
-
-      //The actual work:
-      Tuple!TList result;
-      foreach (i, T; TList) {
-        auto elt = jsonRow.array[i];
-        result[i] = jsonValueAs!T(elt);
-      }
-
-      return result;
+    if (TList.length != columns.length) {
+      //TODO: Rethink things - may not want/need all the types.
+      // This is especially painful in that it introduces a runtime error if ever the query
+      // changes what it returns in any way.
+      throw new PrestoClientException("Wrong number of types");
     }
+
+    auto jsonRow = data_.array[row];
+    requireMatchingTypes!TList(jsonRow);
+
+    //The actual work:
+    Tuple!TList result;
+    foreach (i, T; TList) {
+      auto elt = jsonRow.array[i];
+      result[i] = jsonValueAs!T(elt);
+    }
+
+    return result;
   }
 private:
   auto jsonValueAs(T)(JSONValue elt) const {
