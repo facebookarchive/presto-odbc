@@ -2,10 +2,7 @@
 import std.net.curl : post, get, HTTP;
 import json : JSON_TYPE, parseJSON, JSONValue;
 import std.stdio : writeln;
-import std.variant : Algebraic;
-import std.typetuple : TypeTuple;
 import std.typecons : Tuple;
-import std.exception : enforce;
 import std.conv : text, to;
 
 void main() {
