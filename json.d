@@ -1,4 +1,3 @@
-
 // Written in the D programming language.
 
 /**
@@ -16,6 +15,7 @@ Distributed under the Boost Software License, Version 1.0.
    (See accompanying file LICENSE_1_0.txt or copy at
          http://www.boost.org/LICENSE_1_0.txt)
 */
+module std.json;
 
 import std.ascii;
 import std.conv;
@@ -342,14 +342,15 @@ struct JSONValue
         return store.object[k];
     }
 
-    bool opBinaryRight(string op)(string k) const if (op == "in") {
+    auto opBinaryRight(string op : "in")(string k) const
+    {
         enforceEx!JSONException(type == JSON_TYPE.OBJECT,
                                 "JSONValue is not an object");
-        return (k in store.object) != null;
+        return k in store.object;
     }
 
     /// Implements the foreach $(D opApply) interface for json arrays.
-    int opApply(int delegate(size_t index, inout ref JSONValue) dg) inout
+    int opApply(int delegate(size_t index, ref JSONValue) dg)
     {
         enforceEx!JSONException(type == JSON_TYPE.ARRAY,
                                 "JSONValue is not an array");
@@ -366,7 +367,7 @@ struct JSONValue
     }
 
     /// Implements the foreach $(D opApply) interface for json objects.
-    int opApply(int delegate(string key, inout ref JSONValue) dg) inout
+    int opApply(int delegate(string key, ref JSONValue) dg)
     {
         enforceEx!JSONException(type == JSON_TYPE.OBJECT,
                                 "JSONValue is not an object");
@@ -884,6 +885,11 @@ unittest
     assert(jv.type == JSON_TYPE.OBJECT);
     assertNotThrown(jv.object);
     assertNotThrown(jv["key"]);
+    assert("key" in jv);
+    assert("notAnElement" !in jv);
+    const cjv = jv;
+    assert("key" in cjv);
+
     foreach(string key, value; jv)
     {
         static assert(is(typeof(value) == JSONValue));

@@ -4,8 +4,10 @@ import json : JSON_TYPE, parseJSON, JSONValue;
 import std.stdio : writeln;
 import std.typecons : Tuple;
 import std.conv : text, to;
+import std.array : front, popFront, empty;
 
-void main() {
+version(unittest) void main() { writeln("Tests completed."); }
+else void main() {
 
   auto http = HTTP();
   http.addRequestHeader("x-presto-user", "test");
@@ -23,7 +25,11 @@ void main() {
   writeln(json["columns"]);
   writeln(json["data"]);
 
-  writeln(queryResults.dataAs!(string, string, string, bool)(0));
+  // writeln(queryResults.dataAs!(string, string, string, bool)(0));
+  auto data = queryResults.byRow!(string, string, string, bool)();
+  foreach(row; data) {
+    writeln(row);
+  }
 }
 
 struct QueryResults {
@@ -55,103 +61,62 @@ struct QueryResults {
     QueryStats stats() const nothrow { return stats_; }
   }
 
-  //TODO: Remove this function and make a range class that does this
-  Tuple!TList dataAs(TList...)(uint row) const {
-    //Static/runtime checks:
-    static assert(isJSONTypeList!TList, "Types must be bool/long/double/string");
-
-    if (TList.length != columns.length) {
-      //TODO: Rethink things - may not want/need all the types.
-      // This is especially painful in that it introduces a runtime error if ever the query
-      // changes what it returns in any way.
-      throw new PrestoClientException("Wrong number of types");
-    }
-
-    auto jsonRow = data_.array[row];
-    requireMatchingTypes!TList(jsonRow);
-
-    //The actual work:
-    Tuple!TList result;
-    foreach (i, T; TList) {
-      auto elt = jsonRow.array[i];
-      result[i] = jsonValueAs!T(elt);
-    }
-
-    return result;
+  auto byRow(RowTList...)() {
+    return Range!RowTList(&this, data_.array);
   }
+
+  struct Range(RowTList...) {
+    this(QueryResults* qr, JSONValue[] data) {
+      static assert(isJSONTypeList!RowTList, "Types must be bool/long/double/string");
+
+      if (RowTList.length != qr.columns.length) {
+        //TODO: Rethink things - may not want/need all the types.
+        // This is especially painful in that it introduces a runtime error if ever the query
+        // changes what it returns in any way.
+        throw new PrestoClientException("Wrong number of types");
+      }
+
+      this.qr = qr;
+      this.data = data;
+    }
+
+    @property {
+      Tuple!RowTList front() {
+        assert(!data.empty);
+
+        auto jsonRow = data[0];
+        requireMatchingTypes!RowTList(*qr, jsonRow);
+
+        Tuple!RowTList result;
+        foreach (i, T; RowTList) {
+          auto elt = jsonRow.array[i];
+          result[i] = jsonValueAs!T(elt);
+        }
+
+        return result;
+      }
+
+      bool empty() {
+        return data.length == 0;
+      }
+    }
+
+    void popFront() {
+      data = data[1 .. $];
+    }
+
+  private:
+    QueryResults* qr;
+    JSONValue[] data;
+  }
+
 private:
-  T jsonValueAs(T)(JSONValue elt) const {
-    static if (is(T == bool)) {
-      if (elt.type == JSON_TYPE.TRUE) {
-        return true;
-      } else {
-        return false;
-      }
-    } else static if (is(T == long)) {
-      return elt.integer;
-    } else static if (is(T == double)) {
-      return elt.floating;
-    } else {
-      return elt.str;
-    }
-  }
-
-  const void requireMatchingTypes(TList...)(JSONValue jsonRow) {
-    foreach (i, T; TList) {
-      if (!typeMatchesColumnTypeName!T(columns[i].type)
-          || !typeMatchesJSONType!T(jsonRow[i].type)) {
-        throw new WrongTypeException!T;
-      }
-    }
-  }
-
-  static pure const nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
-    static if (is(T == bool)) {
-      return jsonType == JSON_TYPE.TRUE || jsonType == JSON_TYPE.FALSE;
-    } else static if (is(T == long)) {
-      return jsonType == JSON_TYPE.INTEGER;
-    } else static if (is(T == double)) {
-      return jsonType == JSON_TYPE.FLOAT;
-    } else {
-      return jsonType == JSON_TYPE.STRING;
-    }
-  }
-
-  static pure const nothrow bool typeMatchesColumnTypeName(T)(string typeName) {
-    static if (is(T == bool)) {
-      return typeName == "boolean";
-    } else static if (is(T == long)) {
-      return typeName == "bigint";
-    } else static if (is(T == double)) {
-      return typeName == "double";
-    } else {
-      return true;
-    }
-  }
-
-  static pure const nothrow bool isJSONTypeList(TList...)() {
-    foreach(T; TList) {
-      if (!isJSONType!T) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  static pure const nothrow bool isJSONType(T)() {
-    static if (is(T == string) || is(T == long) || is(T == bool) || is(T == double)) {
-      return true;
-    }
-    return false;
-  }
-
   string id_;
   string infoURI_;
   string partialCancelURI_;
   string nextURI_;
   Column[] columns_;
   JSONValue data_;
-  //data
   QueryStats stats_;
   //error
 }
@@ -167,13 +132,6 @@ struct Column {
   string type;
 }
 
-string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy string default_ = "") {
-  if (propertyName !in src) {
-    return default_;
-  }
-  return src[propertyName].str;
-}
-
 class PrestoClientException : Exception {
   this(string msg) {
     super(msg);
@@ -184,5 +142,76 @@ class WrongTypeException(Expected) : PrestoClientException {
   this(string received = "bad runtime type") {
     super("Expected " ~ text(typeid(Expected)) ~ " received " ~ received);
   }
+}
 
+private T jsonValueAs(T)(JSONValue elt) {
+  static if (is(T == bool)) {
+    if (elt.type == JSON_TYPE.TRUE) {
+      return true;
+    } else {
+      return false;
+    }
+  } else static if (is(T == long)) {
+    return elt.integer;
+  } else static if (is(T == double)) {
+    return elt.floating;
+  } else {
+    return elt.str;
+  }
+}
+
+private void requireMatchingTypes(TList...)(QueryResults qr, JSONValue jsonRow) {
+  foreach (i, T; TList) {
+    if (!typeMatchesColumnTypeName!T(qr.columns[i].type)
+        || !typeMatchesJSONType!T(jsonRow[i].type)) {
+      throw new WrongTypeException!T;
+    }
+  }
+}
+
+private pure nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
+  static if (is(T == bool)) {
+    return jsonType == JSON_TYPE.TRUE || jsonType == JSON_TYPE.FALSE;
+  } else static if (is(T == long)) {
+    return jsonType == JSON_TYPE.INTEGER;
+  } else static if (is(T == double)) {
+    return jsonType == JSON_TYPE.FLOAT;
+  } else {
+    return jsonType == JSON_TYPE.STRING;
+  }
+}
+
+private pure nothrow bool typeMatchesColumnTypeName(T)(string typeName) {
+  static if (is(T == bool)) {
+    return typeName == "boolean";
+  } else static if (is(T == long)) {
+    return typeName == "bigint";
+  } else static if (is(T == double)) {
+    return typeName == "double";
+  } else {
+    return true;
+  }
+}
+
+private pure nothrow bool isJSONTypeList(TList...)() {
+  foreach(T; TList) {
+    if (!isJSONType!T) {
+      return false;
+    }
+  }
+  return true;
+}
+
+private pure nothrow bool isJSONType(T)() {
+  static if (is(T == string) || is(T == long) || is(T == bool) || is(T == double)) {
+    return true;
+  }
+  return false;
+}
+
+private string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy string default_ = "") {
+  if (propertyName !in src) {
+    return default_;
+  }
+  return src[propertyName].str;
 }
