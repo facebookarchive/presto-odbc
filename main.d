@@ -71,7 +71,7 @@ struct QueryResults {
 
   struct Range(RowTList...) {
     this(QueryResults* qr, JSONValue[] data) {
-      static assert(isJSONTypeList!RowTList, "Types must be bool/long/double/string");
+      static assert(isJSONTypeList!UnnamedRowTList, "Types must be bool/long/double/string");
 
       bool allTsHaveNames = 2 * UnnamedRowTList.length == RowTList.length;
       if (!allTsHaveNames) {
@@ -231,8 +231,6 @@ private pure nothrow bool isJSONType(T)() {
   }
   return false;
 }
-
-private pure nothrow bool isJSONType(string ignore)() { return true; }
 
 private string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy string default_ = "") {
   if (propertyName !in src) {
