@@ -1,30 +1,23 @@
 
-import json : parseJSON;
-import std.net.curl : post, get, HTTP;
+
 import std.stdio : writeln;
 import queryresults : QueryResults;
+import statementclient : ClientSession, StatementClient;
 
 version(unittest) void main() { writeln("Tests completed."); }
 else void main() {
 
-  auto http = HTTP();
-  http.addRequestHeader("x-presto-user", "test");
-  http.addRequestHeader("x-presto-catalog", "tpch");
-  http.addRequestHeader("x-presto-schema", "tiny");
-  auto response = post("localhost:8080/v1/statement", "SELECT * FROM sys.node", http);
-  auto json = parseJSON(response);
-  auto queryResults = QueryResults(json);
+  auto session = ClientSession("localhost:8080/v1/statement", "test");
+  session.catalog = "tpch";
+  session.schema = "tiny";
 
+  auto client = StatementClient(session, "SELECT * FROM sys.node");
 
-  response = get(queryResults.nextURI);
-  json = parseJSON(response);
-  queryResults = QueryResults(json);
-
-  writeln(json["columns"]);
-  writeln(json["data"]);
-
-  auto data = queryResults.byRow!(string, "http_uri")();
-  foreach(row; data) {
-    writeln(row.http_uri);
+  foreach (resultSet; client) {
+    writeln ("Starting a new set");
+    foreach (row; resultSet.byRow!(string, "http_uri")()) {
+      writeln(row);
+    }
   }
+
 }
