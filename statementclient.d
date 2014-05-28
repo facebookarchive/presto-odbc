@@ -65,10 +65,7 @@ struct StatementClient {
     this.session_ = session;
     this.query_ = query;
 
-    stdout.flush();
     auto response = post(session.endpoint, query, session.constructHeaders());
-    stdout.flush();
-
     parseAndSetResults(response);
   }
 
@@ -86,7 +83,7 @@ struct StatementClient {
   }
 
   void popFront() {
-    assert (!empty);
+    assert(!empty);
     auto response = get(results_.nextURI);
     parseAndSetResults(response);
   }
@@ -109,7 +106,6 @@ private void addHeaderIfNotNull(PRESTO_HEADER header)(ref HTTP http, string valu
   if (value != null) {
     string headerValue = header;
     http.addRequestHeader(text(headerValue), value);
-
   }
 }
 
