@@ -93,12 +93,13 @@ struct StatementClient {
   }
 
   bool empty() {
-    return results_.nextURI == "";
+    return results_.nextURI == "" || queryTerminated_;
   }
 
   void terminateQuery() {
     if (!empty) {
       del(results_.nextURI);
+      queryTerminated_ = true;
     }
   }
 
@@ -107,6 +108,7 @@ private:
     results_ = QueryResults(parseJSON(response));
   }
 
+  bool queryTerminated_ = false;
   ClientSession session_;
   string query_;
   QueryResults results_;
