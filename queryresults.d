@@ -4,10 +4,12 @@ import std.typecons : Tuple, tuple;
 import std.typetuple : TypeTuple;
 import std.conv : text, to;
 import std.array : front, popFront, empty;
+import std.stdio;
 
 import util : PrestoClientException;
 
 struct QueryResults {
+
   this(JSONValue rawResult) {
     id_ = rawResult["id"].str;
     infoURI_ = rawResult["infoUri"].str;
@@ -23,6 +25,8 @@ struct QueryResults {
 
     if ("data" in rawResult) {
       data_ = rawResult["data"];
+    } else {
+      data_.array = [];
     }
   }
 
@@ -54,7 +58,6 @@ struct QueryResults {
 
       this.qr = qr;
       this.data = data;
-
       foreach (i, column; qr.columns_) {
         fieldNameToIndex[column.name] = i;
       }

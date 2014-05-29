@@ -11,11 +11,11 @@ else void main() {
   session.catalog = "tpch";
   session.schema = "tiny";
 
-  auto client = StatementClient(session, "SELECT * FROM sys.node");
-
+  auto client = StatementClient(session, "SELECT * FROM orders");
   foreach (resultSet; client) {
     writeln ("Starting a new set");
-    foreach (row; resultSet.byRow!(string, "http_uri")()) {
+
+    foreach (row; resultSet.byRow!(string, "comment")()) {
       writeln(row);
     }
   }

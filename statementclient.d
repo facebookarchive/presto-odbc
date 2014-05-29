@@ -7,7 +7,7 @@ import std.traits : EnumMembers;
 import json : parseJSON;
 import std.stdio;
 
-import mockcurl : get, post;
+import mockcurl : get, post, del;
 import queryresults : QueryResults;
 
 enum PRESTO_HEADER {
@@ -69,6 +69,10 @@ struct StatementClient {
     parseAndSetResults(response);
   }
 
+  ~this() {
+    terminateQuery();
+  }
+
   @property {
     ClientSession session() const {
       return session_;
@@ -90,6 +94,12 @@ struct StatementClient {
 
   bool empty() {
     return results_.nextURI == "";
+  }
+
+  void terminateQuery() {
+    if (!empty) {
+      del(results_.nextURI);
+    }
   }
 
 private:

@@ -24,6 +24,10 @@ version(unittest) {
     return get(url);
   }
 
+  void del(const(char)[] url) {
+    //No-op
+  }
+
 } else {
-  public import std.net.curl : post, get;
+  public import std.net.curl : post, get, del;
 }
