@@ -31,3 +31,17 @@ version(unittest) {
 } else {
   public import std.net.curl : post, get, del;
 }
+
+unittest {
+  /* Broken when running with other tests, see:
+   * http://forum.dlang.org/thread/fqbjamocnvvxpuzgmjid@forum.dlang.org#post-fqbjamocnvvxpuzgmjid
+  enqueueCurlResult("test1".dup);
+  enqueueCurlResult("test2".dup);
+  enqueueCurlResult("test3".dup);
+
+  assert(get("localhost") == "test1");
+  assert(get("localhost") == "test2");
+  assert(post("localhost", "post data") == "test3");
+  del("No-op");
+  */
+}

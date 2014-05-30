@@ -4,7 +4,7 @@ CC = dmd
 LIB_FLAGS = -L-lphobos2 -L-lcurl
 
 CFLAGS = -c
-FLAGS = -g
+FLAGS = -g -unittest
 
 OBJS = statementclient.o queryresults.o mockcurl.o util.o json.o
 

@@ -10,6 +10,11 @@ import std.stdio;
 import mockcurl : get, post, del;
 import queryresults : QueryResults;
 
+version(unittest) {
+  import mockcurl : enqueueCurlResult;
+  import queryresults : JSBuilder;
+}
+
 enum PRESTO_HEADER {
   USER = "X-Presto-User",
   SOURCE = "X-Presto-Source",
@@ -49,6 +54,13 @@ struct ClientSession {
 
     return http;
   }
+}
+
+unittest {
+  auto cs = ClientSession("localhost", "user1");
+  cs.schema = "tiny";
+  cs.catalog = "tpch";
+  cs.constructHeaders();
 }
 
 string getThisTimeZoneId() {
@@ -114,6 +126,42 @@ private:
   QueryResults results_;
 }
 
+unittest {
+  enqueueCurlResult(JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+
+  auto session = ClientSession("localhost", "user1");
+  auto query = "SELECT lemons FROM life";
+  auto client = StatementClient(session, query);
+  assert(client.query == query);
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(!client.front.byRow().empty);
+
+  client.popFront;
+  assert(client.empty);
+  assert(!client.front.byRow().empty);
+}
+
+unittest {
+  enqueueCurlResult(JSBuilder().withNext().toString().dup);
+
+  auto session = ClientSession("localhost", "user1");
+  auto client = StatementClient(session, "query");
+  assert(!client.empty);
+  client.terminateQuery();
+  assert(client.empty);
+}
+
 private void addHeaderIfNotNull(PRESTO_HEADER header)(ref HTTP http, string value) {
   if (value != null) {
     string headerValue = header;
@@ -123,4 +171,8 @@ private void addHeaderIfNotNull(PRESTO_HEADER header)(ref HTTP http, string valu
 
 private string mapHeaderToMemberName(PRESTO_HEADER header)() {
   return toLower(text(header));
+}
+
+unittest {
+  static assert(mapHeaderToMemberName!(PRESTO_HEADER.USER) == "user");
 }

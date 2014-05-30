@@ -8,6 +8,11 @@ import std.stdio;
 
 import util : PrestoClientException;
 
+version(unittest) {
+  import json : parseJSON;
+  import std.exception : assertThrown;
+}
+
 struct QueryResults {
 
   this(JSONValue rawResult) {
@@ -50,11 +55,8 @@ struct QueryResults {
   struct Range(RowTList...) {
     this(QueryResults* qr, JSONValue[] data) {
       static assert(isJSONTypeList!UnnamedRowTList, "Types must be bool/long/double/string");
-
-      bool allTsHaveNames = 2 * UnnamedRowTList.length == RowTList.length;
-      if (!allTsHaveNames) {
-        throw new PrestoClientException("Wrong number of types");
-      }
+      static assert(2 * UnnamedRowTList.length == RowTList.length,
+        "All types must have names to match against the JSON");
 
       this.qr = qr;
       this.data = data;
@@ -80,6 +82,7 @@ struct QueryResults {
           alias name = fieldNames[i];
           auto fieldIndex = fieldNameToIndex[name];
 
+          //TODO: Consider running this check only on the 0th row.
           requireMatchingType!T(fieldIndex, qr, jsonRow);
 
           auto elt = jsonRow.array[fieldIndex];
@@ -115,6 +118,84 @@ private:
   JSONValue data_;
   QueryStats stats_;
   //error
+}
+
+version(unittest) {
+  struct JSBuilder {
+    private string js = "{
+      \"id\" : \"123\",
+      \"infoUri\" : \"localhost\",
+      \"stats\" : {}";
+
+    JSBuilder* withNext() {
+      js ~= ",\"nextUri\" : \"localhost\"";
+      return &this;
+    }
+
+    JSBuilder* withColumns() {
+      js ~= ",\"columns\" : [ { \"name\" : \"col1\", \"type\" : \"varchar\" },
+                              { \"name\" : \"col2\", \"type\" : \"bigint\" } ]";
+      return &this;
+    }
+
+    JSBuilder* withData() {
+      js ~= ",\"data\" : [ [\"testentry1\", 45], [\"testentry2\", 3] ]";
+      return &this;
+    }
+
+    JSONValue build() {
+      return parseJSON(toString());
+    }
+
+    string toString() {
+      return js ~ "}";
+    }
+  }
+}
+
+unittest {
+  auto qr = QueryResults(JSBuilder().withNext().build());
+  assert(qr.id == "123");
+  assert(qr.nextURI == "localhost");
+  assert(qr.columns.empty);
+  assert(qr.data.array.empty);
+  assert(qr.byRow().empty);
+}
+
+unittest {
+  auto qr = QueryResults(JSBuilder().withNext().withColumns().build());
+  assert(qr.id == "123");
+  assert(qr.nextURI == "localhost");
+  assert(!qr.columns.empty);
+  assert(qr.data.array.empty);
+  assert(qr.byRow().empty);
+  assert(qr.byRow!(long, "col2").empty);
+  assert(qr.columns[0].name == "col1");
+  assertThrown!NoSuchColumn(qr.byRow!(long, "doesNotExist"));
+}
+
+unittest {
+  auto qr = QueryResults(JSBuilder().withNext().withColumns().withData().build());
+  assert(qr.id == "123");
+  assert(qr.nextURI == "localhost");
+  assert(!qr.columns.empty);
+  assert(!qr.data.array.empty);
+  assert(!qr.byRow().empty);
+  assert(qr.columns[0].name == "col1");
+
+  auto rng = qr.byRow!(long, "col2");
+  assert(rng.front[0] == 45);
+  rng.popFront();
+  assert(!rng.empty);
+  assert(rng.front[0] == 3);
+  rng.popFront();
+  assert(rng.empty);
+
+  auto rng2 = qr.byRow!(long, "col2", string, "col1");
+  assert(rng2.front[0] == 45 && rng2.front[1] == "testentry1");
+
+  auto badRng = qr.byRow!(string, "col2");
+  assertThrown!(WrongTypeException!string)(badRng.front);
 }
 
 struct QueryStats {
@@ -156,11 +237,26 @@ private T jsonValueAs(T)(JSONValue elt) {
   }
 }
 
+unittest {
+  assert(jsonValueAs!long(parseJSON("5")) == 5);
+  assert(jsonValueAs!long(parseJSON("4")) != 5);
+  assertThrown!Exception(jsonValueAs!long(parseJSON("\"str\"")));
+}
+
 private void requireMatchingType(T)(ulong fieldIndex, QueryResults* qr, JSONValue jsonRow) {
   if (!typeMatchesColumnTypeName!T(qr.columns[fieldIndex].type)
       || !typeMatchesJSONType!T(jsonRow[fieldIndex].type)) {
     throw new WrongTypeException!T;
   }
+}
+
+unittest {
+  auto js = parseJSON("[\"test\"]");
+  QueryResults qr;
+  qr.columns_ = [ Column("test", "varchar") ];
+  requireMatchingType!string(0, &qr, js);
+  assertThrown!(WrongTypeException!long)(requireMatchingType!long(0, &qr, js));
+  assertThrown!(WrongTypeException!bool)(requireMatchingType!bool(0, &qr, js));
 }
 
 private pure nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
@@ -175,6 +271,11 @@ private pure nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
   }
 }
 
+unittest {
+  static assert(typeMatchesJSONType!bool(JSON_TYPE.TRUE));
+  static assert(typeMatchesJSONType!string(JSON_TYPE.STRING));
+}
+
 private pure nothrow bool typeMatchesColumnTypeName(T)(string typeName) {
   static if (is(T == bool)) {
     return typeName == "boolean";
@@ -187,6 +288,11 @@ private pure nothrow bool typeMatchesColumnTypeName(T)(string typeName) {
   }
 }
 
+unittest {
+  static assert(typeMatchesColumnTypeName!bool("boolean"));
+  static assert(!typeMatchesColumnTypeName!bool("bool"));
+}
+
 private pure nothrow bool isJSONTypeList(TList...)() {
   foreach(T; TList) {
     if (!isJSONType!T) {
@@ -196,6 +302,13 @@ private pure nothrow bool isJSONTypeList(TList...)() {
   return true;
 }
 
+unittest {
+  static assert(isJSONTypeList!(string));
+  static assert(isJSONTypeList!(string, string));
+  static assert(isJSONTypeList!(string, long));
+  static assert(!isJSONTypeList!(string, int));
+}
+
 private pure nothrow bool isJSONType(T)() {
   static if (is(T == string) || is(T == long) || is(T == bool) || is(T == double)) {
     return true;
@@ -203,11 +316,23 @@ private pure nothrow bool isJSONType(T)() {
   return false;
 }
 
+unittest {
+  static assert(isJSONType!string);
+  static assert(isJSONType!long);
+  static assert(!isJSONType!int);
+}
+
 private string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy string default_ = "") {
   if (propertyName !in src) {
     return default_;
   }
   return src[propertyName].str;
+}
+
+unittest {
+  auto js = parseJSON("{\"test\" : \"value\"}");
+  assert(getStringPropertyOrDefault!"test"(js) == "value");
+  assert(getStringPropertyOrDefault!"meep"(js) == "");
 }
 
 private template extractCTFEStrings(RowTList...) {
@@ -218,4 +343,8 @@ private template extractCTFEStrings(RowTList...) {
   } else {
     alias extractCTFEStrings = extractCTFEStrings!(RowTList[1 .. $]);
   }
+}
+
+unittest {
+  static assert(extractCTFEStrings!(int,"1","2",string,"3") == TypeTuple!("1","2","3"));
 }
