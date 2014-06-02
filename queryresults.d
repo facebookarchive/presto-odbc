@@ -13,25 +13,25 @@ version(unittest) {
   import std.exception : assertThrown;
 }
 
-struct QueryResults {
+immutable(QueryResults) queryResults(JSONValue rawResult) {
+  return new immutable(QueryResults)(rawResult);
+}
 
-  this(JSONValue rawResult) {
+class QueryResults {
+
+  this(JSONValue rawResult) immutable {
     id_ = rawResult["id"].str;
     infoURI_ = rawResult["infoUri"].str;
     partialCancelURI_ = getStringPropertyOrDefault!"partialCancelUri"(rawResult);
     nextURI_ = getStringPropertyOrDefault!"nextUri"(rawResult);
     stats_ = QueryStats(rawResult["stats"]);
 
-    if ("columns" in rawResult) {
-      foreach (columnJSON; rawResult["columns"].array) {
-        columns_ ~= Column(columnJSON["name"].str, columnJSON["type"].str);
-      }
-    }
+    columns_ = parseColumns(rawResult);
 
     if ("data" in rawResult) {
       data_ = rawResult["data"];
     } else {
-      data_.array = [];
+      data_ = emptyJSONArray();
     }
   }
 
@@ -40,20 +40,20 @@ struct QueryResults {
     string infoURI() const nothrow { return infoURI_; }
     string partialCancelURI() const nothrow { return partialCancelURI_; }
     string nextURI() const nothrow { return nextURI_; }
-    const(Column)[] columns() const nothrow { return columns_; }
-    const(JSONValue) data() const nothrow { return data_; }
-    QueryStats stats() const nothrow { return stats_; }
+    auto columns() const nothrow { return columns_; }
+    auto data() const nothrow { return data_; }
+    auto stats() const nothrow { return stats_; }
   }
 
-  auto byRow(RowTList...)() {
+  auto byRow(RowTList...)() const {
     if (columns_.empty) {
       return Range!RowTList();
     }
-    return Range!RowTList(&this, data_.array);
+    return Range!RowTList(this, data_.array);
   }
 
   struct Range(RowTList...) {
-    this(QueryResults* qr, JSONValue[] data) {
+    this(const(QueryResults) qr, immutable(JSONValue)[] data) {
       static assert(isJSONTypeList!UnnamedRowTList, "Types must be bool/long/double/string");
       static assert(2 * UnnamedRowTList.length == RowTList.length,
         "All types must have names to match against the JSON");
@@ -71,7 +71,7 @@ struct QueryResults {
     }
 
     @property {
-      Tuple!RowTList front() {
+      Tuple!RowTList front() const {
         assert(!data.empty);
 
         auto jsonRow = data[0];
@@ -92,7 +92,7 @@ struct QueryResults {
         return result;
       }
 
-      bool empty() {
+      bool empty() const {
         return data.empty;
       }
     }
@@ -104,19 +104,27 @@ struct QueryResults {
   private:
     alias UnnamedRowTList = Tuple!RowTList.Types;
     alias fieldNames = extractCTFEStrings!RowTList;
-    QueryResults* qr;
-    JSONValue[] data;
+    const(QueryResults) qr;
+    immutable(JSONValue)[] data;
     ulong[string] fieldNameToIndex;
   }
 
 private:
+  version(unittest) {
+    this(inout Column[] cols) {
+      columns_ = cols.idup;
+      stats_ = QueryStats();
+      data_ = emptyJSONArray();
+    }
+  }
+
   string id_;
   string infoURI_;
   string partialCancelURI_;
   string nextURI_;
-  Column[] columns_;
-  JSONValue data_;
-  QueryStats stats_;
+  immutable(Column[]) columns_;
+  immutable(JSONValue) data_;
+  immutable(QueryStats) stats_;
   //error
 }
 
@@ -154,7 +162,7 @@ version(unittest) {
 }
 
 unittest {
-  auto qr = QueryResults(JSBuilder().withNext().build());
+  auto qr = queryResults(JSBuilder().withNext().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(qr.columns.empty);
@@ -163,7 +171,7 @@ unittest {
 }
 
 unittest {
-  auto qr = QueryResults(JSBuilder().withNext().withColumns().build());
+  auto qr = queryResults(JSBuilder().withNext().withColumns().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(!qr.columns.empty);
@@ -175,7 +183,7 @@ unittest {
 }
 
 unittest {
-  auto qr = QueryResults(JSBuilder().withNext().withColumns().withData().build());
+  auto qr = queryResults(JSBuilder().withNext().withColumns().withData().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(!qr.columns.empty);
@@ -243,7 +251,7 @@ unittest {
   assertThrown!Exception(jsonValueAs!long(parseJSON("\"str\"")));
 }
 
-private void requireMatchingType(T)(ulong fieldIndex, QueryResults* qr, JSONValue jsonRow) {
+private void requireMatchingType(T)(ulong fieldIndex, const(QueryResults) qr, const JSONValue jsonRow) {
   if (!typeMatchesColumnTypeName!T(qr.columns[fieldIndex].type)
       || !typeMatchesJSONType!T(jsonRow[fieldIndex].type)) {
     throw new WrongTypeException!T;
@@ -252,11 +260,10 @@ private void requireMatchingType(T)(ulong fieldIndex, QueryResults* qr, JSONValu
 
 unittest {
   auto js = parseJSON("[\"test\"]");
-  QueryResults qr;
-  qr.columns_ = [ Column("test", "varchar") ];
-  requireMatchingType!string(0, &qr, js);
-  assertThrown!(WrongTypeException!long)(requireMatchingType!long(0, &qr, js));
-  assertThrown!(WrongTypeException!bool)(requireMatchingType!bool(0, &qr, js));
+  auto qr = new QueryResults([ Column("test", "varchar") ]);
+  requireMatchingType!string(0, qr, js);
+  assertThrown!(WrongTypeException!long)(requireMatchingType!long(0, qr, js));
+  assertThrown!(WrongTypeException!bool)(requireMatchingType!bool(0, qr, js));
 }
 
 private pure nothrow bool typeMatchesJSONType(T)(JSON_TYPE jsonType) {
@@ -347,4 +354,25 @@ private template extractCTFEStrings(RowTList...) {
 
 unittest {
   static assert(extractCTFEStrings!(int,"1","2",string,"3") == TypeTuple!("1","2","3"));
+}
+
+immutable(Column[]) parseColumns(JSONValue rawResult) {
+  if ("columns" !in rawResult) {
+    return [];
+  }
+
+  import std.array : appender;
+  auto columns = appender!(Column[]);
+  columns.reserve(rawResult["columns"].array.length);
+
+  foreach (columnJSON; rawResult["columns"].array) {
+    columns ~= Column(columnJSON["name"].str, columnJSON["type"].str);
+  }
+  return columns.data.idup;
+}
+
+JSONValue emptyJSONArray() {
+  auto result = JSONValue();
+  result.array = [];
+  return result;
 }

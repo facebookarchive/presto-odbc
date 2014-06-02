@@ -4,11 +4,12 @@ import std.datetime : SysTime, Clock;
 import std.conv : text;
 import std.string : toLower;
 import std.traits : EnumMembers;
+import std.typecons : Rebindable, rebindable;
 import json : parseJSON;
 import std.stdio;
 
 import mockcurl : get, post, del;
-import queryresults : QueryResults;
+import queryresults : QueryResults, queryResults;
 
 version(unittest) {
   import mockcurl : enqueueCurlResult;
@@ -92,9 +93,12 @@ struct StatementClient {
     string query() const {
       return query_;
     }
+    bool queryTerminated() {
+      return queryTerminated_;
+    }
   }
 
-  QueryResults front() {
+  immutable(QueryResults) front() const nothrow pure {
     return results_;
   }
 
@@ -104,7 +108,7 @@ struct StatementClient {
     parseAndSetResults(response);
   }
 
-  bool empty() {
+  bool empty() const nothrow {
     return results_.nextURI == "" || queryTerminated_;
   }
 
@@ -117,13 +121,13 @@ struct StatementClient {
 
 private:
   void parseAndSetResults(char[] response) {
-    results_ = QueryResults(parseJSON(response));
+    results_ = Rebindable!(immutable(QueryResults))(queryResults(parseJSON(response)));
   }
 
   bool queryTerminated_ = false;
   ClientSession session_;
   string query_;
-  QueryResults results_;
+  Rebindable!(immutable(QueryResults)) results_;
 }
 
 unittest {
@@ -150,6 +154,67 @@ unittest {
   client.popFront;
   assert(client.empty);
   assert(!client.front.byRow().empty);
+}
+
+unittest {
+  enqueueCurlResult(JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+
+  auto session = ClientSession("localhost", "user1");
+  auto query = "SELECT lemons FROM life";
+  auto client = StatementClient(session, query);
+  assert(client.query == query);
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(!client.front.byRow().empty);
+
+  client.popFront;
+  assert(client.empty);
+  assert(!client.front.byRow().empty);
+}
+
+version(unittest) {
+  import std.concurrency : ownerTid, send;
+
+  void resultProcessorThread(immutable(QueryResults) resultSet) {
+    long reduceVal = 0;
+    foreach (row; resultSet.byRow!(long, "col2")()) {
+      reduceVal += row[0];
+    }
+    ownerTid.send(reduceVal);
+  }
+}
+
+unittest {
+  import std.concurrency : Tid, spawn, receiveOnly;
+
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+
+  auto session = ClientSession("localhost", "user1");
+  auto client = StatementClient(session, "");
+
+  Tid[] workers;
+  foreach (resultSet; client) {
+    workers ~= spawn(&resultProcessorThread, resultSet);
+  }
+
+  foreach (workerTid; workers) {
+    auto result = receiveOnly!long();
+    assert(result == 48);
+  }
 }
 
 unittest {
