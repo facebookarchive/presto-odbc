@@ -6,29 +6,19 @@ LIB_FLAGS = -L-lphobos2 -L-lcurl
 CFLAGS = -c
 FLAGS = -g -unittest
 
-OBJS = statementclient.o queryresults.o mockcurl.o util.o json.o
+OBJS = main.o statementclient.o queryresults.o mockcurl.o util.o json.o
 
 PROGRAM = odbc
 
+.PHONY: default
 default: $(PROGRAM)
 
-$(PROGRAM): main.d $(OBJS)
-	$(CC) $(LIB_FLAGS) $(FLAGS) $(OBJS) main.d -of$(PROGRAM)
+$(PROGRAM): $(OBJS)
+	$(CC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -of$(PROGRAM)
 
-statementclient.o: statementclient.d
-	$(CC) $(CFLAGS) $(FLAGS) statementclient.d
+%.o: %.d
+	$(CC) $(CFLAGS) $(FLAGS) $<
 
-queryresults.o: queryresults.d
-	$(CC) $(CFLAGS) $(FLAGS) queryresults.d
-
-mockcurl.o: mockcurl.d
-	$(CC) $(CFLAGS) $(FLAGS) mockcurl.d
-
-util.o: util.d
-	$(CC) $(CFLAGS) $(FLAGS) util.d
-
-json.o: json.d
-	$(CC) $(CFLAGS) $(FLAGS) json.d
-
+.PHONY: clean
 clean:
-	rm -rf *.o *~ $(PROGRAM)
+	rm f *.o $(PROGRAM)
