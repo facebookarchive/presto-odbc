@@ -16,15 +16,6 @@ version(unittest) {
   import queryresults : JSBuilder;
 }
 
-enum PRESTO_HEADER {
-  USER = "X-Presto-User",
-  SOURCE = "X-Presto-Source",
-  CATALOG = "X-Presto-Catalog",
-  SCHEMA = "X-Presto-Schema",
-  //TIME_ZONE = "X-Presto-Time-Zone",
-  //LANGUAGE = "X-Presto-Language",
-}
-
 struct ClientSession {
   this(string endpoint, string user) {
     this.endpoint = endpoint;
@@ -130,30 +121,13 @@ private:
   Rebindable!(immutable(QueryResults)) results_;
 }
 
-unittest {
-  enqueueCurlResult(JSBuilder().withNext().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
-
-  auto session = ClientSession("localhost", "user1");
-  auto query = "SELECT lemons FROM life";
-  auto client = StatementClient(session, query);
-  assert(client.query == query);
-  assert(!client.empty);
-  assert(client.front.byRow().empty);
-
-  client.popFront;
-  assert(!client.empty);
-  assert(client.front.byRow().empty);
-
-  client.popFront;
-  assert(!client.empty);
-  assert(!client.front.byRow().empty);
-
-  client.popFront;
-  assert(client.empty);
-  assert(!client.front.byRow().empty);
+enum PRESTO_HEADER {
+  USER = "X-Presto-User",
+  SOURCE = "X-Presto-Source",
+  CATALOG = "X-Presto-Catalog",
+  SCHEMA = "X-Presto-Schema",
+  //TIME_ZONE = "X-Presto-Time-Zone",
+  //LANGUAGE = "X-Presto-Language",
 }
 
 unittest {
@@ -182,16 +156,30 @@ unittest {
   assert(!client.front.byRow().empty);
 }
 
-version(unittest) {
-  import std.concurrency : ownerTid, send;
+unittest {
+  enqueueCurlResult(JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
+  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
 
-  void resultProcessorThread(immutable(QueryResults) resultSet) {
-    long reduceVal = 0;
-    foreach (row; resultSet.byRow!(long, "col2")()) {
-      reduceVal += row[0];
-    }
-    ownerTid.send(reduceVal);
-  }
+  auto session = ClientSession("localhost", "user1");
+  auto query = "SELECT lemons FROM life";
+  auto client = StatementClient(session, query);
+  assert(client.query == query);
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(client.front.byRow().empty);
+
+  client.popFront;
+  assert(!client.empty);
+  assert(!client.front.byRow().empty);
+
+  client.popFront;
+  assert(client.empty);
+  assert(!client.front.byRow().empty);
 }
 
 unittest {
@@ -216,6 +204,19 @@ unittest {
     assert(result == 48);
   }
 }
+
+version(unittest) {
+  import std.concurrency : ownerTid, send;
+
+  void resultProcessorThread(immutable(QueryResults) resultSet) {
+    long reduceVal = 0;
+    foreach (row; resultSet.byRow!(long, "col2")()) {
+      reduceVal += row[0];
+    }
+    ownerTid.send(reduceVal);
+  }
+}
+
 
 unittest {
   enqueueCurlResult(JSBuilder().withNext().toString().dup);
