@@ -7,7 +7,7 @@ import statementclient : ClientSession, StatementClient;
 version(unittest) void main() { writeln("Tests completed."); }
 else void main() {
 
-  auto session = ClientSession("localhost:8080/v1/statement", "test");
+  auto session = ClientSession("localhost:8080", "test");
   session.catalog = "tpch";
   session.schema = "tiny";
 

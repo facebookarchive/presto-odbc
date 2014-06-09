@@ -18,7 +18,7 @@ version(unittest) {
 
 struct ClientSession {
   this(string endpoint, string user) {
-    this.endpoint = endpoint;
+    this.endpoint = endpoint ~ "/v1/statement";
     this.user = user;
     this.time_zone = getThisTimeZoneId();
   }
