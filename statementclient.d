@@ -195,8 +195,8 @@ unittest {
   auto client = StatementClient(session, "");
 
   Tid[] workers;
-  foreach (resultSet; client) {
-    workers ~= spawn(&resultProcessorThread, resultSet);
+  foreach (resultBatch; client) {
+    workers ~= spawn(&resultProcessorThread, resultBatch);
   }
 
   foreach (workerTid; workers) {
@@ -208,9 +208,9 @@ unittest {
 version(unittest) {
   import std.concurrency : ownerTid, send;
 
-  void resultProcessorThread(immutable(QueryResults) resultSet) {
+  void resultProcessorThread(immutable(QueryResults) resultBatch) {
     long reduceVal = 0;
-    foreach (row; resultSet.byRow!(long, "col2")()) {
+    foreach (row; resultBatch.byRow!(long, "col2")()) {
       reduceVal += row[0];
     }
     ownerTid.send(reduceVal);

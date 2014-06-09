@@ -12,10 +12,10 @@ else void main() {
   session.schema = "tiny";
 
   auto client = StatementClient(session, "SELECT * FROM orders");
-  foreach (resultSet; client) {
-    writeln ("Starting a new set");
+  foreach (resultBatch; client) {
+    writeln ("Starting a new batch");
 
-    foreach (row; resultSet.byRow!(string, "comment")()) {
+    foreach (row; resultBatch.byRow!(string, "comment")()) {
       writeln(row);
     }
   }
