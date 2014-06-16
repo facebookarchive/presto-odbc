@@ -1,0 +1,8 @@
+LIBRARY         dshared
+DESCRIPTION     'MyDll demonstration DLL'
+EXETYPE		NT
+SUBSYSTEM WINDOWS
+CODE SHARED EXECUTE
+EXPORTS
+		dllSquare
+    dllTest
