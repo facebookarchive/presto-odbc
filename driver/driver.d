@@ -12,7 +12,6 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
-alias OutputDebugString = printf;
 //////  DLL entry point for global initializations/finalizations if any
 
 version(unittest) {
@@ -95,8 +94,6 @@ SQLRETURN SQLExecDirectW(
     SQLWCHAR* szSqlStr,
     SQLINTEGER TextLength) {
   showCalled("SQLExecDirect ", szSqlStr, TextLength);
-
-  OutputDebugString("SQLExecDirect called\n");
   return SQL_SUCCESS;
 }
 
@@ -129,7 +126,6 @@ SQLRETURN SQLAllocHandle(
   }
   showCalled("SQLAllocHandle ", HandleType, NewHandlePointer, type);
 
-  OutputDebugString("SQLAllocHandle called\n");
   return SQL_SUCCESS;
 }
 
@@ -143,7 +139,6 @@ SQLRETURN SQLBindCol(
     SQLLEN BufferLength,
     SQLLEN* StrLen_or_Ind) {
   showCalled("SQLBindCol ", ColumnNumber, TargetType, TargetValue, BufferLength);
-  OutputDebugString("SQLBindCol called\n");
   return SQL_SUCCESS;
 }
 
@@ -151,7 +146,6 @@ SQLRETURN SQLBindCol(
 
 SQLRETURN SQLCancel(SQLHSTMT StatementHandle) {
   showCalled("SQLCancel ");
-  OutputDebugString("SQLCancel called\n");
   return SQL_SUCCESS;
 }
 
@@ -166,7 +160,6 @@ SQLRETURN SQLConnectW(
     SQLWCHAR* szAuthStr,
     SQLSMALLINT cchAuthStr) {
   showCalled("SQLConnect ");
-  OutputDebugString("SQLConnect called\n");
   return SQL_SUCCESS;
 }
 
@@ -183,7 +176,6 @@ SQLRETURN SQLDescribeColW(
     SQLSMALLINT* pibScale,
     SQLSMALLINT* pfNullable) {
   showCalled("SQLDescribeCol ", icol, szColName);
-  OutputDebugString("SQLDescribeCol called\n");
   return SQL_SUCCESS;
 }
 
@@ -191,7 +183,6 @@ SQLRETURN SQLDescribeColW(
 
 SQLRETURN SQLDisconnect(SQLHDBC ConnectionHandle) {
   showCalled("SQLDisconnect ");
-  OutputDebugString("SQLDisconnect called\n");
   return SQL_SUCCESS;
 }
 
@@ -199,7 +190,6 @@ SQLRETURN SQLDisconnect(SQLHDBC ConnectionHandle) {
 
 SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
   showCalled("SQLExecute ");
-  OutputDebugString("SQLExecute called\n");
   return SQL_SUCCESS;
 }
 
@@ -207,7 +197,6 @@ SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
 
 SQLRETURN SQLFetch(HSTMT StatementHandle) {
   showCalled("SQLFetch ");
-  OutputDebugString("SQLFetch called\n");
   return SQL_NO_DATA;
 }
 
@@ -217,7 +206,6 @@ SQLRETURN SQLFreeStmt(
     SQLHSTMT StatementHandle,
     SQLUSMALLINT Option) {
   showCalled("SQLFreeStmt ");
-  OutputDebugString("SQLFreeStmt called\n");
   return SQL_SUCCESS;
 }
 
@@ -229,7 +217,6 @@ SQLRETURN SQLGetCursorNameW(
     SQLSMALLINT cchCursorMax,
     SQLSMALLINT* pcchCursor) {
   showCalled("SQLGetCursorName ", szCursor, cchCursorMax, pcchCursor);
-  OutputDebugString("SQLGetCursorName called\n");
   return SQL_SUCCESS;
 }
 
@@ -239,7 +226,6 @@ SQLRETURN SQLNumResultCols(
     SQLHSTMT StatementHandle,
     SQLSMALLINT* ColumnCount) {
   showCalled("SQLNumResultCols ", ColumnCount);
-  OutputDebugString("SQLNumResultCols called\n");
   return SQL_SUCCESS;
 }
 
@@ -250,7 +236,6 @@ SQLRETURN SQLPrepareW(
     SQLWCHAR* szSqlStr,
     SQLINTEGER cchSqlStr) {
   showCalled("SQLPrepare ");
-  OutputDebugString("SQLPrepare called\n");
   return SQL_SUCCESS;
 }
 
@@ -260,7 +245,6 @@ SQLRETURN SQLRowCount(
     SQLHSTMT StatementHandle,
     SQLLEN* RowCount) {
   showCalled("SQLRowCount ", RowCount);
-  OutputDebugString("SQLRowCount called\n");
   return SQL_SUCCESS;
 }
 
@@ -271,7 +255,6 @@ SQLRETURN SQLSetCursorNameW(
     SQLWCHAR* szCursor,
     SQLSMALLINT cchCursor) {
   showCalled("SQLSetCursorName ");
-  OutputDebugString("SQLSetCursorName called\n");
   return SQL_SUCCESS;
 }
 
@@ -288,7 +271,6 @@ SQLRETURN SQLColumnsW(
     SQLWCHAR* szColumnName,
     SQLSMALLINT cchColumnName) {
   showCalled("SQLColumns ");
-  OutputDebugString("SQLColumns called\n");
   return SQL_SUCCESS;
 }
 
@@ -302,7 +284,6 @@ SQLRETURN SQLGetData(
     SQLLEN BufferLength,
     SQLLEN* StrLen_or_IndPtr) {
   showCalled("SQLGetData ");
-  OutputDebugString("SQLGetData called\n");
   return SQL_SUCCESS;
 }
 
@@ -416,7 +397,6 @@ SQLRETURN SQLGetTypeInfoW(
     SQLHSTMT StatementHandle,
     SQLSMALLINT DataType) {
   showCalled("SQLGetTypeInfo ", DataType);
-  OutputDebugString("SQLGetTypeInfo called\n");
   return SQL_SUCCESS;
 }
 
@@ -426,7 +406,6 @@ SQLRETURN SQLParamData(
     SQLHSTMT StatementHandle,
     SQLPOINTER *Value) {
   showCalled("SQLParamData ");
-  OutputDebugString("SQLParamData called\n");
   return SQL_SUCCESS;
 }
 
@@ -437,7 +416,6 @@ SQLRETURN SQLPutData(
     SQLPOINTER Data,
     SQLLEN StrLen_or_Ind) {
   showCalled("SQLPutData ");
-  OutputDebugString("SQLPutData called\n");
   return SQL_SUCCESS;
 }
 
@@ -456,7 +434,6 @@ SQLRETURN SQLSpecialColumnsW(
     SQLUSMALLINT fScope,
     SQLUSMALLINT fNullable) {
   showCalled("SQLSpecialColumns ");
-  OutputDebugString("SQLSpecialColumns called\n");
   return SQL_SUCCESS;
 }
 
@@ -473,7 +450,6 @@ SQLRETURN SQLStatisticsW(
     SQLUSMALLINT fUnique,
     SQLUSMALLINT fAccuracy) {
   showCalled("SQLStatistics ");
-  OutputDebugString("SQLStatistics called\n");
   return SQL_SUCCESS;
 }
 
@@ -497,9 +473,7 @@ SQLRETURN SQLTablesW(
     SQLSMALLINT cchTableName,
     SQLWCHAR* szTableType,
     SQLSMALLINT cchTableType) {
-  //stringstream ss; ss, "SQLTables ", showIfNotNull(szCatalogName), showIfNotNull(szSchemaName)
-  // " ", showIfNotNull(szTableName), showIfNotNull(szTableType), " ");
-  OutputDebugString("SQLTables called\n");
+  showCalled("SQLTablesW ");
   return SQL_SUCCESS;
 }
 
@@ -513,7 +487,6 @@ SQLRETURN SQLBrowseConnectW(
     SQLSMALLINT cchConnStrOutMax,
     SQLSMALLINT* pcchConnStrOut) {
   showCalled("SQLBrowseConnect ");
-  OutputDebugString("SQLBrowseConnect called\n");
   return SQL_SUCCESS;
 }
 
@@ -530,7 +503,6 @@ SQLRETURN SQLColumnPrivilegesW(
     SQLWCHAR* szColumnName,
     SQLSMALLINT cchColumnName) {
   showCalled("SQLColumnPrivileges ");
-  OutputDebugString("SQLColumnPrivileges called\n");
   return SQL_SUCCESS;
 }
 
@@ -544,7 +516,6 @@ SQLRETURN SQLDescribeParam(
     SQLSMALLINT* pibScale,
     SQLSMALLINT* pfNullable) {
   showCalled("SQLDescribeParam ");
-  OutputDebugString("SQLDescribeParam called\n");
   return SQL_SUCCESS;
 }
 
@@ -557,7 +528,6 @@ SQLRETURN SQLExtendedFetch(
     SQLULEN* pcrow,
     SQLUSMALLINT* rgfRowStatus) {
   showCalled("SQLExtendedFetch ");
-  OutputDebugString("SQLExtendedFetch called\n");
   return SQL_SUCCESS;
 }
 
@@ -578,14 +548,12 @@ SQLRETURN SQLForeignKeysW(
     SQLWCHAR* szFkTableName,
     SQLSMALLINT cchFkTableName) {
   showCalled("SQLForeignKeys ");
-  OutputDebugString("SQLForeignKeys called\n");
   return SQL_SUCCESS;
 }
 
 ///// SQLMoreResults /////
 SQLRETURN SQLMoreResults(SQLHSTMT hstmt) {
   showCalled("SQLMoreResults ");
-  OutputDebugString("SQLMoreResults called\n");
   return SQL_SUCCESS;
 }
 
@@ -599,7 +567,6 @@ SQLRETURN SQLNativeSqlW(
     SQLINTEGER cchSqlStrMax,
     SQLINTEGER* pcchSqlStr) {
   showCalled("SQLNativeSql ");
-  OutputDebugString("SQLNativeSql called\n");
   return SQL_SUCCESS;
 }
 
@@ -609,7 +576,6 @@ SQLRETURN SQLNumParams(
     SQLHSTMT hstmt,
     SQLSMALLINT* pcpar) {
   showCalled("SQLNumParams ");
-  OutputDebugString("SQLNumParams called\n");
   return SQL_SUCCESS;
 }
 
@@ -624,7 +590,6 @@ SQLRETURN SQLPrimaryKeysW(
     SQLWCHAR* szTableName,
     SQLSMALLINT cchTableName) {
   showCalled("SQLPrimaryKeys ");
-  OutputDebugString("SQLPrimaryKeys called\n");
   return SQL_SUCCESS;
 }
 
@@ -641,7 +606,6 @@ SQLRETURN SQLProcedureColumnsW(
     SQLWCHAR* szColumnName,
     SQLSMALLINT cchColumnName) {
   showCalled("SQLProcedureColumns ");
-  OutputDebugString("SQLProcedureColumns called\n");
   return SQL_SUCCESS;
 }
 
@@ -656,7 +620,6 @@ SQLRETURN SQLProceduresW(
     SQLWCHAR* szProcName,
     SQLSMALLINT cchProcName) {
   showCalled("SQLProcedures ");
-  OutputDebugString("SQLProcedures called\n");
   return SQL_SUCCESS;
 }
 
@@ -668,7 +631,6 @@ SQLRETURN SQLSetPos(
     SQLUSMALLINT fOption,
     SQLUSMALLINT       fLock) {
   showCalled("SQLSetPos ");
-  OutputDebugString("SQLSetPos called\n");
   return SQL_SUCCESS;
 }
 
@@ -683,7 +645,6 @@ SQLRETURN SQLTablePrivilegesW(
     SQLWCHAR* szTableName,
     SQLSMALLINT cchTableName) {
   showCalled("SQLTablePrivileges ");
-  OutputDebugString("SQLTablePrivileges called\n");
   return SQL_SUCCESS;
 }
 
@@ -701,7 +662,6 @@ SQLRETURN SQLBindParameter(
     SQLLEN cbValueMax,
     SQLLEN* pcbValue) {
   showCalled("SQLBindParameter ");
-  OutputDebugString("SQLBindParameter called\n");
   return SQL_SUCCESS;
 }
 
@@ -709,7 +669,6 @@ SQLRETURN SQLBindParameter(
 
 SQLRETURN SQLCloseCursor(SQLHSTMT StatementHandle) {
   showCalled("SQLCloseCursor ");
-  OutputDebugString("SQLCloseCursor called\n");
   return SQL_SUCCESS;
 }
 
@@ -724,7 +683,6 @@ SQLRETURN SQLColAttributeW(
     SQLSMALLINT* StringLength,
     SQLLEN* NumericAttribute) {
   showCalled("SQLColAttribute ");
-  OutputDebugString("SQLColAttribute called\n");
   return SQL_SUCCESS;
 }
 
@@ -734,7 +692,6 @@ SQLRETURN SQLCopyDesc(
     SQLHDESC SourceDescHandle,
     SQLHDESC TargetDescHandle) {
   showCalled("SQLCopyDesc ");
-  OutputDebugString("SQLCopyDesc called\n");
   return SQL_SUCCESS;
 }
 
@@ -744,7 +701,6 @@ SQLRETURN SQLEndTran(
     SQLHANDLE Handle,
     SQLSMALLINT CompletionType) {
   showCalled("SQLEndTran ");
-  OutputDebugString("SQLEndTran called\n");
   return SQL_SUCCESS;
 }
 
@@ -755,7 +711,6 @@ SQLRETURN SQLFetchScroll(
     SQLSMALLINT FetchOrientation,
     SQLLEN FetchOffset) {
   showCalled("SQLFetchScroll ");
-  OutputDebugString("SQLFetchScroll called\n");
   return SQL_SUCCESS;
 }
 
@@ -763,7 +718,6 @@ SQLRETURN SQLFetchScroll(
 
 SQLRETURN SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle) {
   showCalled("SQLFreeHandle ");
-  OutputDebugString("SQLFreeHandle called\n");
   return SQL_SUCCESS;
 }
 
@@ -776,7 +730,6 @@ SQLRETURN SQLGetConnectAttrW(
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLengthPtr) {
   showCalled("SQLGetConnectAttr ");
-  OutputDebugString("SQLGetConnectAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -790,7 +743,6 @@ SQLRETURN SQLGetDescFieldW(
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLength) {
   showCalled("SQLGetDescField ");
-  OutputDebugString("SQLGetDescField called\n");
   return SQL_SUCCESS;
 }
 
@@ -809,7 +761,6 @@ SQLRETURN SQLGetDescRecW(
     SQLSMALLINT* pScale,
     SQLSMALLINT* pNullable) {
   showCalled("SQLGetDescRec ");
-  OutputDebugString("SQLGetDescRec called\n");
   return SQL_SUCCESS;
 }
 
@@ -823,10 +774,13 @@ SQLRETURN SQLGetDiagFieldW(
     SQLPOINTER DiagInfo,
     SQLSMALLINT BufferLength,
     SQLSMALLINT* StringLength) {
-  (cast(char*)DiagInfo)[0] = '\0';
-  *StringLength = 0;
+  if (DiagInfo) {
+    (cast(char*)DiagInfo)[0] = '\0';
+  }
+  if (StringLength) {
+    *StringLength = 0;
+  }
   showCalled("SQLGetDiagField ", RecNumber, DiagIdentifier, DiagInfo, BufferLength);
-  OutputDebugString("SQLGetDiagField called\n");
   return SQL_NO_DATA;
 }
 
@@ -842,7 +796,6 @@ SQLRETURN SQLGetDiagRecW(
     SQLSMALLINT cchErrorMsgMax,
     SQLSMALLINT* pcchErrorMsg) {
   showCalled("SQLGetDiagRec ", iRecord, pfNativeError, (szErrorMsg == null), cchErrorMsgMax);
-  OutputDebugString("SQLGetDiagRec called\n");
   return SQL_NO_DATA;
 }
 
@@ -855,7 +808,6 @@ SQLRETURN SQLGetEnvAttr(
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLength) {
   showCalled("SQLGetEnvAttr ");
-  OutputDebugString("SQLGetEnvAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -881,10 +833,9 @@ SQLRETURN SQLGetStmtAttrW(
     Value = null;
     break;
   default:
-    assert(false);
+    return SQL_ERROR;
   }
   showCalled("SQLGetStmtAttr ", Attribute, Value, BufferLength);
-  OutputDebugString("SQLGetStmtAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -899,10 +850,9 @@ SQLRETURN SQLSetConnectAttrW(
   case SQL_LOGIN_TIMEOUT:
     break;
   default:
-    assert(false);
+    return SQL_ERROR;
   }
   showCalled("SQLSetConnectAttr ", Attribute, Value, StringLength);
-  OutputDebugString("SQLSetConnectAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -915,7 +865,6 @@ SQLRETURN SQLSetDescFieldW(
     SQLPOINTER Value,
     SQLINTEGER BufferLength) {
   showCalled("SQLSetDescField ");
-  OutputDebugString("SQLSetDescField called\n");
   return SQL_SUCCESS;
 }
 
@@ -933,7 +882,6 @@ SQLRETURN SQLSetDescRec(
     SQLLEN* StringLength,
     SQLLEN* Indicator) {
   showCalled("SQLSetDescRec ");
-  OutputDebugString("SQLSetDescRec called\n");
   return SQL_SUCCESS;
 }
 
@@ -949,11 +897,10 @@ SQLRETURN SQLSetEnvAttr(
 
     break;
   default:
-    assert(false);
+    return SQL_ERROR;
   }
 
   showCalled("SQLSetEnvAttr ", Attribute, Value, StringLength);
-  OutputDebugString("SQLSetEnvAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -965,7 +912,6 @@ SQLRETURN SQLSetStmtAttrW(
     SQLPOINTER Value,
     SQLINTEGER StringLength) {
   showCalled("SQLSetStmtAttr ");
-  OutputDebugString("SQLSetStmtAttr called\n");
   return SQL_SUCCESS;
 }
 
@@ -976,6 +922,5 @@ SQLRETURN SQLBulkOperations(
     SQLHSTMT StatementHandle,
     SQLSMALLINT Operation) {
   showCalled("SQLBulkOperations ");
-  OutputDebugString("SQLBulkOperations called\n");
   return SQL_SUCCESS;
 }
