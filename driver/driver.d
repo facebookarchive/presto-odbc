@@ -115,6 +115,8 @@ SQLRETURN SQLAllocHandle(
 
 ///// SQLBindCol /////
 
+static ColumnBinding[int] columnBindings;
+
 SQLRETURN SQLBindCol(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
@@ -234,6 +236,7 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
 SQLRETURN SQLFreeStmt(
     SQLHSTMT StatementHandle,
     SQLUSMALLINT Option) {
+
   logMessage("SQLFreeStmt ", Option);
   return SQL_SUCCESS;
 }
@@ -476,6 +479,7 @@ SQLRETURN SQLTablesW(
     SQLSMALLINT cchTableName,
     SQLWCHAR* szTableType,
     SQLSMALLINT cchTableType) {
+
   logMessage("SQLTablesW ");
   return SQL_SUCCESS;
 }
