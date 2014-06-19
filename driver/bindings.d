@@ -8,7 +8,6 @@ import std.typetuple : TypeTuple;
 import sqlext;
 import odbcinst;
 
-<<<<<<< HEAD
 import util : copyToBuffer;
 
 /**
@@ -27,16 +26,6 @@ unittest {
   enum testSqlTypeId = SQL_TYPE_ID.SQL_SMALLINT;
   alias testSqlType = SQL_TYPES[testSqlTypeId];
   auto binding = ColumnBinding(new SQLLEN);
-=======
-import util : showCalled, copyToBuffer;
-
-unittest {
-  import std.c.stdlib : malloc;
-
-  enum testSqlTypeId = SQL_TYPE_ID.SQL_SMALLINT;
-  alias testSqlType = SQL_TYPES[testSqlTypeId];
-  auto binding = ColumnBinding(cast(SQLLEN*) malloc(SQLLEN.sizeof));
->>>>>>> Basic implementation of bind and fetch
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = testSqlType.sizeof;
   binding.numberOfBytesWritten = -1;
@@ -47,17 +36,9 @@ unittest {
 }
 
 unittest {
-<<<<<<< HEAD
   enum testSqlTypeId = SQL_TYPE_ID.SQL_VARCHAR;
   alias testSqlType = SQL_TYPES[testSqlTypeId];
   auto binding = ColumnBinding(new SQLLEN);
-=======
-  import std.c.stdlib : malloc;
-
-  enum testSqlTypeId = SQL_TYPE_ID.SQL_VARCHAR;
-  alias testSqlType = SQL_TYPES[testSqlTypeId];
-  auto binding = ColumnBinding(cast(SQLLEN*) malloc(SQLLEN.sizeof));
->>>>>>> Basic implementation of bind and fetch
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = 10; //10 character limit including null terminator
   binding.numberOfBytesWritten = -1;
@@ -67,13 +48,9 @@ unittest {
   assert(cast(char[]) binding.outputBuffer == "Hello wor\0");
 }
 
-<<<<<<< HEAD
 //Writes the value inside the Variant into the buffer specified by the binding
 void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
 
-=======
-void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
->>>>>>> Basic implementation of bind and fetch
   static void copyToOutputImpl(VARIANT_TYPE)(Variant value, ref ColumnBinding binding) {
     alias ResultType = firstNonVoidType!(SQL_TYPE, VARIANT_TYPE);
 
@@ -98,13 +75,10 @@ void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
   dispatchOnVariantType!(copyToOutputImpl)(value, binding);
 }
 
-<<<<<<< HEAD
 unittest {
   dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
 }
 
-=======
->>>>>>> Basic implementation of bind and fetch
 version(unittest) {
   static void requireIntType(T, TList...)(TList) {
     static if (!is(T == int)) {
@@ -113,14 +87,6 @@ version(unittest) {
   }
 }
 
-<<<<<<< HEAD
-=======
-unittest {
-  dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
-  int x = 0;
-}
-
->>>>>>> Basic implementation of bind and fetch
 auto dispatchOnSQLType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs) {
   switch(type) {
     foreach(i, SQL_TYPE; SQL_TYPES) {
@@ -163,12 +129,9 @@ template firstNonVoidType(TList...) {
   }
 }
 
-<<<<<<< HEAD
 /**
  * Stores information about how to return results to the user for a particular column.
  */
-=======
->>>>>>> Basic implementation of bind and fetch
 struct ColumnBinding {
   this(SQLLEN* indicator) {
     this.indicator = indicator;
@@ -176,11 +139,8 @@ struct ColumnBinding {
 
   SQL_TYPE_ID columnType;
   void[] outputBuffer;
-<<<<<<< HEAD
   SQLLEN* indicator;
 
-=======
->>>>>>> Basic implementation of bind and fetch
   @property {
     SQLLEN numberOfBytesWritten() {
       assert(indicator != null);
@@ -192,43 +152,27 @@ struct ColumnBinding {
       }
     }
   }
-<<<<<<< HEAD
 }
 
 /**
  * A range that allows retrieving one row at a time from the result set of a query.
  */
-=======
-
-  SQLLEN* indicator;
-}
-
->>>>>>> Basic implementation of bind and fetch
 interface OdbcResult {
   @property {
     bool empty();
     OdbcResultRow front();
     void popFront();
 
-<<<<<<< HEAD
     uint numberOfColumns();
   }
 }
 
 final class EmptyOdbcResult : OdbcResult {
-=======
-    int numberOfColumns();
-  }
-}
-
-class EmptyOdbcResult : OdbcResult {
->>>>>>> Basic implementation of bind and fetch
   @property {
     bool empty() { return true; }
     OdbcResultRow front() { return null; }
     void popFront() {}
 
-<<<<<<< HEAD
     uint numberOfColumns() { return 0; }
   }
 }
@@ -257,45 +201,12 @@ private:
   RowT result = new RowT();
   bool poppedContents = false;
 }
-=======
-    int numberOfColumns() { return 0; }
-  }
-}
-
-OdbcResult latestOdbcResult;
->>>>>>> Basic implementation of bind and fetch
 
 interface OdbcResultRow {
   Variant dataAt(int column);
 }
 
-<<<<<<< HEAD
 final class VarcharTypeInfoResultRow : OdbcResultRow {
-=======
-enum TypeInfoResultColumns {
-  TYPE_NAME = 1,
-  DATA_TYPE,
-  COLUMN_SIZE,
-  LITERAL_PREFIX,
-  LITERAL_SUFFIX,
-  CREATE_PARAMS,
-  NULLABLE,
-  CASE_SENSITIVE,
-  SEARCHABLE,
-  UNSIGNED_ATTRIBUTE,
-  FIXED_PREC_SCALE,
-  AUTO_UNIQUE_VALUE,
-  LOCAL_TYPE_NAME,
-  MINIMUM_SCALE,
-  MAXIMUM_SCALE,
-  SQL_DATA_TYPE,
-  SQL_DATETIME_SUB,
-  NUM_PREC_RADIX,
-  INTERVAL_PRECISION,
-}
-
-class TypeInfoResultRow : OdbcResultRow {
->>>>>>> Basic implementation of bind and fetch
   Variant dataAt(int column) {
     switch(column) {
     case TypeInfoResultColumns.TYPE_NAME:
@@ -338,7 +249,6 @@ class TypeInfoResultRow : OdbcResultRow {
   }
 }
 
-<<<<<<< HEAD
 enum TypeInfoResultColumns {
   TYPE_NAME = 1,
   DATA_TYPE,
@@ -359,27 +269,4 @@ enum TypeInfoResultColumns {
   SQL_DATETIME_SUB,
   NUM_PREC_RADIX,
   INTERVAL_PRECISION,
-=======
-class TypeInfoResult : OdbcResult {
-  @property {
-    bool empty() {
-      return poppedContents;
-    }
-
-    TypeInfoResultRow front() {
-      return new TypeInfoResultRow();
-    }
-
-    void popFront() {
-      poppedContents = true;
-    }
-
-    int numberOfColumns() {
-      return 19;
-    }
-  }
-
-private:
-  bool poppedContents = false;
->>>>>>> Basic implementation of bind and fetch
 }

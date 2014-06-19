@@ -108,14 +108,13 @@ SQLRETURN SQLAllocHandle(
   default:
     return SQL_ERROR;
   }
+
   logMessage("SQLAllocHandle ", handleType, newHandlePointer, cast(SQL_HANDLE_TYPE) handleType);
 
   return SQL_SUCCESS;
 }
 
 ///// SQLBindCol /////
-
-static ColumnBinding[int] columnBindings;
 
 SQLRETURN SQLBindCol(
     OdbcStatement statementHandle,
