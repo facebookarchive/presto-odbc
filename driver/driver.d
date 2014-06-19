@@ -321,10 +321,10 @@ SQLRETURN SQLGetInfoW(
 
   switch (InfoType) {
 
-  case SQL_DRIVER_ODBC_VER: { // 77
+  case SQL_DRIVER_ODBC_VER: // 77
     *StringLengthPtr = copyToBuffer("03.80", InfoValue, BufferLength);
     break;
-  } case SQL_ASYNC_DBC_FUNCTIONS: //10023
+  case SQL_ASYNC_DBC_FUNCTIONS: //10023
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
     break;
   case SQL_ASYNC_NOTIFICATION: //10025
@@ -339,50 +339,48 @@ SQLRETURN SQLGetInfoW(
   case SQL_GETDATA_EXTENSIONS: //81
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_GD_ANY_ORDER;
     break;
-  case SQL_DATA_SOURCE_NAME: { //2
+  case SQL_DATA_SOURCE_NAME: //2
     *StringLengthPtr = copyToBuffer("", InfoValue, BufferLength);
     break;
-  } case SQL_MAX_CONCURRENT_ACTIVITIES: //1
+  case SQL_MAX_CONCURRENT_ACTIVITIES: //1
     *cast(SQLUSMALLINT*)(InfoValue) = 1;
     break;
-  case SQL_DATA_SOURCE_READ_ONLY: { //25
+  case SQL_DATA_SOURCE_READ_ONLY: //25
     *StringLengthPtr = copyToBuffer("Y", InfoValue, BufferLength);
     break;
-  } case SQL_DRIVER_NAME: { //6
+  case SQL_DRIVER_NAME: //6
     *StringLengthPtr = copyToBuffer("ODBCDRV0.dll", InfoValue, BufferLength);
     break;
-  } case SQL_SEARCH_PATTERN_ESCAPE: { //14
+  case SQL_SEARCH_PATTERN_ESCAPE: //14
     *StringLengthPtr = copyToBuffer("%", InfoValue, BufferLength);
     break;
-  } case SQL_CORRELATION_NAME: { //74
+  case SQL_CORRELATION_NAME: //74
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_CN_ANY;
     break;
-  } case SQL_NON_NULLABLE_COLUMNS: { //75
+  case SQL_NON_NULLABLE_COLUMNS: //75
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_NNC_NON_NULL;
     break;
-  } case SQL_CATALOG_NAME_SEPARATOR: { //41
+  case SQL_CATALOG_NAME_SEPARATOR: //41
     *StringLengthPtr = copyToBuffer(".", InfoValue, BufferLength);
     break;
-  } case SQL_FILE_USAGE: { //84
+  case SQL_FILE_USAGE: //84
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_FILE_USAGE;
     break;
-  } case SQL_CATALOG_TERM: { //42
+  case SQL_CATALOG_TERM: //42
     *StringLengthPtr = copyToBuffer("catalog", InfoValue, BufferLength);
     break;
-  } case SQL_DATABASE_NAME: { //16
+  case SQL_DATABASE_NAME: //16
     *StringLengthPtr = copyToBuffer("dbname", InfoValue, BufferLength);
     showCalled("dbname", InfoType, InfoValue, BufferLength, *StringLengthPtr);
     break;
-  } case SQL_MAX_SCHEMA_NAME_LEN: { //32
+  case SQL_MAX_SCHEMA_NAME_LEN: //32
     *cast(SQLUSMALLINT*)(InfoValue) = 0;
     break;
-  } case SQL_IDENTIFIER_QUOTE_CHAR: { //29
+  case SQL_IDENTIFIER_QUOTE_CHAR: //29
     *StringLengthPtr = copyToBuffer("\"", InfoValue, BufferLength);
     break;
-  }
-  default: {
+  default:
     showCalled("SQLGetInfo ", InfoType, InfoValue, BufferLength, " ");
-  }
   } //switch
   return SQL_SUCCESS;
 }
