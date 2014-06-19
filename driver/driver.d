@@ -284,6 +284,7 @@ SQLRETURN SQLGetInfoW(
   switch (InfoType) {
 
   case SQL_DRIVER_ODBC_VER: // 77
+    //Latest version of ODBC is 3.8 (as of 6/19/14)
     *StringLengthPtr = copyToBuffer("03.80", InfoValue, BufferLength);
     break;
   case SQL_ASYNC_DBC_FUNCTIONS: //10023
