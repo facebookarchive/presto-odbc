@@ -448,14 +448,6 @@ SQLRETURN SQLStatisticsW(
 
 ///// SQLTables /////
 
-const(char)* showIfNotNull(SQLWCHAR* ptr) {
-  if (ptr != null) {
-    return cast(const char*)(ptr);
-  }
-  enum const(char)* ret = "null".ptr;
-  return ret;
-}
-
 SQLRETURN SQLTablesW(
     SQLHSTMT hstmt,
     SQLWCHAR* szCatalogName,
