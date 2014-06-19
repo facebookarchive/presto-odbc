@@ -50,7 +50,9 @@ unittest {
   assert(cast(char[]) binding.outputBuffer == "Hello wor\0");
 }
 
+//Writes the value inside the Variant into the buffer specified by the binding
 void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
+
   static void copyToOutputImpl(VARIANT_TYPE)(Variant value, ref ColumnBinding binding) {
     alias ResultType = firstNonVoidType!(SQL_TYPE, VARIANT_TYPE);
 
@@ -75,17 +77,17 @@ void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
   dispatchOnVariantType!(copyToOutputImpl)(value, binding);
 }
 
+unittest {
+  dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
+  int x = 0;
+}
+
 version(unittest) {
   static void requireIntType(T, TList...)(TList) {
     static if (!is(T == int)) {
       assert(false, "Wrong type dispatched");
     }
   }
-}
-
-unittest {
-  dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
-  int x = 0;
 }
 
 auto dispatchOnSQLType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs) {
@@ -162,7 +164,7 @@ interface OdbcResult {
   }
 }
 
-class EmptyOdbcResult : OdbcResult {
+final class EmptyOdbcResult : OdbcResult {
   @property {
     bool empty() { return true; }
     OdbcResultRow front() { return null; }
@@ -172,7 +174,7 @@ class EmptyOdbcResult : OdbcResult {
   }
 }
 
-class TypeInfoResult : OdbcResult {
+final class TypeInfoResult : OdbcResult {
   @property {
     bool empty() {
       return poppedContents;
@@ -199,7 +201,7 @@ interface OdbcResultRow {
   Variant dataAt(int column);
 }
 
-class TypeInfoResultRow : OdbcResultRow {
+final class TypeInfoResultRow : OdbcResultRow {
   Variant dataAt(int column) {
     switch(column) {
     case TypeInfoResultColumns.TYPE_NAME:
