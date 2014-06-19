@@ -10,6 +10,16 @@ import odbcinst;
 
 import util : showCalled, copyToBuffer;
 
+
+final class OdbcStatement {
+  this() {
+    latestOdbcResult = new EmptyOdbcResult();
+  }
+
+  ColumnBinding[int] columnBindings;
+  OdbcResult latestOdbcResult;
+}
+
 unittest {
   import std.c.stdlib : malloc;
 
@@ -162,32 +172,31 @@ class EmptyOdbcResult : OdbcResult {
   }
 }
 
-OdbcResult latestOdbcResult;
+class TypeInfoResult : OdbcResult {
+  @property {
+    bool empty() {
+      return poppedContents;
+    }
+
+    TypeInfoResultRow front() {
+      return new TypeInfoResultRow();
+    }
+
+    void popFront() {
+      poppedContents = true;
+    }
+
+    int numberOfColumns() {
+      return 19;
+    }
+  }
+
+private:
+  bool poppedContents = false;
+}
 
 interface OdbcResultRow {
   Variant dataAt(int column);
-}
-
-enum TypeInfoResultColumns {
-  TYPE_NAME = 1,
-  DATA_TYPE,
-  COLUMN_SIZE,
-  LITERAL_PREFIX,
-  LITERAL_SUFFIX,
-  CREATE_PARAMS,
-  NULLABLE,
-  CASE_SENSITIVE,
-  SEARCHABLE,
-  UNSIGNED_ATTRIBUTE,
-  FIXED_PREC_SCALE,
-  AUTO_UNIQUE_VALUE,
-  LOCAL_TYPE_NAME,
-  MINIMUM_SCALE,
-  MAXIMUM_SCALE,
-  SQL_DATA_TYPE,
-  SQL_DATETIME_SUB,
-  NUM_PREC_RADIX,
-  INTERVAL_PRECISION,
 }
 
 class TypeInfoResultRow : OdbcResultRow {
@@ -233,25 +242,24 @@ class TypeInfoResultRow : OdbcResultRow {
   }
 }
 
-class TypeInfoResult : OdbcResult {
-  @property {
-    bool empty() {
-      return poppedContents;
-    }
-
-    TypeInfoResultRow front() {
-      return new TypeInfoResultRow();
-    }
-
-    void popFront() {
-      poppedContents = true;
-    }
-
-    int numberOfColumns() {
-      return 19;
-    }
-  }
-
-private:
-  bool poppedContents = false;
+enum TypeInfoResultColumns {
+  TYPE_NAME = 1,
+  DATA_TYPE,
+  COLUMN_SIZE,
+  LITERAL_PREFIX,
+  LITERAL_SUFFIX,
+  CREATE_PARAMS,
+  NULLABLE,
+  CASE_SENSITIVE,
+  SEARCHABLE,
+  UNSIGNED_ATTRIBUTE,
+  FIXED_PREC_SCALE,
+  AUTO_UNIQUE_VALUE,
+  LOCAL_TYPE_NAME,
+  MINIMUM_SCALE,
+  MAXIMUM_SCALE,
+  SQL_DATA_TYPE,
+  SQL_DATETIME_SUB,
+  NUM_PREC_RADIX,
+  INTERVAL_PRECISION,
 }

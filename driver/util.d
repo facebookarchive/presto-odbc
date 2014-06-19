@@ -75,3 +75,76 @@ SQLSMALLINT copyToBuffer(C)(const(C)[] src, SQLPOINTER dest, ulong destSize) if 
   *(cast(C*) (dest + numCopied)) = 0;
   return numCopied;
 }
+
+///Test with class
+unittest {
+  import std.c.stdlib : free;
+
+  class TestClass {
+    this() {}
+    this(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+    int x;
+    int y;
+  }
+  auto ptr = makeWithoutGC!TestClass();
+  assert(ptr.x == 0);
+  assert(ptr.y == 0);
+  free(cast(void*) ptr);
+
+  ptr = makeWithoutGC!TestClass(2, 3);
+  assert(ptr.x == 2);
+  assert(ptr.y == 3);
+  free(cast(void*) ptr);
+}
+
+///Test with struct
+unittest {
+  import std.c.stdlib : free;
+
+  struct TestStruct {
+    this(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+    int x;
+    int y;
+  }
+
+  auto ptr = makeWithoutGC!TestStruct();
+  assert(ptr.x == 0);
+  assert(ptr.y == 0);
+  free(cast(void*) ptr);
+
+  ptr = makeWithoutGC!TestStruct(2, 3);
+  assert(ptr.x == 2);
+  assert(ptr.y == 3);
+  free(cast(void*) ptr);
+
+}
+
+auto makeWithoutGC(T, TList...)(auto ref TList args) {
+  import std.c.stdlib : malloc;
+  auto ptr = malloc(getInstanceSize!T);
+  return emplaceWrapper!T(ptr, args);
+}
+
+private auto emplaceWrapper(T, TList...)(void* memory, auto ref TList args) {
+  import std.conv : emplace;
+
+  static if (is(T == class)) {
+    return emplace!T(cast(void[]) memory[0 .. getInstanceSize!T], args);
+  } else {
+    return emplace!T(cast(T*) memory, args);
+  }
+}
+
+ulong getInstanceSize(T)() if(is(T == class)) {
+  return __traits(classInstanceSize, T);
+}
+
+ulong getInstanceSize(T)() if(!is(T == class)) {
+  return T.sizeof;
+}

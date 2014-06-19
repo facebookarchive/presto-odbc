@@ -13,7 +13,7 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToBuffer;
+import util : logMessage, copyToBuffer, makeWithoutGC;
 import bindings;
 
 //////  DLL entry point for global initializations/finalizations if any
@@ -41,7 +41,7 @@ extern(System):
 
 ///// SQLDriverConnect /////
 
-SQLRETURN SQLDriverConnect(
+SQLRETURN SQLDriverConnectW(
     SQLHDBC hdbc,
     SQLHWND hwnd,
     SQLWCHAR* connStrIn,
@@ -50,6 +50,8 @@ SQLRETURN SQLDriverConnect(
     SQLSMALLINT connStrOutMaxLen,
     SQLSMALLINT* connStrOutLen,
     SQLUSMALLINT driverCompletion) {
+
+  showCalled("SQLDriverConnect ", connStrIn, connStrInLen, connStrOut, connStrOutMaxLen, connStrOutLen, driverCompletion);
 
   if (connStrIn == null) {
     return SQL_SUCCESS;
@@ -86,64 +88,62 @@ SQLRETURN SQLExecDirectW(
 ///// SQLAllocHandle /////
 
 SQLRETURN SQLAllocHandle(
-    SQLSMALLINT	HandleType,
-    SQLHANDLE HandleParent,
-    SQLHANDLE* NewHandlePointer) {
+    SQLSMALLINT	handleType,
+    SQLHANDLE handleParent,
+    SQLHANDLE* newHandlePointer) {
+  assert(newHandlePointer != null);
 
-  string type;
-  switch (HandleType) {
-  case SQL_HANDLE_DBC:
-    type = "SQL_HANDLE_DBC";
+  switch (cast(SQL_HANDLE_TYPE) handleType) {
+  case SQL_HANDLE_TYPE.DBC:
     break;
-  case SQL_HANDLE_DESC:
-    type = "SQL_HANDLE_DESC";
+  case SQL_HANDLE_TYPE.DESC:
     break;
-  case SQL_HANDLE_ENV:
-    type = "SQL_HANDLE_ENV";
+  case SQL_HANDLE_TYPE.ENV:
     break;
-  case SQL_HANDLE_SENV:
-    type = "SQL_HANDLE_SENV";
+  case SQL_HANDLE_TYPE.SENV:
     break;
-  case SQL_HANDLE_STMT:
-    type = "SQL_HANDLE_STMT";
+  case SQL_HANDLE_TYPE.STMT:
+    *newHandlePointer = cast(void*) makeWithoutGC!OdbcStatement();
     break;
   default:
     return SQL_ERROR;
   }
-  logMessage("SQLAllocHandle ", HandleType, NewHandlePointer, type);
+  logMessage("SQLAllocHandle ", handleType, newHandlePointer, cast(SQL_HANDLE_TYPE) handleType);
 
   return SQL_SUCCESS;
 }
 
 ///// SQLBindCol /////
 
-static ColumnBinding[int] columnBindings;
-
 SQLRETURN SQLBindCol(
-    SQLHSTMT statementHandle,
+    OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
     SQLSMALLINT columnType,
     SQLPOINTER outputBuffer,
     SQLLEN bufferLength,
     SQLLEN* numberOfBytesWritten) {
+
   logMessage("SQLBindCol ", columnNumber, columnType, outputBuffer, bufferLength);
-  if (outputBuffer == null) {
-    columnBindings.remove(columnNumber);
-    return SQL_SUCCESS;
-  }
+  assert(statementHandle !is null);
+  with (statementHandle) {
+    if (outputBuffer == null) {
+      columnBindings.remove(columnNumber);
+      return SQL_SUCCESS;
+    }
 
-  if (columnType == SQL_C_DEFAULT) {
-    columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
-  }
-  if (columnType > SQL_TYPE_ID.max) {
-    showCalled("SQLBindCol: Column type too big: ", columnType);
-    return SQL_ERROR;
-  }
+    if (columnType == SQL_C_DEFAULT) {
+      columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
+    }
+    if (columnType > SQL_TYPE_ID.max) {
+      logMessage("SQLBindCol: Column type too big: ", columnType);
+      return SQL_ERROR;
+    }
 
-  auto binding = ColumnBinding(numberOfBytesWritten);
-  binding.columnType = cast(SQL_TYPE_ID)columnType;
-  binding.outputBuffer = outputBuffer[0 .. max(0, bufferLength)];
-  columnBindings[columnNumber] = binding;
+    auto binding = ColumnBinding(numberOfBytesWritten);
+    binding.columnType = cast(SQL_TYPE_ID)columnType;
+    binding.outputBuffer = outputBuffer[0 .. max(0, bufferLength)];
+    columnBindings[columnNumber] = binding;
+  }
 
   return SQL_SUCCESS;
 }
@@ -201,26 +201,29 @@ SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
 
 ///// SQLFetch /////
 
-SQLRETURN SQLFetch(HSTMT StatementHandle) {
+SQLRETURN SQLFetch(OdbcStatement statementHandle) {
   logMessage("SQLFetch ");
 
-  if (latestOdbcResult.empty) {
-    return SQL_NO_DATA;
-  }
-
-  showCalled("SQLFetch -- Showing something!");
-  try {
-    auto row = latestOdbcResult.front;
-    latestOdbcResult.popFront;
-    foreach (col, binding; columnBindings) {
-      if (col > latestOdbcResult.numberOfColumns) {
-        return SQL_ERROR;
-      }
-      dispatchOnSQLType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
+  assert(statementHandle !is null);
+  with (statementHandle) {
+    if (latestOdbcResult.empty) {
+      return SQL_NO_DATA;
     }
-  } catch(Error e) {
-    showCalled("SQLFetch ERROR: ", e);
-    assert(false);
+
+    logMessage("SQLFetch -- Showing something!");
+    try {
+      auto row = latestOdbcResult.front;
+      latestOdbcResult.popFront;
+      foreach (col, binding; statementHandle.columnBindings) {
+        if (col > latestOdbcResult.numberOfColumns) {
+          return SQL_ERROR;
+        }
+        dispatchOnSQLType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
+      }
+    } catch(Error e) {
+      logMessage("SQLFetch ERROR: ", e);
+      assert(false);
+    }
   }
 
   return SQL_SUCCESS;
@@ -391,11 +394,13 @@ SQLRETURN SQLGetInfoW(
 
 ///// SQLGetTypeInfo /////
 SQLRETURN SQLGetTypeInfoW(
-    SQLHSTMT statementHandle,
-    SQLSMALLINT sataType) {
-  logMessage("SQLGetTypeInfo ", DataType);
+    OdbcStatement statementHandle,
+    SQLSMALLINT dataType) {
+  logMessage("SQLGetTypeInfo ", dataType);
 
-  latestOdbcResult = new TypeInfoResult();
+  with (statementHandle) {
+    latestOdbcResult = new TypeInfoResult();
+  }
 
   return SQL_SUCCESS;
 }
