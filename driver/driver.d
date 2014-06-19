@@ -12,6 +12,8 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
+import util : showCalled, copyToBuffer;
+
 //////  DLL entry point for global initializations/finalizations if any
 
 version(unittest) {
@@ -56,9 +58,9 @@ SQLRETURN SQLDriverConnect(
     connStrInLen = cast(SQLSMALLINT) strlen(cast(const char*)(connStrIn));
   }
 
-  // copy in conn string to out string
+  //Copy input string to output string
   if (connStrOut && connStrOutMaxLen > 0) {
-    auto connStr = makeDString(connStrIn, connStrInLen);
+    auto connStr = connStrIn[0 .. connStrInLen];
     auto numCopied = copyToBuffer(connStr, connStrOut, connStrOutMaxLen);
 
     if (connStrOutLen) {
@@ -68,23 +70,6 @@ SQLRETURN SQLDriverConnect(
   }
 
   return SQL_SUCCESS;
-}
-
-void showCalled(Ts...)(Ts vs) if (vs.length > 0) {
-  import std.conv : wtext;
-  import std.algorithm : map, joiner, equal;
-
-  wstring[] rngOfVs;
-  foreach (v; vs) {
-    rngOfVs ~= wtext(v);
-  }
-
-  auto message = joiner(rngOfVs, " ");
-  MessageBoxW(GetForegroundWindow(), (wtext(message) ~ '\0').ptr, "Presto ODBC Driver"w.ptr, MB_OK);
-}
-
-unittest {
-  showCalled("Hi", "there" , 5);
 }
 
 ///// SQLExecDirect /////
@@ -288,29 +273,6 @@ SQLRETURN SQLGetData(
 }
 
 ///// SQLGetInfo /////
-import std.traits;
-auto makeDString(C, N)(const(C)* src, N length) if (isIntegral!N && isSomeChar!C) {
-  import std.array : appender;
-  alias StringType = immutable(C)[];
-
-  auto builder = appender!StringType;
-  builder.reserve(length);
-  foreach(i; 0 .. length) {
-    assert(src[i] != '\0');
-    builder ~= src[i];
-  }
-  return builder.data();
-}
-
-SQLSMALLINT copyToBuffer(S)(S src, SQLPOINTER dest, SQLSMALLINT destSize) if (isSomeString!S) {
-  const(void)[] from = cast(void[]) src;
-  const numCopied = cast(SQLSMALLINT) min(from.length, destSize - 1);
-  from = from[0 .. numCopied];
-  void[] to = dest[0 .. numCopied];
-  to[] = from[];
-  (cast(ubyte*) dest)[numCopied] = 0;
-  return numCopied;
-}
 
 SQLRETURN SQLGetInfoW(
     SQLHDBC ConnectionHandle,

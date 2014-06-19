@@ -7,7 +7,7 @@ LIB_FLAGS = -Luser32.lib # -L-LIBPATH:"$(LIB_PATH)" -v
 CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
-MODULES = driver odbcinst sql sqlext sqltypes sqlucode
+MODULES = driver util odbcinst sql sqlext sqltypes sqlucode
 OBJS = $(addsuffix .prod.obj, $(MODULES))
 TEST_OBJS = $(addsuffix .unit.obj, $(MODULES))
 
