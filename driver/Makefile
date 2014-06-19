@@ -1,7 +1,5 @@
 
-#dmd cversion.d cversion.def sqlucode.d sqlext.d sqltypes.d odbcinst.d -m64 -shared -g -version=UNICODE -Luser32.lib
-
-CC = dmd
+DC = dmd
 
 LIB_PATH = \"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\amd64\ \"
 LIB_FLAGS = -Luser32.lib # -L-LIBPATH:"$(LIB_PATH)" -v
@@ -9,30 +7,32 @@ LIB_FLAGS = -Luser32.lib # -L-LIBPATH:"$(LIB_PATH)" -v
 CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
-OBJS = driver.prod.obj odbcinst.prod.obj sql.prod.obj sqlext.prod.obj sqltypes.prod.obj sqlucode.prod.obj
-TEST_OBJS = driver.unit.obj odbcinst.unit.obj sql.unit.obj sqlext.unit.obj sqltypes.unit.obj sqlucode.unit.obj
+MODULES = driver odbcinst sql sqlext sqltypes sqlucode
+OBJS = $(addsuffix .prod.obj, $(MODULES))
+TEST_OBJS = $(addsuffix .unit.obj, $(MODULES))
 
 PROGRAM = ODBCDRV1.dll
 TEST_PROGRAM = unittests
 
-.PHONY: default
-default: $(PROGRAM) $(TEST_PROGRAM)
+.PHONY: all
+all: $(PROGRAM) $(TEST_PROGRAM)
 
 $(PROGRAM): $(OBJS)
-	$(CC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -shared driver.def
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -shared driver.def
 
 $(TEST_PROGRAM): $(TEST_OBJS)
-	$(CC) $(LIB_FLAGS) $(FLAGS) $(TEST_OBJS) -of$(TEST_PROGRAM)
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(TEST_OBJS) -of$(TEST_PROGRAM)
 
 %.prod.obj: %.d
-	$(CC) $(CFLAGS) $(FLAGS) -shared $< -of$@
+	$(DC) $(CFLAGS) $(FLAGS) -shared $< -of$@
 
 %.unit.obj: %.d
-	$(CC) $(CFLAGS) $(FLAGS) -unittest $< -of$@
+	$(DC) $(CFLAGS) $(FLAGS) -unittest $< -of$@
 
 .PHONY: copy
 copy:
-	cp $(PROGRAM) C:\\TEMP\\$(PROGRAM); rm C:\\Users\\markisaa\\Desktop\\SQL.LOG;
+	cp $(PROGRAM) C:\\TEMP\\$(PROGRAM)
+	rm C:\\Users\\markisaa\\Desktop\\SQL.LOG
 
 .PHONY: clean
 clean:

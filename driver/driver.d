@@ -17,7 +17,6 @@ alias OutputDebugString = printf;
 
 version(unittest) {
   void main() {
-    import std.stdio : writeln;
     writeln("Tests completed.");
   }
 } else {
@@ -26,19 +25,9 @@ version(unittest) {
     if (fdwReason == DLL_PROCESS_ATTACH) {        // DLL is being loaded
       Runtime.initialize();
       MessageBoxW(GetForegroundWindow(),
-          "ODBCDRV0 loaded by application or driver manager",
-          "Congrats !!! Also hey I changed something!", MB_OK);
-
-      // any initialization global to DLL goes here
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH) {   // DLL is being unloaded
+          "ODBCDRV0 loaded by application or driver manager", "Successful Start", MB_OK);
+    } else if (fdwReason == DLL_PROCESS_DETACH) {   // DLL is being unloaded
       Runtime.terminate();
-      // any finalization global to DLL goes here
-
-      // show a message box
-/*    MessageBoxW(GetForegroundWindow(), "ODBCDRV0 is being unloaded",
-      "Congrats !!! ", MB_OK);
-*/
     }
 
     return TRUE;
@@ -59,49 +48,47 @@ SQLRETURN SQLDriverConnect(
     SQLSMALLINT connStrOutMaxLen,
     SQLSMALLINT* connStrOutLen,
     SQLUSMALLINT driverCompletion) {
-  OutputDebugString("SQLDriverConnect called\n"); // for DBMON
 
-  if (connStrInLen == SQL_NTS && connStrIn) // get in-string strlen
-    connStrInLen = cast(SQLSMALLINT)strlen(cast(const char*)(connStrOut));
+  if (connStrIn == null) {
+    return SQL_SUCCESS;
+  }
 
-  /*MessageBox(h Wnd, "Connection dialog would go here",
-    "Sample driver",
-    MB_OK);*/
+  if (connStrInLen == SQL_NTS) {
+    connStrInLen = cast(SQLSMALLINT) strlen(cast(const char*)(connStrIn));
+  }
 
   // copy in conn string to out string
   if (connStrOut && connStrOutMaxLen > 0) {
-    auto numToCopy = (connStrInLen == SQL_NTS) ? connStrOutMaxLen - 1 : min(connStrOutMaxLen, connStrInLen);
-    //TODO:
     auto connStr = makeDString(connStrIn, connStrInLen);
-    copyToBuffer(connStr, connStrOut, connStrOutMaxLen);
-    //strncpy_s(cast(char*)(connStrOut), connStrOutMaxLen,
-    //    cast(const char*)(connStrIn), numToCopy);
-  }
+    auto numCopied = copyToBuffer(connStr, connStrOut, connStrOutMaxLen);
 
-  if (connStrOutLen)      // set length of out string also
-    *connStrOutLen = connStrInLen;
+    if (connStrOutLen) {
+      *connStrOutLen = numCopied;
+    }
+
+  }
 
   return SQL_SUCCESS;
 }
 
-///// SQLExecDirect /////
-
 void showCalled(Ts...)(Ts vs) if (vs.length > 0) {
   import std.conv : wtext;
-  import std.algorithm : joiner, equal;
+  import std.algorithm : map, joiner, equal;
 
   wstring[] rngOfVs;
   foreach (v; vs) {
     rngOfVs ~= wtext(v);
   }
-  auto message = joiner(rngOfVs, " ");
 
-  MessageBoxW(GetForegroundWindow(), wtext(message).ptr, wtext(vs[0]).ptr, MB_OK);
+  auto message = joiner(rngOfVs, " ");
+  MessageBoxW(GetForegroundWindow(), (wtext(message) ~ '\0').ptr, "Presto ODBC Driver"w.ptr, MB_OK);
 }
 
 unittest {
   showCalled("Hi", "there" , 5);
 }
+
+///// SQLExecDirect /////
 
 SQLRETURN SQLExecDirectW(
     SQLHSTMT hstmt,
@@ -138,7 +125,7 @@ SQLRETURN SQLAllocHandle(
     type = "SQL_HANDLE_STMT";
     break;
   default:
-    assert(false);
+    return SQL_ERROR;
   }
   showCalled("SQLAllocHandle ", HandleType, NewHandlePointer, type);
 
@@ -155,8 +142,6 @@ SQLRETURN SQLBindCol(
     SQLPOINTER TargetValue,
     SQLLEN BufferLength,
     SQLLEN* StrLen_or_Ind) {
-  (cast(char*)(TargetValue))[0] = 'H';
-  *StrLen_or_Ind = 1; //Would actually be stored and set elsewhere later...
   showCalled("SQLBindCol ", ColumnNumber, TargetType, TargetValue, BufferLength);
   OutputDebugString("SQLBindCol called\n");
   return SQL_SUCCESS;
@@ -221,11 +206,9 @@ SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
 ///// SQLFetch /////
 
 SQLRETURN SQLFetch(HSTMT StatementHandle) {
-  static auto count = 0;
   showCalled("SQLFetch ");
   OutputDebugString("SQLFetch called\n");
-  ++count;
-  return count == 1 ? SQL_SUCCESS : SQL_NO_DATA;
+  return SQL_NO_DATA;
 }
 
 ///// SQLFreeStmt /////
@@ -325,18 +308,15 @@ SQLRETURN SQLGetData(
 
 ///// SQLGetInfo /////
 import std.traits;
-auto makeDString(C, N)(const(C)* src, N length) if (isIntegral!N) {
+auto makeDString(C, N)(const(C)* src, N length) if (isIntegral!N && isSomeChar!C) {
   import std.array : appender;
   alias StringType = immutable(C)[];
-  static assert(isSomeString!StringType);
 
   auto builder = appender!StringType;
   builder.reserve(length);
-  auto curSrc = src;
   foreach(i; 0 .. length) {
-    assert(*curSrc != '\0');
-    builder ~= *curSrc;
-    ++curSrc;
+    assert(src[i] != '\0');
+    builder ~= src[i];
   }
   return builder.data();
 }
@@ -860,19 +840,7 @@ SQLRETURN SQLGetDiagRecW(
     SQLINTEGER* pfNativeError,
     SQLWCHAR* szErrorMsg,
     SQLSMALLINT cchErrorMsgMax,
-    SQLSMALLINT* pcchErrorMsg) {/*
-                              //char buf2 [] = "\0"; "HY000";
-                              //memcpy(s zSqlState, b uf2, sizeof(buf2));
-                              char buf [] = "[vendor][ODBCDRV0][Presto] ODBC driver unimplemented error";
-                              auto cpyAmt = min(sizeof(buf), cchErrorMsgMax);
-                              if (szErrorMsg != null) {
-                              szErrorMsg[0] = 0;
-                              //strncpy_s(cast(char*)(szErrorMsg), c chErrorMsgMax, b uf, sizeof(buf));
-                              }
-                              *pcchErrorMsg = 0;// cpyAmt;
-                              if (pfNativeError != null) {
-                              *pfNativeError = 0;
-                              }*/
+    SQLSMALLINT* pcchErrorMsg) {
   showCalled("SQLGetDiagRec ", iRecord, pfNativeError, (szErrorMsg == null), cchErrorMsgMax);
   OutputDebugString("SQLGetDiagRec called\n");
   return SQL_NO_DATA;
