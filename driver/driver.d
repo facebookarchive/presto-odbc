@@ -303,16 +303,12 @@ auto makeDString(C, N)(const(C)* src, N length) if (isIntegral!N && isSomeChar!C
 }
 
 SQLSMALLINT copyToBuffer(S)(S src, SQLPOINTER dest, SQLSMALLINT destSize) if (isSomeString!S) {
-  alias CharType = Unqual!(typeof(src[0]));
-
-  //strncpy_s(cast(char*)(dest), destSize, src.data(), _TRUNCATE);
-  auto numCopied = cast(SQLSMALLINT)min(src.length, destSize - 1);
-  auto curDest = cast(CharType*)dest;
-  foreach(i; 0 .. numCopied) {
-    *curDest = src[i];
-    ++curDest;
-  }
-  (cast(char*)dest)[numCopied] = '\0';
+  const(void)[] from = cast(void[]) src;
+  const numCopied = cast(SQLSMALLINT) min(from.length, destSize - 1);
+  from = from[0 .. numCopied];
+  void[] to = dest[0 .. numCopied];
+  to[] = from[];
+  (cast(ubyte*) dest)[numCopied] = 0;
   return numCopied;
 }
 
@@ -327,7 +323,6 @@ SQLRETURN SQLGetInfoW(
 
   case SQL_DRIVER_ODBC_VER: { // 77
     *StringLengthPtr = copyToBuffer("03.80", InfoValue, BufferLength);
-    //_SQLCopyCharData(_DIAGCONN(pConn), p InfoValuePtr, p BufferLength, p StringLengthPtr, 1 6, "03.00", -1);
     break;
   } case SQL_ASYNC_DBC_FUNCTIONS: //10023
     *cast(SQLUSMALLINT*)(InfoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
@@ -376,7 +371,7 @@ SQLRETURN SQLGetInfoW(
     break;
   } case SQL_DATABASE_NAME: { //16
     *StringLengthPtr = copyToBuffer("dbname", InfoValue, BufferLength);
-    showCalled("dbname!!!!!!!!!!!!!!!!!!!!! ", InfoType, InfoValue, BufferLength, *StringLengthPtr);
+    showCalled("dbname", InfoType, InfoValue, BufferLength, *StringLengthPtr);
     break;
   } case SQL_MAX_SCHEMA_NAME_LEN: { //32
     *cast(SQLUSMALLINT*)(InfoValue) = 0;
