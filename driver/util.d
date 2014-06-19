@@ -6,22 +6,37 @@ import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import sqlext;
 import odbcinst;
 
-unittest {
-  //showCalled("Hi", "there" , 5);
+void logMessage(TList...)(auto ref TList vs) {
+  import std.file : append;
+  auto message = buildDebugMessage(vs) ~ '\n';
+  append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log", message);
 }
 
-void showCalled(Ts...)(Ts vs) if (vs.length > 0) {
-  import std.conv : wtext;
-  import std.algorithm : joiner, equal;
+void showPopupMessage(TList...)(auto ref TList vs) {
   import std.c.windows.windows;
+  auto message = buildDebugMessage(vs) ~ '\0';
+  MessageBoxW(GetForegroundWindow(), message.ptr, "Presto ODBC Driver", MB_OK);
+}
+
+unittest {
+  assert(buildDebugMessage("Hi", "there", 5) == "Hi there 5"w);
+  assert(buildDebugMessage(2, "there", 5) == "2 there 5"w);
+  assert(buildDebugMessage(2, 3, 4) == "2 3 4"w);
+  assert(buildDebugMessage("Hi", null, 5) == "Hi null 5"w);
+  long addr = 12345;
+  auto ptr = cast(void*)(addr);
+  assert(buildDebugMessage("Hi", ptr, 5) == "Hi 3039 5"w);
+}
+
+wstring buildDebugMessage(TList...)(auto ref TList vs) {
+  import std.conv : wtext;
+  import std.algorithm : joiner;
 
   wstring[] rngOfVs;
   foreach (v; vs) {
     rngOfVs ~= wtext(v);
   }
-  auto message = joiner(rngOfVs, " ");
-
-  MessageBoxW(GetForegroundWindow(), wtext(message).ptr, wtext(vs[0]).ptr, MB_OK);
+  return wtext(joiner(rngOfVs, " "));
 }
 
 ///wstring source, dest < src
