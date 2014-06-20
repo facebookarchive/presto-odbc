@@ -10,22 +10,22 @@ import odbcinst;
 
 import util : showCalled, copyToBuffer;
 
-
+/**
+  An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
+*/
 final class OdbcStatement {
   this() {
     latestOdbcResult = new EmptyOdbcResult();
   }
 
-  ColumnBinding[int] columnBindings;
+  ColumnBinding[uint] columnBindings;
   OdbcResult latestOdbcResult;
 }
 
 unittest {
-  import std.c.stdlib : malloc;
-
   enum testSqlTypeId = SQL_TYPE_ID.SQL_SMALLINT;
   alias testSqlType = SQL_TYPES[testSqlTypeId];
-  auto binding = ColumnBinding(cast(SQLLEN*) malloc(SQLLEN.sizeof));
+  auto binding = ColumnBinding(new SQLLEN);
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = testSqlType.sizeof;
   binding.numberOfBytesWritten = -1;
@@ -36,11 +36,9 @@ unittest {
 }
 
 unittest {
-  import std.c.stdlib : malloc;
-
   enum testSqlTypeId = SQL_TYPE_ID.SQL_VARCHAR;
   alias testSqlType = SQL_TYPES[testSqlTypeId];
-  auto binding = ColumnBinding(cast(SQLLEN*) malloc(SQLLEN.sizeof));
+  auto binding = ColumnBinding(new SQLLEN);
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = 10; //10 character limit including null terminator
   binding.numberOfBytesWritten = -1;
@@ -79,7 +77,6 @@ void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
 
 unittest {
   dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
-  int x = 0;
 }
 
 version(unittest) {
@@ -132,6 +129,9 @@ template firstNonVoidType(TList...) {
   }
 }
 
+/**
+ * Stores information about how to return results to the user for a particular column.
+ */
 struct ColumnBinding {
   this(SQLLEN* indicator) {
     this.indicator = indicator;
@@ -154,6 +154,9 @@ struct ColumnBinding {
   SQLLEN* indicator;
 }
 
+/**
+ * A range that allows retrieving one row at a time from the result set of a query.
+ */
 interface OdbcResult {
   @property {
     bool empty();
