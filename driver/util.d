@@ -39,6 +39,28 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
   return wtext(joiner(rngOfVs, " "));
 }
 
+void dllEnforce(bool condition, lazy string message = "dllEnforce failed", string file = __FILE__, int line = __LINE__) {
+  import core.exception : Exception;
+
+  if (!condition) {
+    auto ex = new Exception(message, file, line);
+    logMessage(ex);
+    assert(false);
+  }
+}
+
+SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
+  try {
+    return fun(args);
+  } catch(Exception e) {
+    logMessage(e);
+    return SQL_ERROR;
+  } catch(Error e) {
+    logMessage(e);
+    assert(false);
+  }
+}
+
 ///wstring source, dest < src
 unittest {
   auto src = "happySrcString"w;

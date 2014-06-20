@@ -13,7 +13,7 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToBuffer, makeWithoutGC;
+import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary;
 import bindings;
 
 //////  DLL entry point for global initializations/finalizations if any
@@ -50,29 +50,30 @@ SQLRETURN SQLDriverConnectW(
     SQLSMALLINT connStrOutMaxLen,
     SQLSMALLINT* connStrOutLen,
     SQLUSMALLINT driverCompletion) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLDriverConnect ", connStrIn, connStrInLen, connStrOut, connStrOutMaxLen, connStrOutLen, driverCompletion);
 
-  logMessage("SQLDriverConnect ", connStrIn, connStrInLen, connStrOut, connStrOutMaxLen, connStrOutLen, driverCompletion);
-
-  if (connStrIn == null) {
-    return SQL_SUCCESS;
-  }
-
-  if (connStrInLen == SQL_NTS) {
-    connStrInLen = cast(SQLSMALLINT) strlen(cast(const char*)(connStrIn));
-  }
-
-  //Copy input string to output string
-  if (connStrOut && connStrOutMaxLen > 0) {
-    auto connStr = connStrIn[0 .. connStrInLen];
-    auto numCopied = copyToBuffer(connStr, connStrOut, connStrOutMaxLen);
-
-    if (connStrOutLen) {
-      *connStrOutLen = numCopied;
+    if (connStrIn == null) {
+      return SQL_SUCCESS;
     }
 
-  }
+    if (connStrInLen == SQL_NTS) {
+      connStrInLen = cast(SQLSMALLINT) strlen(cast(const char*)(connStrIn));
+    }
 
-  return SQL_SUCCESS;
+    //Copy input string to output string
+    if (connStrOut && connStrOutMaxLen > 0) {
+      auto connStr = connStrIn[0 .. connStrInLen];
+      auto numCopied = copyToBuffer(connStr, connStrOut, connStrOutMaxLen);
+
+      if (connStrOutLen) {
+        *connStrOutLen = numCopied;
+      }
+
+    }
+
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLExecDirect /////
@@ -91,7 +92,7 @@ SQLRETURN SQLAllocHandle(
     SQLSMALLINT	handleType,
     SQLHANDLE handleParent,
     SQLHANDLE* newHandlePointer) {
-  assert(newHandlePointer != null);
+  dllEnforce(newHandlePointer != null);
 
   switch (cast(SQL_HANDLE_TYPE) handleType) {
   case SQL_HANDLE_TYPE.DBC:
@@ -123,30 +124,31 @@ SQLRETURN SQLBindCol(
     SQLPOINTER outputBuffer,
     SQLLEN bufferLength,
     SQLLEN* numberOfBytesWritten) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLBindCol ", columnNumber, columnType, outputBuffer, bufferLength);
+    dllEnforce(statementHandle !is null);
+    with (statementHandle) {
+      if (outputBuffer == null) {
+        columnBindings.remove(columnNumber);
+        return SQL_SUCCESS;
+      }
 
-  logMessage("SQLBindCol ", columnNumber, columnType, outputBuffer, bufferLength);
-  assert(statementHandle !is null);
-  with (statementHandle) {
-    if (outputBuffer == null) {
-      columnBindings.remove(columnNumber);
-      return SQL_SUCCESS;
+      if (columnType == SQL_C_DEFAULT) {
+        columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
+      }
+      if (columnType > SQL_TYPE_ID.max) {
+        logMessage("SQLBindCol: Column type too big: ", columnType);
+          return SQL_ERROR;
+      }
+
+      auto binding = ColumnBinding(numberOfBytesWritten);
+      binding.columnType = cast(SQL_TYPE_ID)columnType;
+      binding.outputBuffer = outputBuffer[0 .. max(0, bufferLength)];
+      columnBindings[columnNumber] = binding;
     }
 
-    if (columnType == SQL_C_DEFAULT) {
-      columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
-    }
-    if (columnType > SQL_TYPE_ID.max) {
-      logMessage("SQLBindCol: Column type too big: ", columnType);
-      return SQL_ERROR;
-    }
-
-    auto binding = ColumnBinding(numberOfBytesWritten);
-    binding.columnType = cast(SQL_TYPE_ID)columnType;
-    binding.outputBuffer = outputBuffer[0 .. max(0, bufferLength)];
-    columnBindings[columnNumber] = binding;
-  }
-
-  return SQL_SUCCESS;
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLCancel /////
@@ -203,16 +205,16 @@ SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
 ///// SQLFetch /////
 
 SQLRETURN SQLFetch(OdbcStatement statementHandle) {
-  logMessage("SQLFetch ");
+  return exceptionBoundary!(() => {
+    logMessage("SQLFetch ");
 
-  assert(statementHandle !is null);
-  with (statementHandle) {
-    if (latestOdbcResult.empty) {
-      return SQL_NO_DATA;
-    }
+    dllEnforce(statementHandle !is null);
+    with (statementHandle) {
+      if (latestOdbcResult.empty) {
+        return SQL_NO_DATA;
+      }
 
-    logMessage("SQLFetch -- Showing something!");
-    try {
+      logMessage("SQLFetch -- Showing something!");
       auto row = latestOdbcResult.front;
       latestOdbcResult.popFront;
       foreach (col, binding; statementHandle.columnBindings) {
@@ -221,13 +223,9 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
         }
         dispatchOnSQLType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
       }
-    } catch(Error e) {
-      logMessage("SQLFetch ERROR: ", e);
-      assert(false);
     }
-  }
-
-  return SQL_SUCCESS;
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLFreeStmt /////
@@ -398,19 +396,21 @@ SQLRETURN SQLGetInfoW(
 SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQLSMALLINT dataType) {
-  logMessage("SQLGetTypeInfo ", dataType);
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetTypeInfo ", dataType);
 
-  with (statementHandle) {
-    switch(cast(SQL_TYPE_ID) dataType) {
-    case SQL_TYPE_ID.SQL_UNKNOWN_TYPE:
-    case SQL_TYPE_ID.SQL_VARCHAR:
-      latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
-    default:
-      logMessage("Unexpected type in GetTypeInfo");
+    with (statementHandle) {
+      switch(cast(SQL_TYPE_ID) dataType) {
+      case SQL_TYPE_ID.SQL_UNKNOWN_TYPE:
+      case SQL_TYPE_ID.SQL_VARCHAR:
+        latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
+      default:
+        logMessage("Unexpected type in GetTypeInfo");
+      }
     }
-  }
 
-  return SQL_SUCCESS;
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLParamData /////
