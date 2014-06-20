@@ -4,6 +4,7 @@ import core.runtime;
 import std.array : front, popFront, empty;
 import std.algorithm;
 import std.stdio : writeln;
+import std.conv : to;
 
 import std.c.stdio;
 import std.c.stdlib;
@@ -13,7 +14,7 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary;
+import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary, strlen;
 import bindings;
 
 //////  DLL entry point for global initializations/finalizations if any
@@ -58,7 +59,7 @@ SQLRETURN SQLDriverConnectW(
     }
 
     if (connStrInLen == SQL_NTS) {
-      connStrInLen = cast(SQLSMALLINT) strlen(cast(const char*)(connStrIn));
+      connStrInLen = to!SQLSMALLINT(strlen(connStrIn));
     }
 
     //Copy input string to output string
@@ -338,8 +339,8 @@ SQLRETURN SQLGetInfoW(
       *cast(SQLUSMALLINT*)(infoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
       break;
     case SQL_ASYNC_NOTIFICATION: //10025
-    *cast(SQLUSMALLINT*)(infoValue) = SQL_ASYNC_NOTIFICATION_NOT_CAPABLE;
-    break;
+      *cast(SQLUSMALLINT*)(infoValue) = SQL_ASYNC_NOTIFICATION_NOT_CAPABLE;
+      break;
     case SQL_CURSOR_COMMIT_BEHAVIOR: //23
       *cast(SQLUSMALLINT*)(infoValue) = SQL_CB_DELETE;
       break;

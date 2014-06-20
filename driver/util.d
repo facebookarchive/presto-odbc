@@ -35,7 +35,15 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
 
   wstring[] rngOfVs;
   foreach (v; vs) {
-    rngOfVs ~= wtext(v);
+    static if (is(typeof(v) == wchar*)) {
+      if (v == null) {
+        rngOfVs ~= "null_wstring";
+        continue;
+      }
+      rngOfVs ~= v[0 .. strlen(v)].idup;
+    } else {
+      rngOfVs ~= wtext(v);
+    }
   }
   return wtext(joiner(rngOfVs, " "));
 }
@@ -171,4 +179,22 @@ ulong getInstanceSize(T)() if(is(T == class)) {
 
 ulong getInstanceSize(T)() if(!is(T == class)) {
   return T.sizeof;
+}
+
+unittest {
+  auto test1 = "Hello, world!";
+  assert(strlen(test1.ptr) == test1.length);
+  auto test2 = "Hello, world!"w;
+  assert(strlen(test2.ptr) == test2.length);
+  auto test3 = "Hello, world!"d;
+  assert(strlen(test3.ptr) == test3.length);
+}
+
+ulong strlen(C)(const(C)* str) {
+  C terminator = 0;
+  ulong length;
+  for (length = 0; str[length] != terminator; ++length) {
+    //Intentionally blank
+  }
+  return length;
 }
