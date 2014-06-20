@@ -2,7 +2,7 @@
 import std.algorithm : min;
 import std.stdio : writeln;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
-import std.c.stdlib : abort;
+import core.stdc.stdlib : abort;
 
 import sqlext;
 import odbcinst;
@@ -59,6 +59,7 @@ SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
   } catch(Error e) {
     logMessage(e);
     abort();
+    assert(false, "Silence compiler errors about not returning");
   }
 }
 
