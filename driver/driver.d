@@ -51,7 +51,7 @@ SQLRETURN SQLDriverConnectW(
     SQLSMALLINT* connStrOutLen,
     SQLUSMALLINT driverCompletion) {
 
-  showCalled("SQLDriverConnect ", connStrIn, connStrInLen, connStrOut, connStrOutMaxLen, connStrOutLen, driverCompletion);
+  logMessage("SQLDriverConnect ", connStrIn, connStrInLen, connStrOut, connStrOutMaxLen, connStrOutLen, driverCompletion);
 
   if (connStrIn == null) {
     return SQL_SUCCESS;
@@ -404,7 +404,7 @@ SQLRETURN SQLGetTypeInfoW(
     case SQL_TYPE_ID.SQL_VARCHAR:
       latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
     default:
-      showCalled("Unexpected type in GetTypeInfo");
+      logMessage("Unexpected type in GetTypeInfo");
     }
   }
 

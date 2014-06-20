@@ -32,7 +32,8 @@ $(TEST_PROGRAM): $(TEST_OBJS)
 .PHONY: copy
 copy:
 	cp $(PROGRAM) C:\\TEMP\\$(PROGRAM)
-	rm C:\\Users\\markisaa\\Desktop\\SQL.LOG
+	rm /cygdrive/c/Users/markisaa/Desktop/SQL.LOG
+	rm /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log
 
 .PHONY: clean
 clean:

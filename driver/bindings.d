@@ -8,7 +8,7 @@ import std.typetuple : TypeTuple;
 import sqlext;
 import odbcinst;
 
-import util : showCalled, copyToBuffer;
+import util : copyToBuffer;
 
 /**
   An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
