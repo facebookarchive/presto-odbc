@@ -139,6 +139,8 @@ struct ColumnBinding {
 
   SQL_TYPE_ID columnType;
   void[] outputBuffer;
+  SQLLEN* indicator;
+
   @property {
     SQLLEN numberOfBytesWritten() {
       assert(indicator != null);
@@ -150,8 +152,6 @@ struct ColumnBinding {
       }
     }
   }
-
-  SQLLEN* indicator;
 }
 
 /**
@@ -163,7 +163,7 @@ interface OdbcResult {
     OdbcResultRow front();
     void popFront();
 
-    int numberOfColumns();
+    uint numberOfColumns();
   }
 }
 
@@ -173,30 +173,32 @@ final class EmptyOdbcResult : OdbcResult {
     OdbcResultRow front() { return null; }
     void popFront() {}
 
-    int numberOfColumns() { return 0; }
+    uint numberOfColumns() { return 0; }
   }
 }
 
-final class TypeInfoResult : OdbcResult {
+final class TypeInfoResult(RowT) : OdbcResult {
   @property {
     bool empty() {
       return poppedContents;
     }
 
-    TypeInfoResultRow front() {
-      return new TypeInfoResultRow();
+    RowT front() {
+      assert(!empty);
+      return result;
     }
 
     void popFront() {
       poppedContents = true;
     }
 
-    int numberOfColumns() {
-      return 19;
+    uint numberOfColumns() {
+      return TypeInfoResultColumns.max;
     }
   }
 
 private:
+  RowT result = new RowT();
   bool poppedContents = false;
 }
 
@@ -204,7 +206,7 @@ interface OdbcResultRow {
   Variant dataAt(int column);
 }
 
-final class TypeInfoResultRow : OdbcResultRow {
+final class VarcharTypeInfoResultRow : OdbcResultRow {
   Variant dataAt(int column) {
     switch(column) {
     case TypeInfoResultColumns.TYPE_NAME:

@@ -399,7 +399,13 @@ SQLRETURN SQLGetTypeInfoW(
   logMessage("SQLGetTypeInfo ", dataType);
 
   with (statementHandle) {
-    latestOdbcResult = new TypeInfoResult();
+    switch(cast(SQL_TYPE_ID) dataType) {
+    case SQL_TYPE_ID.SQL_UNKNOWN_TYPE:
+    case SQL_TYPE_ID.SQL_VARCHAR:
+      latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
+    default:
+      showCalled("Unexpected type in GetTypeInfo");
+    }
   }
 
   return SQL_SUCCESS;
