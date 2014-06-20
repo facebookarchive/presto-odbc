@@ -2,6 +2,7 @@
 import std.algorithm : min;
 import std.stdio : writeln;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
+import std.c.stdlib : abort;
 
 import sqlext;
 import odbcinst;
@@ -45,7 +46,7 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
   if (!condition) {
     auto ex = new Exception(message, file, line);
     logMessage(ex);
-    assert(false);
+    abort();
   }
 }
 
@@ -57,7 +58,7 @@ SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
     return SQL_ERROR;
   } catch(Error e) {
     logMessage(e);
-    assert(false);
+    abort();
   }
 }
 
