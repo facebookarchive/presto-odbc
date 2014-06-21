@@ -21,6 +21,7 @@ void showPopupMessage(TList...)(auto ref TList vs) {
 
 unittest {
   assert(buildDebugMessage("Hi", "there", 5) == "Hi there 5"w);
+  assert(buildDebugMessage("Hi".ptr, "there"w.ptr, 5) == "Hi there 5"w);
   assert(buildDebugMessage(2, "there", 5) == "2 there 5"w);
   assert(buildDebugMessage(2, 3, 4) == "2 3 4"w);
   assert(buildDebugMessage("Hi", null, 5) == "Hi null 5"w);
@@ -35,12 +36,12 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
 
   wstring[] rngOfVs;
   foreach (v; vs) {
-    static if (is(typeof(v) == wchar*)) {
+    static if (isSomeCString!(typeof(v))) {
       if (v == null) {
-        rngOfVs ~= "null_wstring";
+        rngOfVs ~= "null_string";
         continue;
       }
-      rngOfVs ~= v[0 .. strlen(v)].idup;
+      rngOfVs ~= wtext(v[0 .. strlen(v)].idup);
     } else {
       rngOfVs ~= wtext(v);
     }
@@ -190,11 +191,19 @@ unittest {
   assert(strlen(test3.ptr) == test3.length);
 }
 
-ulong strlen(C)(const(C)* str) {
-  C terminator = 0;
-  ulong length;
-  for (length = 0; str[length] != terminator; ++length) {
+size_t strlen(C)(const(C)* str) {
+  ulong length = 0;
+  for (; str[length] != 0; ++length) {
     //Intentionally blank
   }
   return length;
+}
+
+bool isSomeCString(T)() {
+  import std.traits : isPointer, PointerTarget;
+  static if (isPointer!T && !is(T == void*) && isSomeChar!(PointerTarget!T)) {
+    return true;
+  } else {
+    return false;
+  }
 }
