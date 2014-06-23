@@ -1,14 +1,14 @@
 
 import std.stdio : writeln;
 import std.array : empty, front, popFront;
-import std.conv : to, text;
+import std.conv : to, text, wtext;
 import std.variant : Variant;
 import std.typetuple : TypeTuple;
 
 import sqlext;
 import odbcinst;
 
-import util : copyToBuffer;
+import util : copyToBuffer, dllEnforce;
 
 /**
   An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
@@ -269,4 +269,60 @@ enum TypeInfoResultColumns {
   SQL_DATETIME_SUB,
   NUM_PREC_RADIX,
   INTERVAL_PRECISION,
+}
+
+final class TableInfoResult : OdbcResult {
+  @property {
+    bool empty() {
+      return poppedContents;
+    }
+
+    TableInfoResultRow front() {
+      assert(!empty);
+      return result;
+    }
+
+    void popFront() {
+      poppedContents = true;
+    }
+
+    uint numberOfColumns() {
+      return TableInfoResultColumns.max;
+    }
+  }
+
+private:
+  TableInfoResultRow result = new TableInfoResultRow();
+  //Only returning 1 made-up table for now.
+  bool poppedContents = false;
+}
+
+final class TableInfoResultRow : OdbcResultRow {
+  Variant dataAt(int column) {
+    with (TableInfoResultColumns) {
+      switch (column) {
+      case TABLE_CAT:
+        return Variant("tpch");
+      case TABLE_SCHEM:
+        return Variant("tiny");
+      case TABLE_NAME:
+        return Variant("orders");
+      case TABLE_TYPE:
+        return Variant("TABLE");
+      case REMARKS:
+        return Variant("A faux table for testing");
+      default:
+        dllEnforce(false, "Non-existant column " ~ text(cast(TableInfoResultColumns) column));
+        assert(false, "Silence compiler errors about not returning");
+      }
+    }
+  }
+}
+
+enum TableInfoResultColumns {
+  TABLE_CAT = 1,
+  TABLE_SCHEM,
+  TABLE_NAME,
+  TABLE_TYPE,
+  REMARKS
 }

@@ -33,7 +33,12 @@ $(TEST_PROGRAM): $(TEST_OBJS)
 copy:
 	cp $(PROGRAM) C:\\TEMP\\$(PROGRAM)
 	rm /cygdrive/c/Users/markisaa/Desktop/SQL.LOG
-	rm /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log
+	mv /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log /cygdrive/c/Users/markisaa/Desktop/presto_odbc.last.log
+
+.PHONY: logdiff
+logdiff:
+	sdiff --text /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log /cygdrive/c/Users/markisaa/Desktop/presto_odbc.last.log
+
 
 .PHONY: clean
 clean:

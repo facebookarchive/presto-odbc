@@ -199,6 +199,14 @@ size_t strlen(C)(const(C)* str) {
   return length;
 }
 
+unittest {
+  static assert(isSomeCString!(char*));
+  static assert(isSomeCString!(wchar*));
+  static assert(isSomeCString!(const (wchar)*));
+  static assert(!isSomeCString!(char[]));
+  static assert(!isSomeCString!(string));
+}
+
 bool isSomeCString(T)() {
   import std.traits : isPointer, PointerTarget;
   static if (isPointer!T && !is(T == void*) && isSomeChar!(PointerTarget!T)) {
@@ -206,4 +214,20 @@ bool isSomeCString(T)() {
   } else {
     return false;
   }
+}
+
+unittest {
+  auto str = "Hello world";
+  auto wstr = "Hello world"w;
+  assert(toDString(str.ptr) == str);
+  assert(toDString(str.ptr, str.length) == str);
+  assert(toDString(wstr.ptr) == wstr);
+  assert(toDString(wstr.ptr, wstr.length) == wstr);
+}
+
+auto toDString(C)(const(C)* cString, size_t length = SQL_NTS) if (isSomeChar!C) {
+  if (length == SQL_NTS) {
+    length = strlen(cString);
+  }
+  return cString[0 .. length];
 }

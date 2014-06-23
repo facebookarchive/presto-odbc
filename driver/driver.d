@@ -390,6 +390,8 @@ SQLRETURN SQLGetInfoW(
       *stringLengthPtr = copyToBuffer("\"", infoValue, bufferLength);
       break;
     default:
+      logMessage("SQLGetinfo: Unhandled case: ", cast(OdbcInfo) infoType);
+      break;
     } //switch
   }
   logMessage("SQLGetinfo ", cast(OdbcInfo) infoType, infoValue, bufferLength);
@@ -474,18 +476,22 @@ SQLRETURN SQLStatisticsW(
 ///// SQLTables /////
 
 SQLRETURN SQLTablesW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName,
-    SQLWCHAR* szTableType,
-    SQLSMALLINT cchTableType) {
-
-  logMessage("SQLTablesW ");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLWCHAR* catalogName,
+    SQLSMALLINT catalogNameLength,
+    SQLWCHAR* schemaName,
+    SQLSMALLINT schemaNameLength,
+    SQLWCHAR* tableName,
+    SQLSMALLINT tableNameLength,
+    SQLWCHAR* tableType,
+    SQLSMALLINT tableTypeLength) {
+  return exceptionBoundary!(() => {
+    with (statementHandle) {
+      logMessage("SQLTablesW ", catalogName, schemaName, tableName, tableType);
+      latestOdbcResult = new TableInfoResult();
+      return SQL_SUCCESS;
+    }
+  }());
 }
 
 ///// SQLBrowseConnect /////
