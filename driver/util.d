@@ -103,16 +103,7 @@ unittest {
   auto result = (cast(wchar[]) dest)[0 .. numCopied];
   assert(result == src);
 }
-/*
-SQLSMALLINT copyToBuffer(const(char)[] src, char* dest, size_t destSizeBytes) {
-  logMessage("Narrow: ", src, destSizeBytes);
-  import std.c.string : memcpy;
-  const numberOfBytesCopied = cast(SQLSMALLINT) min(src.length * char.sizeof, destSizeBytes - char.sizeof);
-  memcpy(dest, src.ptr, numberOfBytesCopied);
-  *(cast(char*) (dest + numberOfBytesCopied)) = 0;
-  return numberOfBytesCopied;
-}
-*/
+
 SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
   logMessage("Wide:", src, dest.length);
   import std.c.string : memcpy;
@@ -122,7 +113,20 @@ SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
   }
   memcpy(dest.buffer.ptr, src.ptr, numberOfCharsCopied * wchar.sizeof);
   dest[numberOfCharsCopied] = 0;
-  dest.length = numberOfCharsCopied + 1;
+  //dest.length = numberOfCharsCopied + 1;
+  return to!SQLSMALLINT(numberOfCharsCopied);
+}
+
+SQLSMALLINT copyToBuffer(const(char)[] src, char[] dest) {
+  logMessage("Narrow:", src, dest.length);
+  import std.c.string : memcpy;
+  const numberOfCharsCopied = min(src.length, dest.length - 1);
+  if (numberOfCharsCopied < src.length) {
+    logMessage("Truncated in copyToBuffer: ", src, dest.length);
+  }
+  memcpy(dest.ptr, src.ptr, numberOfCharsCopied);
+  dest[numberOfCharsCopied] = 0;
+  //dest.length = numberOfCharsCopied + 1;
   return to!SQLSMALLINT(numberOfCharsCopied);
 }
 
@@ -267,17 +271,16 @@ template UnqualString(T) {
 }
 
 struct OutputWChar {
-  this(SQLPOINTER buffer, size_t lengthBytes) {
+  this(wchar* buffer, size_t lengthBytes) {
     assert(buffer != null); //Revisit?
     assert(lengthBytes % 2 == 0);
     assert(lengthBytes >= 2);
 
-    void[] together = buffer[0 .. lengthBytes];
-    this.buffer = cast(wchar[]) together;
+    this.buffer = buffer[0 .. lengthBytes / 2];
   }
 
-  this(wchar* buffer, size_t lengthBytes) {
-    this(cast(SQLPOINTER) buffer, lengthBytes);
+  this(SQLPOINTER buffer, size_t lengthBytes) {
+    this(cast(wchar*) buffer, lengthBytes);
   }
 
   this(void[] buffer) {

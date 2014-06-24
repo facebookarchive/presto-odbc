@@ -57,6 +57,9 @@ SQLRETURN SQLDriverConnectW(
   return exceptionBoundary!(() => {
     auto connStr = toDString(_connStrIn, _connStrInChars);
     auto connStrOut = OutputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof);
+    if (connStrOutChars) {
+      *connStrOutChars = 0;
+    }
     logMessage("SQLDriverConnect ", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars, driverCompletion);
 
     if (connStr == null) {
@@ -109,6 +112,7 @@ SQLRETURN SQLAllocHandle(
       *newHandlePointer = cast(void*) makeWithoutGC!OdbcStatement();
       break;
     default:
+      *newHandlePointer = null;
       return SQL_ERROR;
     }
   }
@@ -135,6 +139,12 @@ SQLRETURN SQLBindCol(
         columnBindings.remove(columnNumber);
         return SQL_SUCCESS;
       }
+      if (bufferLengthBytes < 0) {
+        return SQL_ERROR;
+      }
+      if (numberOfBytesWritten) {
+        *numberOfBytesWritten = 0;
+      }
 
       if (columnType == SQL_C_DEFAULT) {
         columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
@@ -146,13 +156,13 @@ SQLRETURN SQLBindCol(
 
       with (SQL_TYPE_ID) {
         if (columnType == SQL_CHAR || columnType == SQL_UNKNOWN_TYPE || columnType == SQL_VARCHAR) {
-          assert(bufferLengthBytes % 2 == 0);
+//          assert(bufferLengthBytes % 2 == 0);
         }
       }
 
       auto binding = ColumnBinding(numberOfBytesWritten);
       binding.columnType = cast(SQL_TYPE_ID) columnType;
-      binding.outputBuffer = outputBuffer[0 .. max(0, bufferLengthBytes)];
+      binding.outputBuffer = outputBuffer[0 .. bufferLengthBytes];
       columnBindings[columnNumber] = binding;
     }
 
@@ -240,11 +250,32 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
 ///// SQLFreeStmt /////
 
 SQLRETURN SQLFreeStmt(
-    SQLHSTMT StatementHandle,
-    SQLUSMALLINT Option) {
+    OdbcStatement statementHandle,
+    SQLUSMALLINT option) {
+  import std.c.stdlib : free;
+  return exceptionBoundary!(() => {
+    with (statementHandle) {
+      with (FreeStmtOptions) {
+        final switch(cast(FreeStmtOptions) option) {
+        case SQL_CLOSE:
+          latestOdbcResult = null;
+          columnBindings = null;
+          break;
+        case SQL_DROP:
+          dllEnforce(false, "Deprecated option: SQL_DROP");
+          return SQL_ERROR;
+        case SQL_UNBIND:
+          columnBindings = null;
+          break;
+        case SQL_RESET_PARAMS:
+          break;
+        }
+      }
+      logMessage("SQLFreeStmt ", option);
+    }
 
-  logMessage("SQLFreeStmt ", Option);
-  return SQL_SUCCESS;
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetCursorName /////
@@ -346,6 +377,9 @@ SQLRETURN SQLGetInfoW(
     dllEnforce(bufferLengthBytes % 2 == 0);
     auto stringResult = OutputWChar(_infoValue, bufferLengthBytes);
     with (OdbcInfo) {
+      if (stringLengthBytes) {
+        *stringLengthBytes = 0;
+      }
       switch (cast(OdbcInfo) infoType) {
 
       case SQL_DRIVER_ODBC_VER: // 77
@@ -410,11 +444,11 @@ SQLRETURN SQLGetInfoW(
         *stringLengthBytes = wcharsToBytes(copyToBuffer("schema"w, stringResult));
         break;
       default:
-        logMessage("SQLGetinfo: Unhandled case: ", cast(OdbcInfo) infoType);
+        logMessage("SQLGetInfo: Unhandled case: ", cast(OdbcInfo) infoType);
         break;
       } //switch
     }
-    logMessage("SQLGetinfo ", cast(OdbcInfo) infoType, bufferLengthBytes);
+    logMessage("SQLGetInfo ", cast(OdbcInfo) infoType, bufferLengthBytes);
     return SQL_SUCCESS;
   }());
 }
@@ -762,9 +796,30 @@ SQLRETURN SQLFetchScroll(
 
 ///// SQLFreeHandle /////
 
-SQLRETURN SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle) {
-  logMessage("SQLFreeHandle ");
-  return SQL_SUCCESS;
+SQLRETURN SQLFreeHandle(SQLSMALLINT handleType, SQLHANDLE handle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLFreeHandle ", cast(SQL_HANDLE_TYPE) handleType);
+
+    with(SQL_HANDLE_TYPE) {
+      switch (cast(SQL_HANDLE_TYPE) handleType) {
+      case DBC:
+        break;
+      case DESC:
+        break;
+      case ENV:
+        break;
+      case SENV:
+        break;
+      case STMT:
+        free(cast(void*) handle);
+        break;
+      default:
+        return SQL_ERROR;
+      }
+    }
+
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetConnectAttr /////
