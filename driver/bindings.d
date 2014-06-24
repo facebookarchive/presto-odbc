@@ -4,11 +4,12 @@ import std.array : empty, front, popFront;
 import std.conv : to, text, wtext;
 import std.variant : Variant;
 import std.typetuple : TypeTuple;
+import std.traits : isSomeString, Unqual;
 
 import sqlext;
 import odbcinst;
 
-import util : copyToBuffer, dllEnforce;
+import util : copyToBuffer, dllEnforce, OutputWChar, wcharsToBytes;
 
 /**
   An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
@@ -40,12 +41,12 @@ unittest {
   alias testSqlType = SQL_TYPES[testSqlTypeId];
   auto binding = ColumnBinding(new SQLLEN);
   binding.columnType = testSqlTypeId;
-  binding.outputBuffer.length = 10; //10 character limit including null terminator
+  binding.outputBuffer.length = 12;
   binding.numberOfBytesWritten = -1;
 
-  copyToOutput!(testSqlType)(Variant("Hello world, my name is Fred"), binding);
-  assert(binding.numberOfBytesWritten == 9);
-  assert(cast(char[]) binding.outputBuffer == "Hello wor\0");
+  copyToOutput!(testSqlType)(Variant("Hello world, my name is Fred"w), binding);
+  assert(binding.numberOfBytesWritten == 10);
+  assert(cast(wchar[]) binding.outputBuffer == "Hello\0"w);
 }
 
 //Writes the value inside the Variant into the buffer specified by the binding
@@ -54,23 +55,25 @@ void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
   static void copyToOutputImpl(VARIANT_TYPE)(Variant value, ref ColumnBinding binding) {
     alias ResultType = firstNonVoidType!(SQL_TYPE, VARIANT_TYPE);
 
-    static if (is(VARIANT_TYPE == typeof(null))) {
-      binding.numberOfBytesWritten = SQL_NULL_DATA;
-    } else static if (is(ResultType == string)) {
-      static if (is(VARIANT_TYPE == string)) {
-        auto resultCStr = cast(char[]) binding.outputBuffer;
-        binding.numberOfBytesWritten = copyToBuffer(value.get!VARIANT_TYPE, resultCStr.ptr, resultCStr.length);
+    with (binding) {
+      static if (is(VARIANT_TYPE == typeof(null))) {
+        numberOfBytesWritten = SQL_NULL_DATA;
+      } else static if (is(ResultType == wstring)) {
+        static if (is(VARIANT_TYPE == wstring)) {
+          auto numberOfCharsWritten = copyToBuffer(value.get!VARIANT_TYPE, to!OutputWChar(outputBuffer));
+          numberOfBytesWritten = wcharsToBytes(numberOfCharsWritten);
+        } else {
+          assert(false, "Should not be reachable, but should be generated.");
+        }
       } else {
-        assert(false, "Should not be reachable, but should be generated.");
-      }
-    } else {
-      assert(!is(VARIANT_TYPE == string));
+          assert(!isSomeString!VARIANT_TYPE, "" ~ text(typeid(ResultType)) ~ " " ~ text(typeid(VARIANT_TYPE)));
 
-      auto resultPtr = cast(ResultType*) binding.outputBuffer.ptr;
-      *resultPtr = to!ResultType(value.get!VARIANT_TYPE);
-      binding.numberOfBytesWritten = ResultType.sizeof;
+        auto resultPtr = cast(ResultType*) outputBuffer.ptr;
+        *resultPtr = to!ResultType(value.get!VARIANT_TYPE);
+        numberOfBytesWritten = ResultType.sizeof;
+      }
     }
-  }
+  } //with
 
   dispatchOnVariantType!(copyToOutputImpl)(value, binding);
 }
@@ -105,7 +108,7 @@ unittest {
 
 auto dispatchOnVariantType(alias fun, TList...)(Variant value, auto ref TList vs) {
   auto type = value.type();
-  foreach (T; TypeTuple!(string, short, ushort, int, uint, long, ulong, bool, SQL_TYPE_ID, typeof(null))) {
+  foreach (T; TypeTuple!(wstring, short, ushort, int, uint, long, ulong, bool, SQL_TYPE_ID, typeof(null))) {
     if(type == typeid(T)) {
       return fun!T(value, vs);
     }
@@ -211,7 +214,7 @@ final class VarcharTypeInfoResultRow : OdbcResultRow {
     switch(column) {
     case TypeInfoResultColumns.TYPE_NAME:
     case TypeInfoResultColumns.LOCAL_TYPE_NAME:
-      return Variant("varchar");
+      return Variant("varchar"w);
     case TypeInfoResultColumns.DATA_TYPE:
     case TypeInfoResultColumns.SQL_DATA_TYPE:
       return Variant(SQL_TYPE_ID.SQL_VARCHAR);
@@ -219,9 +222,9 @@ final class VarcharTypeInfoResultRow : OdbcResultRow {
       return Variant(120); //At most 120 characters
     case TypeInfoResultColumns.LITERAL_PREFIX:
     case TypeInfoResultColumns.LITERAL_SUFFIX:
-      return Variant("'");
+      return Variant("'"w);
     case TypeInfoResultColumns.CREATE_PARAMS:
-      return Variant("length");
+      return Variant("length"w);
     case TypeInfoResultColumns.NULLABLE:
       return Variant(SQL_NULLABLE);
     case TypeInfoResultColumns.CASE_SENSITIVE:
@@ -302,15 +305,15 @@ final class TableInfoResultRow : OdbcResultRow {
     with (TableInfoResultColumns) {
       switch (column) {
       case TABLE_CAT:
-        return Variant("tpch");
+        return Variant("tpch"w);
       case TABLE_SCHEM:
-        return Variant("tiny");
+        return Variant("tinyw");
       case TABLE_NAME:
-        return Variant("orders");
+        return Variant("orders"w);
       case TABLE_TYPE:
-        return Variant("TABLE");
+        return Variant("TABLE"w);
       case REMARKS:
-        return Variant("A faux table for testing");
+        return Variant("A faux table for testing"w);
       default:
         dllEnforce(false, "Non-existant column " ~ text(cast(TableInfoResultColumns) column));
         assert(false, "Silence compiler errors about not returning");

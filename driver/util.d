@@ -1,6 +1,7 @@
 
 import std.algorithm : min;
 import std.stdio : writeln;
+import std.conv : to, text, wtext;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 
@@ -55,6 +56,7 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
   if (!condition) {
     auto ex = new Exception(message, file, line);
     logMessage(ex);
+    showPopupMessage(ex);
     abort();
   }
 }
@@ -77,17 +79,18 @@ unittest {
   auto src = "happySrcString"w;
   byte[] dest;
   dest.length = 12;
-  assert(10 == copyToBuffer(src, cast(void*) dest, dest.length));
+  assert(5 == copyToBuffer(src, OutputWChar(dest)));
   assert(cast(wchar[]) dest == "happy\0");
 }
 
 ///string source, dest < src
 unittest {
-  auto src = "happySrcString";
+/*  auto src = "happySrcString";
   byte[] dest;
   dest.length = 6;
-  assert(5 == copyToBuffer(src, cast(void*) dest, dest.length));
+  assert(5 == copyToBuffer(src, cast(char*) dest, dest.length));
   assert(cast(char[]) dest == "happy\0");
+*/
 }
 
 ///wstring source, dest > src
@@ -95,19 +98,38 @@ unittest {
   auto src = "happySrcString"w;
   byte[] dest;
   dest.length = 100;
-  auto numCopied = copyToBuffer(src, cast(void*) dest, dest.length);
-  assert(numCopied == src.length * wchar.sizeof);
-  auto result = (cast(wchar[]) dest)[0 .. numCopied / wchar.sizeof];
+  auto numCopied = copyToBuffer(src, OutputWChar(dest));
+  assert(numCopied == src.length);
+  auto result = (cast(wchar[]) dest)[0 .. numCopied];
   assert(result == src);
 }
-
-SQLSMALLINT copyToBuffer(C)(const(C)[] src, SQLPOINTER dest, ulong destSize) if (isSomeChar!C) {
+/*
+SQLSMALLINT copyToBuffer(const(char)[] src, char* dest, size_t destSizeBytes) {
+  logMessage("Narrow: ", src, destSizeBytes);
   import std.c.string : memcpy;
-  const numCopied = cast(SQLSMALLINT) min(src.length * C.sizeof, destSize - C.sizeof);
-  memcpy(dest, src.ptr, numCopied);
-  *(cast(C*) (dest + numCopied)) = 0;
-  return numCopied;
+  const numberOfBytesCopied = cast(SQLSMALLINT) min(src.length * char.sizeof, destSizeBytes - char.sizeof);
+  memcpy(dest, src.ptr, numberOfBytesCopied);
+  *(cast(char*) (dest + numberOfBytesCopied)) = 0;
+  return numberOfBytesCopied;
 }
+*/
+SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
+  logMessage("Wide:", src, dest.length);
+  import std.c.string : memcpy;
+  const numberOfCharsCopied = min(src.length, dest.length - 1);
+  if (numberOfCharsCopied < src.length) {
+    logMessage("Truncated in copyToBuffer: ", src, dest.length);
+  }
+  memcpy(dest.buffer.ptr, src.ptr, numberOfCharsCopied * wchar.sizeof);
+  dest[numberOfCharsCopied] = 0;
+  dest.length = numberOfCharsCopied + 1;
+  return to!SQLSMALLINT(numberOfCharsCopied);
+}
+
+SQLSMALLINT wcharsToBytes(int count) {
+  return to!SQLSMALLINT(count * wchar.sizeof);
+}
+
 
 ///Test with class
 unittest {
@@ -219,15 +241,50 @@ bool isSomeCString(T)() {
 unittest {
   auto str = "Hello world";
   auto wstr = "Hello world"w;
-  assert(toDString(str.ptr) == str);
+  assert(toDString(str.ptr, SQL_NTS) == str);
   assert(toDString(str.ptr, str.length) == str);
-  assert(toDString(wstr.ptr) == wstr);
+  assert(toDString(wstr.ptr, SQL_NTS) == wstr);
   assert(toDString(wstr.ptr, wstr.length) == wstr);
 }
 
-auto toDString(C)(const(C)* cString, size_t length = SQL_NTS) if (isSomeChar!C) {
-  if (length == SQL_NTS) {
-    length = strlen(cString);
+C[] toDString(C)(C* cString, size_t lengthChars) if (isSomeChar!C) {
+  if (cString == null) {
+    return null;
   }
-  return cString[0 .. length];
+  if (lengthChars == SQL_NTS) {
+    lengthChars = strlen(cString);
+  }
+  return cString[0 .. lengthChars];
+}
+
+template UnqualString(T) {
+  static if (!isSomeString!T) {
+    static assert(false, "Not a string");
+  } else {
+    alias CharType =  typeof(T.init[0]);
+    alias UnqualString = Unqual!(CharType)[];
+  }
+}
+
+struct OutputWChar {
+  this(SQLPOINTER buffer, size_t lengthBytes) {
+    assert(buffer != null); //Revisit?
+    assert(lengthBytes % 2 == 0);
+    assert(lengthBytes >= 2);
+
+    void[] together = buffer[0 .. lengthBytes];
+    this.buffer = cast(wchar[]) together;
+  }
+
+  this(wchar* buffer, size_t lengthBytes) {
+    this(cast(SQLPOINTER) buffer, lengthBytes);
+  }
+
+  this(void[] buffer) {
+    this(buffer.ptr, buffer.length);
+  }
+
+
+  wchar[] buffer;
+  alias buffer this;
 }
