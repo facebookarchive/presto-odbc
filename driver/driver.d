@@ -831,29 +831,35 @@ SQLRETURN SQLGetEnvAttr(
 ///// SQLGetStmtAttr /////
 
 SQLRETURN SQLGetStmtAttrW(
-    SQLHSTMT StatementHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER BufferLength,
-    SQLINTEGER* StringLength) {
-  switch (Attribute) {
-  case SQL_ATTR_APP_ROW_DESC:
-    Value = null;
-    break;
-  case SQL_ATTR_APP_PARAM_DESC:
-    Value = null;
-    break;
-  case SQL_ATTR_IMP_ROW_DESC:
-    Value = null;
-    break;
-  case SQL_ATTR_IMP_PARAM_DESC:
-    Value = null;
-    break;
-  default:
-    return SQL_ERROR;
-  }
-  logMessage("SQLGetStmtAttr ", Attribute, Value, BufferLength);
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    StatementAttribute attribute,
+    SQLPOINTER value,
+    SQLINTEGER valueLengthBytes,
+    SQLINTEGER* stringLength) {
+  return exceptionBoundary!(() => {
+    with (statementHandle) {
+      with (StatementAttribute) {
+        switch (attribute) {
+        case SQL_ATTR_APP_ROW_DESC:
+          value = null;
+          break;
+        case SQL_ATTR_APP_PARAM_DESC:
+          value = null;
+          break;
+        case SQL_ATTR_IMP_ROW_DESC:
+          value = null;
+          break;
+        case SQL_ATTR_IMP_PARAM_DESC:
+          value = null;
+          break;
+        default:
+          return SQL_ERROR;
+        }
+      }
+    }
+    logMessage("SQLGetStmtAttr", attribute);
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLSetConnectAttr /////
