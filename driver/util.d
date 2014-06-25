@@ -41,7 +41,7 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
         rngOfVs ~= "null_string";
         continue;
       }
-      rngOfVs ~= wtext(v[0 .. strlen(v)].idup);
+      rngOfVs ~= wtext(v[0 .. strlen(v)]);
     } else {
       rngOfVs ~= wtext(v);
     }
