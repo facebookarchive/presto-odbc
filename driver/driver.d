@@ -60,7 +60,7 @@ SQLRETURN SQLDriverConnectW(
     if (connStrOutChars) {
       *connStrOutChars = 0;
     }
-    logMessage("SQLDriverConnect ", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars, driverCompletion);
+    logMessage("SQLDriverConnect", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars, driverCompletion);
 
     if (connStr == null) {
       return SQL_SUCCESS;
@@ -86,7 +86,7 @@ SQLRETURN SQLExecDirectW(
     SQLHSTMT hstmt,
     SQLWCHAR* szSqlStr,
     SQLINTEGER TextLength) {
-  logMessage("SQLExecDirect ", szSqlStr, TextLength);
+  logMessage("SQLExecDirect", szSqlStr, TextLength);
   return SQL_SUCCESS;
 }
 
@@ -117,7 +117,7 @@ SQLRETURN SQLAllocHandle(
     }
   }
 
-  logMessage("SQLAllocHandle ", handleType, cast(SQL_HANDLE_TYPE) handleType);
+  logMessage("SQLAllocHandle", handleType, cast(SQL_HANDLE_TYPE) handleType);
 
   return SQL_SUCCESS;
 }
@@ -132,7 +132,7 @@ SQLRETURN SQLBindCol(
     SQLLEN bufferLengthBytes,
     SQLLEN* numberOfBytesWritten) {
   return exceptionBoundary!(() => {
-    logMessage("SQLBindCol ", columnNumber, cast(SQL_TYPE_ID) columnType, bufferLengthBytes);
+    logMessage("SQLBindCol", columnNumber, cast(SQL_TYPE_ID) columnType, bufferLengthBytes);
     dllEnforce(statementHandle !is null);
     with (statementHandle) {
       if (outputBuffer == null) {
@@ -150,7 +150,7 @@ SQLRETURN SQLBindCol(
         columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
       }
       if (columnType > SQL_TYPE_ID.max) {
-        logMessage("SQLBindCol: Column type too big: ", columnType);
+        logMessage("SQLBindCol: Column type too big:", columnType);
           return SQL_ERROR;
       }
 
@@ -173,7 +173,7 @@ SQLRETURN SQLBindCol(
 ///// SQLCancel /////
 
 SQLRETURN SQLCancel(SQLHSTMT StatementHandle) {
-  logMessage("SQLCancel ");
+  logMessage("SQLCancel");
   return SQL_SUCCESS;
 }
 
@@ -187,7 +187,7 @@ SQLRETURN SQLConnectW(
     SQLSMALLINT cchUID,
     SQLWCHAR* szAuthStr,
     SQLSMALLINT cchAuthStr) {
-  logMessage("SQLConnect ");
+  logMessage("SQLConnect");
   return SQL_SUCCESS;
 }
 
@@ -203,21 +203,21 @@ SQLRETURN SQLDescribeColW(
     SQLULEN* pcbColDef,
     SQLSMALLINT* pibScale,
     SQLSMALLINT* pfNullable) {
-  logMessage("SQLDescribeCol ", icol, szColName);
+  logMessage("SQLDescribeCol", icol, szColName);
   return SQL_SUCCESS;
 }
 
 ///// SQLDisconnect /////
 
 SQLRETURN SQLDisconnect(SQLHDBC ConnectionHandle) {
-  logMessage("SQLDisconnect ");
+  logMessage("SQLDisconnect");
   return SQL_SUCCESS;
 }
 
 ///// SQLExecute /////
 
 SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
-  logMessage("SQLExecute ");
+  logMessage("SQLExecute");
   return SQL_SUCCESS;
 }
 
@@ -225,7 +225,7 @@ SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
 
 SQLRETURN SQLFetch(OdbcStatement statementHandle) {
   return exceptionBoundary!(() => {
-    logMessage("SQLFetch ");
+    logMessage("SQLFetch");
 
     dllEnforce(statementHandle !is null);
     with (statementHandle) {
@@ -271,7 +271,7 @@ SQLRETURN SQLFreeStmt(
           break;
         }
       }
-      logMessage("SQLFreeStmt ", option);
+      logMessage("SQLFreeStmt", option);
     }
 
     return SQL_SUCCESS;
@@ -285,7 +285,7 @@ SQLRETURN SQLGetCursorNameW(
     SQLWCHAR* szCursor,
     SQLSMALLINT cchCursorMax,
     SQLSMALLINT* pcchCursor) {
-  logMessage("SQLGetCursorName ", szCursor, cchCursorMax, pcchCursor);
+  logMessage("SQLGetCursorName", szCursor, cchCursorMax, pcchCursor);
   return SQL_SUCCESS;
 }
 
@@ -294,7 +294,7 @@ SQLRETURN SQLGetCursorNameW(
 SQLRETURN SQLNumResultCols(
     SQLHSTMT StatementHandle,
     SQLSMALLINT* ColumnCount) {
-  logMessage("SQLNumResultCols ", ColumnCount);
+  logMessage("SQLNumResultCols", ColumnCount);
   return SQL_SUCCESS;
 }
 
@@ -304,7 +304,7 @@ SQLRETURN SQLPrepareW(
     SQLHSTMT hstmt,
     SQLWCHAR* szSqlStr,
     SQLINTEGER cchSqlStr) {
-  logMessage("SQLPrepare ");
+  logMessage("SQLPrepare");
   return SQL_SUCCESS;
 }
 
@@ -313,7 +313,7 @@ SQLRETURN SQLPrepareW(
 SQLRETURN SQLRowCount(
     SQLHSTMT StatementHandle,
     SQLLEN* RowCount) {
-  logMessage("SQLRowCount ", RowCount);
+  logMessage("SQLRowCount", RowCount);
   return SQL_SUCCESS;
 }
 
@@ -323,7 +323,7 @@ SQLRETURN SQLSetCursorNameW(
     SQLHSTMT hstmt,
     SQLWCHAR* szCursor,
     SQLSMALLINT cchCursor) {
-  logMessage("SQLSetCursorName ");
+  logMessage("SQLSetCursorName");
   return SQL_SUCCESS;
 }
 
@@ -346,7 +346,7 @@ SQLRETURN SQLColumnsW(
     auto columnName = toDString(_columnName, _columnNameLength);
 
     with (statementHandle) {
-      logMessage("SQLColumns ", catalogName, schemaName, tableName, columnName);
+      logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
       return SQL_SUCCESS;
     }
   }());
@@ -361,7 +361,7 @@ SQLRETURN SQLGetData(
     SQLPOINTER TargetValue,
     SQLLEN BufferLength,
     SQLLEN* StrLen_or_IndPtr) {
-  logMessage("SQLGetData ");
+  logMessage("SQLGetData");
   return SQL_SUCCESS;
 }
 
@@ -448,7 +448,7 @@ SQLRETURN SQLGetInfoW(
         break;
       } //switch
     }
-    logMessage("SQLGetInfo ", cast(OdbcInfo) infoType, bufferLengthBytes);
+    logMessage("SQLGetInfo", cast(OdbcInfo) infoType, bufferLengthBytes);
     return SQL_SUCCESS;
   }());
 }
@@ -458,7 +458,7 @@ SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQLSMALLINT dataType) {
   return exceptionBoundary!(() => {
-    logMessage("SQLGetTypeInfo ", dataType);
+    logMessage("SQLGetTypeInfo", dataType);
 
     with (statementHandle) {
       with (SQL_TYPE_ID) {
@@ -483,7 +483,7 @@ SQLRETURN SQLGetTypeInfoW(
 SQLRETURN SQLParamData(
     SQLHSTMT StatementHandle,
     SQLPOINTER *Value) {
-  logMessage("SQLParamData ");
+  logMessage("SQLParamData");
   return SQL_SUCCESS;
 }
 
@@ -493,7 +493,7 @@ SQLRETURN SQLPutData(
     SQLHSTMT StatementHandle,
     SQLPOINTER Data,
     SQLLEN StrLen_or_Ind) {
-  logMessage("SQLPutData ");
+  logMessage("SQLPutData");
   return SQL_SUCCESS;
 }
 
@@ -511,7 +511,7 @@ SQLRETURN SQLSpecialColumnsW(
     SQLSMALLINT cchTableName,
     SQLUSMALLINT fScope,
     SQLUSMALLINT fNullable) {
-  logMessage("SQLSpecialColumns ");
+  logMessage("SQLSpecialColumns");
   return SQL_SUCCESS;
 }
 
@@ -527,7 +527,7 @@ SQLRETURN SQLStatisticsW(
     SQLSMALLINT cchTableName,
     SQLUSMALLINT fUnique,
     SQLUSMALLINT fAccuracy) {
-  logMessage("SQLStatistics ");
+  logMessage("SQLStatistics");
   return SQL_SUCCESS;
 }
 
@@ -550,7 +550,7 @@ SQLRETURN SQLTablesW(
     auto tableName = toDString(_tableName, _tableNameLength);
     auto tableType = toDString(_tableType, _tableTypeLength);
     with (statementHandle) {
-      logMessage("SQLTablesW ", catalogName, schemaName, tableName, tableType);
+      logMessage("SQLTablesW", catalogName, schemaName, tableName, tableType);
       latestOdbcResult = new TableInfoResult();
       return SQL_SUCCESS;
     }
@@ -566,7 +566,7 @@ SQLRETURN SQLBrowseConnectW(
     SQLWCHAR* szConnStrOut,
     SQLSMALLINT cchConnStrOutMax,
     SQLSMALLINT* pcchConnStrOut) {
-  logMessage("SQLBrowseConnect ");
+  logMessage("SQLBrowseConnect");
   return SQL_SUCCESS;
 }
 
@@ -582,7 +582,7 @@ SQLRETURN SQLColumnPrivilegesW(
     SQLSMALLINT cchTableName,
     SQLWCHAR* szColumnName,
     SQLSMALLINT cchColumnName) {
-  logMessage("SQLColumnPrivileges ");
+  logMessage("SQLColumnPrivileges");
   return SQL_SUCCESS;
 }
 
@@ -595,7 +595,7 @@ SQLRETURN SQLDescribeParam(
     SQLULEN* pcbParamDef,
     SQLSMALLINT* pibScale,
     SQLSMALLINT* pfNullable) {
-  logMessage("SQLDescribeParam ");
+  logMessage("SQLDescribeParam");
   return SQL_SUCCESS;
 }
 
@@ -607,7 +607,7 @@ SQLRETURN SQLExtendedFetch(
     SQLLEN irow,
     SQLULEN* pcrow,
     SQLUSMALLINT* rgfRowStatus) {
-  logMessage("SQLExtendedFetch ");
+  logMessage("SQLExtendedFetch");
   return SQL_SUCCESS;
 }
 
@@ -627,13 +627,13 @@ SQLRETURN SQLForeignKeysW(
     SQLSMALLINT cchFkSchemaName,
     SQLWCHAR* szFkTableName,
     SQLSMALLINT cchFkTableName) {
-  logMessage("SQLForeignKeys ");
+  logMessage("SQLForeignKeys");
   return SQL_SUCCESS;
 }
 
 ///// SQLMoreResults /////
 SQLRETURN SQLMoreResults(SQLHSTMT hstmt) {
-  logMessage("SQLMoreResults ");
+  logMessage("SQLMoreResults");
   return SQL_SUCCESS;
 }
 
@@ -646,7 +646,7 @@ SQLRETURN SQLNativeSqlW(
     SQLWCHAR* szSqlStr,
     SQLINTEGER cchSqlStrMax,
     SQLINTEGER* pcchSqlStr) {
-  logMessage("SQLNativeSql ");
+  logMessage("SQLNativeSql");
   return SQL_SUCCESS;
 }
 
@@ -655,7 +655,7 @@ SQLRETURN SQLNativeSqlW(
 SQLRETURN SQLNumParams(
     SQLHSTMT hstmt,
     SQLSMALLINT* pcpar) {
-  logMessage("SQLNumParams ");
+  logMessage("SQLNumParams");
   return SQL_SUCCESS;
 }
 
@@ -669,7 +669,7 @@ SQLRETURN SQLPrimaryKeysW(
     SQLSMALLINT cchSchemaName,
     SQLWCHAR* szTableName,
     SQLSMALLINT cchTableName) {
-  logMessage("SQLPrimaryKeys ");
+  logMessage("SQLPrimaryKeys");
   return SQL_SUCCESS;
 }
 
@@ -685,7 +685,7 @@ SQLRETURN SQLProcedureColumnsW(
     SQLSMALLINT cchProcName,
     SQLWCHAR* szColumnName,
     SQLSMALLINT cchColumnName) {
-  logMessage("SQLProcedureColumns ");
+  logMessage("SQLProcedureColumns");
   return SQL_SUCCESS;
 }
 
@@ -699,7 +699,7 @@ SQLRETURN SQLProceduresW(
     SQLSMALLINT cchSchemaName,
     SQLWCHAR* szProcName,
     SQLSMALLINT cchProcName) {
-  logMessage("SQLProcedures ");
+  logMessage("SQLProcedures");
   return SQL_SUCCESS;
 }
 
@@ -710,7 +710,7 @@ SQLRETURN SQLSetPos(
     SQLSETPOSIROW irow,
     SQLUSMALLINT fOption,
     SQLUSMALLINT       fLock) {
-  logMessage("SQLSetPos ");
+  logMessage("SQLSetPos");
   return SQL_SUCCESS;
 }
 
@@ -724,7 +724,7 @@ SQLRETURN SQLTablePrivilegesW(
     SQLSMALLINT cchSchemaName,
     SQLWCHAR* szTableName,
     SQLSMALLINT cchTableName) {
-  logMessage("SQLTablePrivileges ");
+  logMessage("SQLTablePrivileges");
   return SQL_SUCCESS;
 }
 
@@ -741,14 +741,14 @@ SQLRETURN SQLBindParameter(
     SQLPOINTER rgbValue,
     SQLLEN cbValueMax,
     SQLLEN* pcbValue) {
-  logMessage("SQLBindParameter ");
+  logMessage("SQLBindParameter");
   return SQL_SUCCESS;
 }
 
 ///// SQLCloseCursor /////
 
 SQLRETURN SQLCloseCursor(SQLHSTMT StatementHandle) {
-  logMessage("SQLCloseCursor ");
+  logMessage("SQLCloseCursor");
   return SQL_SUCCESS;
 }
 
@@ -762,7 +762,7 @@ SQLRETURN SQLColAttributeW(
     SQLSMALLINT BufferLength,
     SQLSMALLINT* StringLength,
     SQLLEN* NumericAttribute) {
-  logMessage("SQLColAttribute ");
+  logMessage("SQLColAttribute");
   return SQL_SUCCESS;
 }
 
@@ -771,7 +771,7 @@ SQLRETURN SQLColAttributeW(
 SQLRETURN SQLCopyDesc(
     SQLHDESC SourceDescHandle,
     SQLHDESC TargetDescHandle) {
-  logMessage("SQLCopyDesc ");
+  logMessage("SQLCopyDesc");
   return SQL_SUCCESS;
 }
 
@@ -780,7 +780,7 @@ SQLRETURN SQLEndTran(
     SQLSMALLINT HandleType,
     SQLHANDLE Handle,
     SQLSMALLINT CompletionType) {
-  logMessage("SQLEndTran ");
+  logMessage("SQLEndTran");
   return SQL_SUCCESS;
 }
 
@@ -790,7 +790,7 @@ SQLRETURN SQLFetchScroll(
     SQLHSTMT StatementHandle,
     SQLSMALLINT FetchOrientation,
     SQLLEN FetchOffset) {
-  logMessage("SQLFetchScroll ");
+  logMessage("SQLFetchScroll");
   return SQL_SUCCESS;
 }
 
@@ -798,7 +798,7 @@ SQLRETURN SQLFetchScroll(
 
 SQLRETURN SQLFreeHandle(SQLSMALLINT handleType, SQLHANDLE handle) {
   return exceptionBoundary!(() => {
-    logMessage("SQLFreeHandle ", cast(SQL_HANDLE_TYPE) handleType);
+    logMessage("SQLFreeHandle", cast(SQL_HANDLE_TYPE) handleType);
 
     with(SQL_HANDLE_TYPE) {
       switch (cast(SQL_HANDLE_TYPE) handleType) {
@@ -830,7 +830,7 @@ SQLRETURN SQLGetConnectAttrW(
     SQLPOINTER Value,
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLengthPtr) {
-  logMessage("SQLGetConnectAttr ");
+  logMessage("SQLGetConnectAttr");
   return SQL_SUCCESS;
 }
 
@@ -843,7 +843,7 @@ SQLRETURN SQLGetDescFieldW(
     SQLPOINTER Value,
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLength) {
-  logMessage("SQLGetDescField ");
+  logMessage("SQLGetDescField");
   return SQL_SUCCESS;
 }
 
@@ -861,7 +861,7 @@ SQLRETURN SQLGetDescRecW(
     SQLSMALLINT* pPrecision,
     SQLSMALLINT* pScale,
     SQLSMALLINT* pNullable) {
-  logMessage("SQLGetDescRec ");
+  logMessage("SQLGetDescRec");
   return SQL_SUCCESS;
 }
 
@@ -883,7 +883,7 @@ SQLRETURN SQLGetDiagFieldW(
     if (stringLength) {
       *stringLength = 0;
     }
-    logMessage("SQLGetDiagField ", recNumber, diagIdentifier, diagInfo.length);
+    logMessage("SQLGetDiagField", recNumber, diagIdentifier, diagInfo.length);
     return SQL_NO_DATA;
   }());
 }
@@ -899,7 +899,7 @@ SQLRETURN SQLGetDiagRecW(
     SQLWCHAR* szErrorMsg,
     SQLSMALLINT cchErrorMsgMax,
     SQLSMALLINT* pcchErrorMsg) {
-  logMessage("SQLGetDiagRec ", iRecord, pfNativeError, (szErrorMsg == null), cchErrorMsgMax);
+  logMessage("SQLGetDiagRec", iRecord, pfNativeError, (szErrorMsg == null), cchErrorMsgMax);
   return SQL_NO_DATA;
 }
 
@@ -911,7 +911,7 @@ SQLRETURN SQLGetEnvAttr(
     SQLPOINTER Value,
     SQLINTEGER BufferLength,
     SQLINTEGER* StringLength) {
-  logMessage("SQLGetEnvAttr ");
+  logMessage("SQLGetEnvAttr");
   return SQL_SUCCESS;
 }
 
@@ -962,7 +962,7 @@ SQLRETURN SQLSetConnectAttrW(
   default:
     return SQL_ERROR;
   }
-  logMessage("SQLSetConnectAttr ", Attribute, Value, StringLength);
+  logMessage("SQLSetConnectAttr", Attribute, Value, StringLength);
   return SQL_SUCCESS;
 }
 
@@ -974,7 +974,7 @@ SQLRETURN SQLSetDescFieldW(
     SQLSMALLINT FieldIdentifier,
     SQLPOINTER Value,
     SQLINTEGER BufferLength) {
-  logMessage("SQLSetDescField ");
+  logMessage("SQLSetDescField");
   return SQL_SUCCESS;
 }
 
@@ -991,7 +991,7 @@ SQLRETURN SQLSetDescRec(
     SQLPOINTER Data,
     SQLLEN* StringLength,
     SQLLEN* Indicator) {
-  logMessage("SQLSetDescRec ");
+  logMessage("SQLSetDescRec");
   return SQL_SUCCESS;
 }
 
@@ -1010,7 +1010,7 @@ SQLRETURN SQLSetEnvAttr(
     return SQL_ERROR;
   }
 
-  logMessage("SQLSetEnvAttr ", Attribute, Value, StringLength);
+  logMessage("SQLSetEnvAttr", Attribute, Value, StringLength);
   return SQL_SUCCESS;
 }
 
@@ -1021,7 +1021,7 @@ SQLRETURN SQLSetStmtAttrW(
     SQLINTEGER Attribute,
     SQLPOINTER Value,
     SQLINTEGER StringLength) {
-  logMessage("SQLSetStmtAttr ");
+  logMessage("SQLSetStmtAttr");
   return SQL_SUCCESS;
 }
 
@@ -1031,6 +1031,6 @@ SQLRETURN SQLSetStmtAttrW(
 SQLRETURN SQLBulkOperations(
     SQLHSTMT StatementHandle,
     SQLSMALLINT Operation) {
-  logMessage("SQLBulkOperations ");
+  logMessage("SQLBulkOperations");
   return SQL_SUCCESS;
 }
