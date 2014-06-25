@@ -93,13 +93,13 @@ SQLRETURN SQLExecDirectW(
 ///// SQLAllocHandle /////
 
 SQLRETURN SQLAllocHandle(
-    SQLSMALLINT	handleType,
+    SQL_HANDLE_TYPE	handleType,
     SQLHANDLE handleParent,
     SQLHANDLE* newHandlePointer) {
   dllEnforce(newHandlePointer != null);
 
   with(SQL_HANDLE_TYPE) {
-    switch (cast(SQL_HANDLE_TYPE) handleType) {
+    switch (handleType) {
     case DBC:
       break;
     case DESC:
@@ -117,7 +117,7 @@ SQLRETURN SQLAllocHandle(
     }
   }
 
-  logMessage("SQLAllocHandle", handleType, cast(SQL_HANDLE_TYPE) handleType);
+  logMessage("SQLAllocHandle", handleType, handleType);
 
   return SQL_SUCCESS;
 }
@@ -132,7 +132,7 @@ SQLRETURN SQLBindCol(
     SQLLEN bufferLengthBytes,
     SQLLEN* numberOfBytesWritten) {
   return exceptionBoundary!(() => {
-    logMessage("SQLBindCol", columnNumber, cast(SQL_TYPE_ID) columnType, bufferLengthBytes);
+    logMessage("SQLBindCol", columnNumber, columnType, bufferLengthBytes);
     dllEnforce(statementHandle !is null);
     with (statementHandle) {
       if (outputBuffer == null) {
@@ -248,12 +248,12 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
 
 SQLRETURN SQLFreeStmt(
     OdbcStatement statementHandle,
-    SQLUSMALLINT option) {
+    FreeStmtOptions option) {
   import std.c.stdlib : free;
   return exceptionBoundary!(() => {
     with (statementHandle) {
       with (FreeStmtOptions) {
-        final switch(cast(FreeStmtOptions) option) {
+        final switch(option) {
         case SQL_CLOSE:
           latestOdbcResult = null;
           columnBindings = null;
@@ -366,7 +366,7 @@ SQLRETURN SQLGetData(
 
 SQLRETURN SQLGetInfoW(
     SQLHDBC connectionHandle,
-    SQLUSMALLINT infoType,
+    OdbcInfo infoType,
     SQLPOINTER _infoValue,
     SQLSMALLINT bufferLengthBytes,
     SQLSMALLINT* stringLengthBytes) {
@@ -377,7 +377,7 @@ SQLRETURN SQLGetInfoW(
       if (stringLengthBytes) {
         *stringLengthBytes = 0;
       }
-      switch (cast(OdbcInfo) infoType) {
+      switch (infoType) {
 
       case SQL_DRIVER_ODBC_VER: // 77
         //Latest version of ODBC is 3.8 (as of 6/19/14)
@@ -441,11 +441,11 @@ SQLRETURN SQLGetInfoW(
         *stringLengthBytes = wcharsToBytes(copyToBuffer("schema"w, stringResult));
         break;
       default:
-        logMessage("SQLGetInfo: Unhandled case: ", cast(OdbcInfo) infoType);
+        logMessage("SQLGetInfo: Unhandled case: ", infoType);
         break;
       } //switch
     }
-    logMessage("SQLGetInfo", cast(OdbcInfo) infoType, bufferLengthBytes);
+    logMessage("SQLGetInfo", infoType, bufferLengthBytes);
     return SQL_SUCCESS;
   }());
 }
@@ -453,13 +453,13 @@ SQLRETURN SQLGetInfoW(
 ///// SQLGetTypeInfo /////
 SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
-    SQLSMALLINT dataType) {
+    SQL_TYPE_ID dataType) {
   return exceptionBoundary!(() => {
     logMessage("SQLGetTypeInfo", dataType);
 
     with (statementHandle) {
       with (SQL_TYPE_ID) {
-        switch(cast(SQL_TYPE_ID) dataType) {
+        switch(dataType) {
         case SQL_UNKNOWN_TYPE:
         case SQL_VARCHAR:
           latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
@@ -540,7 +540,6 @@ SQLRETURN SQLTablesW(
     SQLSMALLINT _tableNameLength,
     in SQLWCHAR* _tableType,
     SQLSMALLINT _tableTypeLength) {
-  logMessage("WOO");
   return exceptionBoundary!(() => {
     auto catalogName = toDString(_catalogName, _catalogNameLength);
     auto schemaName = toDString(_schemaName, _schemaNameLength);
@@ -793,12 +792,12 @@ SQLRETURN SQLFetchScroll(
 
 ///// SQLFreeHandle /////
 
-SQLRETURN SQLFreeHandle(SQLSMALLINT handleType, SQLHANDLE handle) {
+SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
   return exceptionBoundary!(() => {
-    logMessage("SQLFreeHandle", cast(SQL_HANDLE_TYPE) handleType);
+    logMessage("SQLFreeHandle", handleType);
 
     with(SQL_HANDLE_TYPE) {
-      switch (cast(SQL_HANDLE_TYPE) handleType) {
+      switch (handleType) {
       case DBC:
         break;
       case DESC:
