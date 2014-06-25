@@ -105,11 +105,10 @@ unittest {
 }
 
 SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
-  logMessage("Wide:", src, dest.length);
   import std.c.string : memcpy;
   const numberOfCharsCopied = min(src.length, dest.length - 1);
   if (numberOfCharsCopied < src.length) {
-    logMessage("Truncated in copyToBuffer: ", src, dest.length);
+    logMessage("Truncated in wide copyToBuffer: ", src, dest.length);
   }
   memcpy(dest.buffer.ptr, src.ptr, numberOfCharsCopied * wchar.sizeof);
   dest[numberOfCharsCopied] = 0;
@@ -118,11 +117,10 @@ SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
 }
 
 SQLSMALLINT copyToBuffer(const(char)[] src, char[] dest) {
-  logMessage("Narrow:", src, dest.length);
   import std.c.string : memcpy;
   const numberOfCharsCopied = min(src.length, dest.length - 1);
   if (numberOfCharsCopied < src.length) {
-    logMessage("Truncated in copyToBuffer: ", src, dest.length);
+    logMessage("Truncated in narrow copyToBuffer: ", src, dest.length);
   }
   memcpy(dest.ptr, src.ptr, numberOfCharsCopied);
   dest[numberOfCharsCopied] = 0;

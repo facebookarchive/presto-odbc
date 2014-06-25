@@ -151,12 +151,6 @@ SQLRETURN SQLBindCol(
         return SQL_ERROR;
       }
 
-      with (SQL_TYPE_ID) {
-        if (columnType == SQL_CHAR || columnType == SQL_UNKNOWN_TYPE || columnType == SQL_VARCHAR) {
-//          assert(bufferLengthBytes % 2 == 0);
-        }
-      }
-
       auto binding = ColumnBinding(numberOfBytesWritten);
       binding.columnType = columnType;
       binding.outputBuffer = outputBuffer[0 .. bufferLengthBytes];
@@ -191,17 +185,33 @@ SQLRETURN SQLConnectW(
 ///// SQLDescribeCol /////
 
 SQLRETURN SQLDescribeColW(
-    SQLHSTMT hstmt,
-    SQLUSMALLINT icol,
-    SQLWCHAR* szColName,
-    SQLSMALLINT cchColNameMax,
-    SQLSMALLINT* pcchColName,
-    SQLSMALLINT* pfSqlType,
-    SQLULEN* pcbColDef,
-    SQLSMALLINT* pibScale,
-    SQLSMALLINT* pfNullable) {
-  logMessage("SQLDescribeCol", icol, szColName);
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLUSMALLINT columnNumber,
+    SQLWCHAR* _columnName,
+    SQLSMALLINT _columnNameMaxLengthChars,
+    SQLSMALLINT* _columnNameLengthChars,
+    SQLSMALLINT* sqlDataTypeOfColumn,
+    SQLULEN* columnSize,
+    SQLSMALLINT* decimalDigits,
+    SQLSMALLINT* nullable) {
+  return exceptionBoundary!(() => {
+    auto columnName = OutputWChar(_columnName, _columnNameMaxLengthChars * wchar.sizeof);
+    assert(columnName);
+    assert(_columnNameLengthChars);
+    assert(sqlDataTypeOfColumn);
+    assert(columnSize);
+    assert(decimalDigits);
+    assert(nullable);
+    logMessage("SQLDescribeCol", columnNumber);
+    with (statementHandle) {
+      *_columnNameLengthChars = copyToBuffer("amount"w, columnName);
+      *sqlDataTypeOfColumn = SQL_TYPE_ID.SQL_INTEGER;
+      *columnSize = 10;
+      *decimalDigits = 0;
+      *nullable = SQL_NO_NULLS;
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLDisconnect /////
@@ -213,9 +223,14 @@ SQLRETURN SQLDisconnect(SQLHDBC ConnectionHandle) {
 
 ///// SQLExecute /////
 
-SQLRETURN SQLExecute(SQLHSTMT StatementHandle) {
-  logMessage("SQLExecute");
-  return SQL_SUCCESS;
+SQLRETURN SQLExecute(OdbcStatement statementHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLExecute");
+    with (statementHandle) {
+      latestOdbcResult = new FauxDataResult();
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLFetch /////
@@ -237,6 +252,7 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
         if (col > latestOdbcResult.numberOfColumns) {
           return SQL_ERROR;
         }
+        logMessage("SQLFetching column:", col);
         dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
       }
     }
@@ -289,20 +305,35 @@ SQLRETURN SQLGetCursorNameW(
 ///// SQLNumResultCols /////
 
 SQLRETURN SQLNumResultCols(
-    SQLHSTMT StatementHandle,
-    SQLSMALLINT* ColumnCount) {
-  logMessage("SQLNumResultCols", ColumnCount);
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLSMALLINT* columnCount) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLNumResultCols (pseudo-implemented)");
+    assert(columnCount);
+    with (statementHandle) {
+      //TODO: Revisit this assert: Can actually call this function when the query
+      //                           is prepared but before it has been executed.
+      assert(!latestOdbcResult.empty && latestOdbcResult.numberOfColumns);
+      *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLPrepare /////
 
 SQLRETURN SQLPrepareW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szSqlStr,
-    SQLINTEGER cchSqlStr) {
-  logMessage("SQLPrepare");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _statementText,
+    SQLINTEGER _textLengthChars) {
+  return exceptionBoundary!(() => {
+    auto statementText = toDString(_statementText, _textLengthChars);
+    logMessage("SQLPrepare", statementText);
+    with (statementHandle) {
+      query = statementText.idup;
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLRowCount /////
@@ -344,6 +375,7 @@ SQLRETURN SQLColumnsW(
 
     with (statementHandle) {
       logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
+      latestOdbcResult = new ColumnsResult();
       return SQL_SUCCESS;
     }
   }());
@@ -498,18 +530,35 @@ SQLRETURN SQLPutData(
 
 
 SQLRETURN SQLSpecialColumnsW(
-    SQLHSTMT hstmt,
-    SQLUSMALLINT fColType,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName,
-    SQLUSMALLINT fScope,
-    SQLUSMALLINT fNullable) {
-  logMessage("SQLSpecialColumns");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQL_SPECIAL_COLUMN_REQUEST_TYPE identifierType,
+    SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    SQLWCHAR* _tableName,
+    SQLSMALLINT _tableNameLength,
+    SQLUSMALLINT minScope,
+    SQLUSMALLINT nullable) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto tableName = toDString(_tableName, _tableNameLength);
+    with (statementHandle) {
+      with (SQL_SPECIAL_COLUMN_REQUEST_TYPE) {
+        logMessage("SQLSpecialColumns", identifierType, catalogName, schemaName, tableName, minScope, nullable);
+        final switch (identifierType) {
+        case SQL_BEST_ROWID:
+          latestOdbcResult = new EmptyOdbcResult();
+          break;
+        case SQL_ROWVER:
+          latestOdbcResult = new EmptyOdbcResult();
+          break;
+        }
+      }
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLStatistics /////
@@ -920,6 +969,7 @@ SQLRETURN SQLGetStmtAttrW(
     SQLINTEGER valueLengthBytes,
     SQLINTEGER* stringLength) {
   return exceptionBoundary!(() => {
+    auto valueString = OutputWChar(value, valueLengthBytes);
     with (statementHandle) {
       with (StatementAttribute) {
         switch (attribute) {
@@ -1013,12 +1063,25 @@ SQLRETURN SQLSetEnvAttr(
 ///// SQLSetStmtAttr /////
 
 SQLRETURN SQLSetStmtAttrW(
-    SQLHSTMT StatementHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER StringLength) {
-  logMessage("SQLSetStmtAttr");
-  return SQL_SUCCESS;
+  OdbcStatement statementHandle,
+  StatementAttribute attribute,
+  in SQLPOINTER _value,
+  SQLINTEGER _valueLengthBytes) {
+  return exceptionBoundary!(() => {
+        //dllEnforce(_valueLengthBytes % 2 == 0);
+        //auto stringValue = toDString(cast(wchar*) _value, _valueLengthBytes / wchar.sizeof);
+    with (statementHandle) {
+      logMessage("SQLSetStmtAttr", attribute);
+      with (StatementAttribute) {
+        switch (attribute) {
+        default:
+          logMessage("SQLGetInfo: Unhandled case:", attribute);
+          break;
+        }
+      }
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 

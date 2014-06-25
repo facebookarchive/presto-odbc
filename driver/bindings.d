@@ -9,7 +9,7 @@ import std.traits : isSomeString, Unqual;
 import sqlext;
 import odbcinst;
 
-import util : copyToBuffer, dllEnforce, OutputWChar, wcharsToBytes;
+import util : logMessage, copyToBuffer, dllEnforce, OutputWChar, wcharsToBytes;
 
 /**
   An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
@@ -21,6 +21,7 @@ final class OdbcStatement {
 
   ColumnBinding[uint] columnBindings;
   OdbcResult latestOdbcResult;
+  wstring query;
 }
 
 unittest {
@@ -60,12 +61,14 @@ void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
         numberOfBytesWritten = SQL_NULL_DATA;
       } else static if (is(ResultType == string)) {
         static if (is(VARIANT_TYPE == string)) {
-          numberOfBytesWritten = copyToBuffer(value.get!VARIANT_TYPE, cast(char[]) outputBuffer);
+          auto srcString = value.get!VARIANT_TYPE;
         } else {
-          assert(false, "Should not be reachable, but should be generated.");
+          logMessage("Converting a non-string type to a string type for output");
+          auto srcString = to!ResultType(value.get!VARIANT_TYPE);
         }
+        numberOfBytesWritten = copyToBuffer(srcString, cast(char[]) outputBuffer);
       } else {
-          assert(!isSomeString!VARIANT_TYPE, "" ~ text(typeid(ResultType)) ~ " " ~ text(typeid(VARIANT_TYPE)));
+        assert(!isSomeString!VARIANT_TYPE, "" ~ text(typeid(ResultType)) ~ " " ~ text(typeid(VARIANT_TYPE)));
 
         auto resultPtr = cast(ResultType*) outputBuffer.ptr;
         *resultPtr = to!ResultType(value.get!VARIANT_TYPE);
@@ -346,4 +349,155 @@ enum TableInfoResultColumns {
   TABLE_NAME,
   TABLE_TYPE,
   REMARKS
+}
+
+
+final class ColumnsResult : OdbcResult {
+  @property {
+    bool empty() {
+      return count == result.length;
+    }
+
+    OdbcResultRow front() {
+      assert(!empty);
+      return result[count];
+    }
+
+    void popFront() {
+      ++count;
+    }
+
+    uint numberOfColumns() {
+      return ColumnsResultColumns.max;
+    }
+  }
+
+private:
+  IntegerColumnsResultRow[] result = [
+    new IntegerColumnsResultRow("amount"),
+    new IntegerColumnsResultRow("client")];
+  int count = 0;
+}
+
+final class IntegerColumnsResultRow : OdbcResultRow {
+  this(string columnName) {
+    this.columnName = columnName;
+  }
+  Variant dataAt(int column) {
+    with (ColumnsResultColumns) {
+      switch (column) {
+      case TABLE_CAT:
+        return Variant("tpch");
+      case TABLE_SCHEM:
+        return Variant("tiny");
+      case TABLE_NAME:
+        return Variant("orders");
+      case COLUMN_NAME:
+        return Variant(columnName);
+      case DATA_TYPE:
+        return Variant(SQL_TYPE_ID.SQL_INTEGER);
+      case TYPE_NAME:
+        return Variant("INTEGER");
+      case COLUMN_SIZE:
+        return Variant(4 * 8);
+      case BUFFER_LENGTH:
+        return Variant(4);
+      case DECIMAL_DIGITS:
+        return Variant(0);
+      case NUM_PREC_RADIX:
+        return Variant(2);
+      case NULLABLE:
+        return Variant(SQL_NO_NULLS);
+      case REMARKS:
+        return Variant("A faux column for testing");
+      case COLUMN_DEF:
+        return Variant("0");
+      case SQL_DATA_TYPE:
+        return Variant(SQL_TYPE_ID.SQL_INTEGER);
+      case SQL_DATETIME_SUB:
+        return Variant(null);
+      case CHAR_OCTET_LENGTH:
+        return Variant(null);
+      case ORDINAL_POSITION:
+        return Variant(1);
+      case IS_NULLABLE:
+        return Variant("NO");
+      default:
+        dllEnforce(false, "Non-existant column " ~ text(cast(ColumnsResultColumns) column));
+        assert(false, "Silence compiler errors about not returning");
+      }
+    }
+  }
+private:
+  string columnName;
+}
+
+enum ColumnsResultColumns {
+  TABLE_CAT = 1,
+  TABLE_SCHEM,
+  TABLE_NAME,
+  COLUMN_NAME,
+  DATA_TYPE,
+  TYPE_NAME,
+  COLUMN_SIZE,
+  BUFFER_LENGTH,
+  DECIMAL_DIGITS,
+  NUM_PREC_RADIX,
+  NULLABLE,
+  REMARKS,
+  COLUMN_DEF,
+  SQL_DATA_TYPE,
+  SQL_DATETIME_SUB,
+  CHAR_OCTET_LENGTH,
+  ORDINAL_POSITION,
+  IS_NULLABLE
+}
+
+final class FauxDataResult : OdbcResult {
+  @property {
+    bool empty() {
+      return count == 10;
+    }
+
+    FauxDataResultRow front() {
+      assert(!empty);
+      return result;
+    }
+
+    void popFront() {
+      ++count;
+    }
+
+    uint numberOfColumns() {
+      return FauxDataResultColumns.max;
+    }
+  }
+
+private:
+  FauxDataResultRow result = new FauxDataResultRow();
+  int count = 0;
+}
+
+final class FauxDataResultRow : OdbcResultRow {
+  Variant dataAt(int column) {
+    with (FauxDataResultColumns) {
+      ++count;
+      switch (column) {
+      case AMOUNT:
+        return Variant(count);
+      case CLIENT:
+        return Variant(count * 500);
+      default:
+        dllEnforce(false, "Non-existant column " ~ text(cast(FauxDataResultColumns) column));
+        assert(false, "Silence compiler errors about not returning");
+      }
+    }
+  }
+private:
+  int count = 0;
+}
+
+enum FauxDataResultColumns {
+  AMOUNT = 1,
+  CLIENT,
 }
