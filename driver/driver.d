@@ -127,7 +127,7 @@ SQLRETURN SQLAllocHandle(
 SQLRETURN SQLBindCol(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
-    SQLSMALLINT columnType,
+    SQL_C_TYPE_ID columnType,
     SQLPOINTER outputBuffer,
     SQLLEN bufferLengthBytes,
     SQLLEN* numberOfBytesWritten) {
@@ -146,12 +146,9 @@ SQLRETURN SQLBindCol(
         *numberOfBytesWritten = 0;
       }
 
-      if (columnType == SQL_C_DEFAULT) {
-        columnType = cast(SQLSMALLINT) SQL_TYPE_ID.SQL_UNKNOWN_TYPE;
-      }
-      if (columnType > SQL_TYPE_ID.max) {
-        logMessage("SQLBindCol: Column type too big:", columnType);
-          return SQL_ERROR;
+      if (columnType > SQL_C_TYPE_ID.max || columnType < SQL_C_TYPE_ID.min) {
+        logMessage("SQLBindCol: Column type out of bounds:", columnType);
+        return SQL_ERROR;
       }
 
       with (SQL_TYPE_ID) {
@@ -161,7 +158,7 @@ SQLRETURN SQLBindCol(
       }
 
       auto binding = ColumnBinding(numberOfBytesWritten);
-      binding.columnType = cast(SQL_TYPE_ID) columnType;
+      binding.columnType = columnType;
       binding.outputBuffer = outputBuffer[0 .. bufferLengthBytes];
       columnBindings[columnNumber] = binding;
     }
@@ -240,7 +237,7 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
         if (col > latestOdbcResult.numberOfColumns) {
           return SQL_ERROR;
         }
-        dispatchOnSQLType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
+        dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
       }
     }
     return SQL_SUCCESS;

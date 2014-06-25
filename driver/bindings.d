@@ -24,8 +24,8 @@ final class OdbcStatement {
 }
 
 unittest {
-  enum testSqlTypeId = SQL_TYPE_ID.SQL_SMALLINT;
-  alias testSqlType = SQL_TYPES[testSqlTypeId];
+  enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;
+  alias testSqlType = int;
   auto binding = ColumnBinding(new SQLLEN);
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = testSqlType.sizeof;
@@ -37,8 +37,8 @@ unittest {
 }
 
 unittest {
-  enum testSqlTypeId = SQL_TYPE_ID.SQL_VARCHAR;
-  alias testSqlType = SQL_TYPES[testSqlTypeId];
+  enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_CHAR;
+  alias testSqlType = string;
   auto binding = ColumnBinding(new SQLLEN);
   binding.columnType = testSqlTypeId;
   binding.outputBuffer.length = 10;
@@ -50,10 +50,10 @@ unittest {
 }
 
 //Writes the value inside the Variant into the buffer specified by the binding
-void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
+void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
 
   static void copyToOutputImpl(VARIANT_TYPE)(Variant value, ref ColumnBinding binding) {
-    alias ResultType = firstNonVoidType!(SQL_TYPE, VARIANT_TYPE);
+    alias ResultType = firstNonVoidType!(SQL_C_TYPE, VARIANT_TYPE);
 
     with (binding) {
       static if (is(VARIANT_TYPE == typeof(null))) {
@@ -78,7 +78,7 @@ void copyToOutput(SQL_TYPE)(Variant value, ref ColumnBinding binding) {
 }
 
 unittest {
-  dispatchOnSQLType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
+  dispatchOnSqlType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
 }
 
 version(unittest) {
@@ -89,7 +89,7 @@ version(unittest) {
   }
 }
 
-auto dispatchOnSQLType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs) {
+auto dispatchOnSqlType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs) {
   switch(type) {
     foreach(i, SQL_TYPE; SQL_TYPES) {
       case cast(SQL_TYPE_ID)i:
@@ -98,6 +98,25 @@ auto dispatchOnSQLType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs)
   default:
     assert(false, "Bad SQL_TYPE_ID passed: " ~ text(type));
   }
+}
+
+unittest {
+  dispatchOnSqlCType!(requireIntType)(SQL_C_TYPE_ID.SQL_C_LONG);
+}
+
+auto dispatchOnSqlCType(alias fun, TList...)(SQL_C_TYPE_ID type, auto ref TList vs) {
+  auto impl(SqlTList...)() {
+    static if (SqlTList.length <= 1) {
+      assert(false, "Bad SQL_TYPE_ID passed: " ~ text(type));
+    } else {
+      if (type == SqlTList[0]) {
+        return fun!(SqlTList[1])(vs);
+      } else {
+        return impl!(SqlTList[2 .. $])();
+      }
+    }
+  }
+  return impl!SQL_C_TYPES();
 }
 
 unittest {
@@ -139,7 +158,7 @@ struct ColumnBinding {
     this.indicator = indicator;
   }
 
-  SQL_TYPE_ID columnType;
+  SQL_C_TYPE_ID columnType;
   void[] outputBuffer;
   SQLLEN* indicator;
 
