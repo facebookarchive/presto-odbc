@@ -3,10 +3,10 @@
 import std.stdio : writeln;
 import queryresults : QueryResults;
 import statementclient : ClientSession, StatementClient;
+import std.net.curl;
 
 version(unittest) void main() { writeln("Tests completed."); }
 else void main() {
-
   auto session = ClientSession("localhost:8080", "test");
   session.catalog = "tpch";
   session.schema = "tiny";
@@ -19,5 +19,4 @@ else void main() {
       writeln(row);
     }
   }
-
 }

@@ -106,7 +106,7 @@ class QueryResults {
     alias fieldNames = extractCTFEStrings!RowTList;
     const(QueryResults) qr;
     immutable(JSONValue)[] data;
-    ulong[string] fieldNameToIndex;
+    size_t[string] fieldNameToIndex;
   }
 
 private:
@@ -251,7 +251,7 @@ unittest {
   assertThrown!Exception(jsonValueAs!long(parseJSON("\"str\"")));
 }
 
-private void requireMatchingType(T)(ulong fieldIndex, const(QueryResults) qr, const JSONValue jsonRow) {
+private void requireMatchingType(T)(size_t fieldIndex, const(QueryResults) qr, const JSONValue jsonRow) {
   if (!typeMatchesColumnTypeName!T(qr.columns[fieldIndex].type)
       || !typeMatchesJSONType!T(jsonRow[fieldIndex].type)) {
     throw new WrongTypeException!T;
