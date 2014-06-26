@@ -1,12 +1,12 @@
 
-import json : JSON_TYPE, JSONValue;
+import facebook.json : JSON_TYPE, JSONValue;
 import std.typecons : Tuple, tuple;
 import std.typetuple : TypeTuple;
 import std.conv : text, to;
 import std.array : front, popFront, empty;
 import std.stdio;
 
-import util : PrestoClientException;
+import dapi.util : PrestoClientException;
 
 version(unittest) {
   import json : parseJSON;

@@ -8,11 +8,17 @@ CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
 MODULES = driver bindings util odbcinst sql sqlext sqltypes sqlucode
+DAPI_MODULES = statementclient queryresults mockcurl util json
 OBJS = $(addsuffix .prod.obj, $(MODULES))
 TEST_OBJS = $(addsuffix .unit.obj, $(MODULES))
 
 PROGRAM = ODBCDRV1.dll
 TEST_PROGRAM = unittests
+
+.PHONY: inone
+inone:
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES)  -shared driver.def
+## $(addprefix ../dapi/, $(DAPI_MODULES))
 
 .PHONY: all
 all: $(PROGRAM) $(TEST_PROGRAM)

@@ -5,7 +5,7 @@ import std.conv : text;
 import std.string : toLower;
 import std.traits : EnumMembers;
 import std.typecons : Rebindable, rebindable;
-import json : parseJSON;
+import facebook.json : parseJSON;
 import std.stdio;
 
 import mockcurl : get, post, del;
