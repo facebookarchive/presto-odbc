@@ -17,6 +17,9 @@ TEST_PROGRAM = unittests
 .PHONY: all
 all: $(PROGRAM) $(TEST_PROGRAM)
 
+.PHONY: driver
+driver: $(PROGRAM)
+
 $(PROGRAM): $(OBJS)
 	$(DC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -shared driver.def
 

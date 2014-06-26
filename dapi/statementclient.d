@@ -131,10 +131,10 @@ enum PRESTO_HEADER {
 }
 
 unittest {
-  enqueueCurlResult(JSBuilder().withNext().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
   auto session = ClientSession("localhost", "user1");
   auto query = "SELECT lemons FROM life";
@@ -157,10 +157,10 @@ unittest {
 }
 
 unittest {
-  enqueueCurlResult(JSBuilder().withNext().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
   auto session = ClientSession("localhost", "user1");
   auto query = "SELECT lemons FROM life";
@@ -185,11 +185,11 @@ unittest {
 unittest {
   import std.concurrency : Tid, spawn, receiveOnly;
 
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withNext().withColumns().withData().toString().dup);
-  enqueueCurlResult(JSBuilder().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
+  enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
   auto session = ClientSession("localhost", "user1");
   auto client = StatementClient(session, "");
@@ -219,7 +219,7 @@ version(unittest) {
 
 
 unittest {
-  enqueueCurlResult(JSBuilder().withNext().toString().dup);
+  enqueueCurlResult(new JSBuilder().withNext().toString().dup);
 
   auto session = ClientSession("localhost", "user1");
   auto client = StatementClient(session, "query");

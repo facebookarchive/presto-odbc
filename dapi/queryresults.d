@@ -17,7 +17,7 @@ immutable(QueryResults) queryResults(JSONValue rawResult) {
   return new immutable(QueryResults)(rawResult);
 }
 
-class QueryResults {
+final class QueryResults {
 
   this(JSONValue rawResult) immutable {
     id_ = rawResult["id"].str;
@@ -26,7 +26,7 @@ class QueryResults {
     nextURI_ = getStringPropertyOrDefault!"nextUri"(rawResult);
     stats_ = QueryStats(rawResult["stats"]);
 
-    columns_ = parseColumns(rawResult);
+    columns_ = parseColumnMetadata(rawResult);
 
     if ("data" in rawResult) {
       data_ = rawResult["data"];
@@ -35,14 +35,14 @@ class QueryResults {
     }
   }
 
-  @property {
-    string id() const nothrow { return id_; }
-    string infoURI() const nothrow { return infoURI_; }
-    string partialCancelURI() const nothrow { return partialCancelURI_; }
-    string nextURI() const nothrow { return nextURI_; }
-    auto columns() const nothrow { return columns_; }
-    auto data() const nothrow { return data_; }
-    auto stats() const nothrow { return stats_; }
+  @property const nothrow {
+    string id() { return id_; }
+    string infoURI() { return infoURI_; }
+    string partialCancelURI() { return partialCancelURI_; }
+    string nextURI() { return nextURI_; }
+    auto columns() { return columns_; }
+    auto data() { return data_; }
+    auto stats() { return stats_; }
   }
 
   auto byRow(RowTList...)() const {
@@ -52,7 +52,7 @@ class QueryResults {
     return Range!RowTList(this, data_.array);
   }
 
-  struct Range(RowTList...) {
+  static struct Range(RowTList...) {
     this(const(QueryResults) qr, immutable(JSONValue)[] data) {
       static assert(isJSONTypeList!UnnamedRowTList, "Types must be bool/long/double/string");
       static assert(2 * UnnamedRowTList.length == RowTList.length,
@@ -65,13 +65,13 @@ class QueryResults {
       }
       foreach (fieldName; fieldNames) {
         if (fieldName !in fieldNameToIndex) {
-          throw new NoSuchColumn("Asked for a column that does not exist!");
+          throw new NoSuchColumn("Asked for a column that does not exist");
         }
       }
     }
 
-    @property {
-      Tuple!RowTList front() const {
+    @property const {
+      Tuple!RowTList front() {
         assert(!data.empty);
 
         auto jsonRow = data[0];
@@ -92,12 +92,13 @@ class QueryResults {
         return result;
       }
 
-      bool empty() const {
+      bool empty() {
         return data.empty;
       }
     }
 
     void popFront() {
+      assert(!empty);
       data = data[1 .. $];
     }
 
@@ -111,7 +112,7 @@ class QueryResults {
 
 private:
   version(unittest) {
-    this(inout Column[] cols) {
+    this(inout ColumnMetadata[] cols) {
       columns_ = cols.idup;
       stats_ = QueryStats();
       data_ = emptyJSONArray();
@@ -122,33 +123,33 @@ private:
   string infoURI_;
   string partialCancelURI_;
   string nextURI_;
-  immutable(Column[]) columns_;
+  immutable(ColumnMetadata[]) columns_;
   immutable(JSONValue) data_;
   immutable(QueryStats) stats_;
-  //error
+  //TODO: Did not translate the 'error' field from Java yet
 }
 
 version(unittest) {
-  struct JSBuilder {
+  final class JSBuilder {
     private string js = "{
       \"id\" : \"123\",
       \"infoUri\" : \"localhost\",
       \"stats\" : {}";
 
-    JSBuilder* withNext() {
+    JSBuilder withNext() {
       js ~= ",\"nextUri\" : \"localhost\"";
-      return &this;
+      return this;
     }
 
-    JSBuilder* withColumns() {
+    JSBuilder withColumns() {
       js ~= ",\"columns\" : [ { \"name\" : \"col1\", \"type\" : \"varchar\" },
                               { \"name\" : \"col2\", \"type\" : \"bigint\" } ]";
-      return &this;
+      return this;
     }
 
-    JSBuilder* withData() {
+    JSBuilder withData() {
       js ~= ",\"data\" : [ [\"testentry1\", 45], [\"testentry2\", 3] ]";
-      return &this;
+      return this;
     }
 
     JSONValue build() {
@@ -162,7 +163,7 @@ version(unittest) {
 }
 
 unittest {
-  auto qr = queryResults(JSBuilder().withNext().build());
+  auto qr = queryResults(new JSBuilder().withNext().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(qr.columns.empty);
@@ -171,7 +172,7 @@ unittest {
 }
 
 unittest {
-  auto qr = queryResults(JSBuilder().withNext().withColumns().build());
+  auto qr = queryResults(new JSBuilder().withNext().withColumns().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(!qr.columns.empty);
@@ -183,7 +184,7 @@ unittest {
 }
 
 unittest {
-  auto qr = queryResults(JSBuilder().withNext().withColumns().withData().build());
+  auto qr = queryResults(new JSBuilder().withNext().withColumns().withData().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
   assert(!qr.columns.empty);
@@ -212,30 +213,26 @@ struct QueryStats {
   }
 }
 
-struct Column {
+struct ColumnMetadata {
   string name;
   string type;
 }
 
 class WrongTypeException(Expected) : PrestoClientException {
   this(string received = "bad runtime type") {
-    super("Expected " ~ text(typeid(Expected)) ~ " received " ~ received);
+    super("Expected " ~ Expected.stringof ~ " received " ~ received);
   }
 }
 
 class NoSuchColumn : PrestoClientException {
   this(string column = "") {
-    super("Asked for a non-existant column (" ~ column ~ ")");
+    super("Asked for a non-existent column (" ~ column ~ ")");
   }
 }
 
 private T jsonValueAs(T)(JSONValue elt) {
   static if (is(T == bool)) {
-    if (elt.type == JSON_TYPE.TRUE) {
-      return true;
-    } else {
-      return false;
-    }
+    return elt.type == JSON_TYPE.TRUE;
   } else static if (is(T == long)) {
     return elt.integer;
   } else static if (is(T == double)) {
@@ -260,7 +257,7 @@ private void requireMatchingType(T)(size_t fieldIndex, const(QueryResults) qr, c
 
 unittest {
   auto js = parseJSON("[\"test\"]");
-  auto qr = new QueryResults([ Column("test", "varchar") ]);
+  auto qr = new QueryResults([ ColumnMetadata("test", "varchar") ]);
   requireMatchingType!string(0, qr, js);
   assertThrown!(WrongTypeException!long)(requireMatchingType!long(0, qr, js));
   assertThrown!(WrongTypeException!bool)(requireMatchingType!bool(0, qr, js));
@@ -356,19 +353,17 @@ unittest {
   static assert(extractCTFEStrings!(int,"1","2",string,"3") == TypeTuple!("1","2","3"));
 }
 
-immutable(Column[]) parseColumns(JSONValue rawResult) {
+immutable(ColumnMetadata[]) parseColumnMetadata(JSONValue rawResult) {
   if ("columns" !in rawResult) {
     return [];
   }
 
-  import std.array : appender;
-  auto columns = appender!(Column[]);
+  import std.array;
+  import std.algorithm : map;
+  auto columns = appender!(ColumnMetadata[]);
   columns.reserve(rawResult["columns"].array.length);
 
-  foreach (columnJSON; rawResult["columns"].array) {
-    columns ~= Column(columnJSON["name"].str, columnJSON["type"].str);
-  }
-  return columns.data.idup;
+  return rawResult["columns"].array.map!(v => ColumnMetadata(v["name"].str, v["type"].str)).array.idup;
 }
 
 JSONValue emptyJSONArray() {

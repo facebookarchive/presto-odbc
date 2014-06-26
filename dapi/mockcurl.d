@@ -6,10 +6,9 @@ import std.net.curl : HTTP;
 //depending on whether or not we are testing.
 
 version(unittest) {
-  alias CurlResultType = char[];
-  CurlResultType[] mockCurlResults;
+  char[][] mockCurlResults;
 
-  void enqueueCurlResult(CurlResultType result) {
+  void enqueueCurlResult(char[] result) {
     mockCurlResults ~= result;
   }
 
