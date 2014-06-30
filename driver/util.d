@@ -10,9 +10,21 @@ import odbcinst;
 import statementclient;
 
 void logMessage(TList...)(auto ref TList vs) {
-  import std.file : append;
+  import std.file : append, FileException;
   auto message = buildDebugMessage(vs) ~ '\n';
-  append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log", message);
+  FileException fileException;
+  for (;;) {
+    try {
+      append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log", message);
+      if (fileException) {
+        append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log",
+            "Had at least one file exception, latest:\n"w ~ wtext(fileException));
+      }
+      break;
+    } catch (FileException e) {
+      fileException = e;
+    }
+  }
 }
 
 void showPopupMessage(TList...)(auto ref TList vs) {
