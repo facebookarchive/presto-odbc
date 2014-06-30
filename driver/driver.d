@@ -487,19 +487,18 @@ SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQL_TYPE_ID dataType) {
   return exceptionBoundary!(() => {
+    import typeinfo;
     logMessage("SQLGetTypeInfo", dataType);
 
-    with (statementHandle) {
-      with (SQL_TYPE_ID) {
-        switch(dataType) {
-        case SQL_UNKNOWN_TYPE:
-        case SQL_VARCHAR:
-          latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow();
-          break;
-        default:
-          logMessage("Unexpected type in GetTypeInfo");
-          break;
-        }
+    with (statementHandle) with (Nullability) with (SQL_TYPE_ID) {
+      switch(dataType) {
+      case SQL_UNKNOWN_TYPE:
+      case SQL_VARCHAR:
+        latestOdbcResult = new TypeInfoResult!VarcharTypeInfoResultRow(SQL_NULLABLE);
+        break;
+      default:
+        logMessage("Unexpected type in GetTypeInfo");
+        break;
       }
     }
 
