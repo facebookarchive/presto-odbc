@@ -247,7 +247,7 @@ final class VarcharTypeInfoResultRow : OdbcResultRow {
     case TypeInfoResultColumns.CREATE_PARAMS:
       return Variant("length");
     case TypeInfoResultColumns.NULLABLE:
-      return Variant(SQL_NULLABLE);
+      return Variant(Nullability.SQL_NULLABLE);
     case TypeInfoResultColumns.CASE_SENSITIVE:
       return Variant(SQL_TRUE);
     case TypeInfoResultColumns.SEARCHABLE:
@@ -407,7 +407,7 @@ final class IntegerColumnsResultRow : OdbcResultRow {
       case NUM_PREC_RADIX:
         return Variant(2);
       case NULLABLE:
-        return Variant(SQL_NO_NULLS);
+        return Variant(Nullability.SQL_NO_NULLS);
       case REMARKS:
         return Variant("A faux column for testing");
       case COLUMN_DEF:

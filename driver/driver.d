@@ -208,7 +208,7 @@ SQLRETURN SQLDescribeColW(
       *sqlDataTypeOfColumn = SQL_TYPE_ID.SQL_INTEGER;
       *columnSize = 10;
       *decimalDigits = 0;
-      *nullable = SQL_NO_NULLS;
+      *nullable = Nullability.SQL_NO_NULLS;
     }
     return SQL_SUCCESS;
   }());
