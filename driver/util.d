@@ -7,7 +7,7 @@ import core.stdc.stdlib : abort;
 
 import sqlext;
 import odbcinst;
-import statementclient;
+import statementclient : StatementClient, ClientSession;
 
 void logMessage(TList...)(auto ref TList vs) {
   import std.file : append, FileException;

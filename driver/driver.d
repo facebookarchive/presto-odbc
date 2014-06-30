@@ -18,6 +18,7 @@ import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoun
 import util : OutputWChar, wcharsToBytes, runQuery;
 import bindings;
 import prestoresults;
+import columnresults;
 
 //////  DLL entry point for global initializations/finalizations if any
 
@@ -394,7 +395,7 @@ SQLRETURN SQLColumnsW(
 
     with (statementHandle) {
       logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
-      latestOdbcResult = new ColumnsResult();
+      latestOdbcResult = listColumnsInTable(text(tableName));
       return SQL_SUCCESS;
     }
   }());
