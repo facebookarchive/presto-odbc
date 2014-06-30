@@ -17,8 +17,7 @@ TEST_PROGRAM = unittests
 
 .PHONY: inone
 inone:
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES)  -shared driver.def
-## $(addprefix ../dapi/, $(DAPI_MODULES))
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -shared driver.def
 
 .PHONY: all
 all: $(PROGRAM) $(TEST_PROGRAM)

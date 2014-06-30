@@ -7,6 +7,7 @@ import core.stdc.stdlib : abort;
 
 import sqlext;
 import odbcinst;
+import statementclient;
 
 void logMessage(TList...)(auto ref TList vs) {
   import std.file : append;
@@ -288,4 +289,12 @@ struct OutputWChar {
 
   wchar[] buffer;
   alias buffer this;
+}
+
+StatementClient runQuery(string query) {
+  auto session = ClientSession("localhost:8080", "ODBC Driver");
+  session.catalog = "tpch";
+  session.schema = "tiny";
+
+  return StatementClient(session, query);
 }
