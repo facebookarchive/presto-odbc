@@ -81,29 +81,6 @@ void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
 }
 
 unittest {
-  dispatchOnSqlType!(requireIntType)(SQL_TYPE_ID.SQL_INTEGER);
-}
-
-version(unittest) {
-  static void requireIntType(T, TList...)(TList) {
-    static if (!is(T == int)) {
-      assert(false, "Wrong type dispatched");
-    }
-  }
-}
-
-auto dispatchOnSqlType(alias fun, TList...)(SQL_TYPE_ID type, auto ref TList vs) {
-  switch(type) {
-    foreach(i, SQL_TYPE; SQL_TYPES) {
-      case cast(SQL_TYPE_ID)i:
-        return fun!SQL_TYPE(vs);
-    }
-  default:
-    assert(false, "Bad SQL_TYPE_ID passed: " ~ text(type));
-  }
-}
-
-unittest {
   dispatchOnSqlCType!(requireIntType)(SQL_C_TYPE_ID.SQL_C_LONG);
 }
 
@@ -120,6 +97,14 @@ auto dispatchOnSqlCType(alias fun, TList...)(SQL_C_TYPE_ID type, auto ref TList 
     }
   }
   return impl!SQL_C_TYPES();
+}
+
+version(unittest) {
+  static void requireIntType(T, TList...)(TList) {
+    static if (!is(T == int)) {
+      assert(false, "Wrong type dispatched");
+    }
+  }
 }
 
 unittest {
