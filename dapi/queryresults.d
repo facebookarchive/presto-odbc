@@ -9,7 +9,7 @@ import std.stdio;
 import dapi.util : PrestoClientException;
 
 version(unittest) {
-  import json : parseJSON;
+  import facebook.json : parseJSON;
   import std.exception : assertThrown;
 }
 
