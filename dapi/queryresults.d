@@ -26,7 +26,7 @@ final class QueryResults {
     nextURI_ = getStringPropertyOrDefault!"nextUri"(rawResult);
     stats_ = QueryStats(rawResult["stats"]);
 
-    columns_ = parseColumnMetadata(rawResult);
+    columnMetadata_ = parseColumnMetadata(rawResult);
 
     if ("data" in rawResult) {
       data_ = rawResult["data"];
@@ -40,13 +40,13 @@ final class QueryResults {
     string infoURI() { return infoURI_; }
     string partialCancelURI() { return partialCancelURI_; }
     string nextURI() { return nextURI_; }
-    auto columns() { return columns_; }
+    auto columnMetadata() { return columnMetadata_; }
     auto data() { return data_; }
     auto stats() { return stats_; }
   }
 
   auto byRow(RowTList...)() const {
-    if (columns_.empty) {
+    if (columnMetadata_.empty) {
       return Range!RowTList();
     }
     return Range!RowTList(this, data_.array);
@@ -60,7 +60,7 @@ final class QueryResults {
 
       this.qr = qr;
       this.data = data;
-      foreach (i, column; qr.columns_) {
+      foreach (i, column; qr.columnMetadata_) {
         fieldNameToIndex[column.name] = i;
       }
       foreach (fieldName; fieldNames) {
@@ -113,7 +113,7 @@ final class QueryResults {
 private:
   version(unittest) {
     this(inout ColumnMetadata[] cols) {
-      columns_ = cols.idup;
+      columnMetadata_ = cols.idup;
       stats_ = QueryStats();
       data_ = emptyJSONArray();
     }
@@ -123,7 +123,7 @@ private:
   string infoURI_;
   string partialCancelURI_;
   string nextURI_;
-  immutable(ColumnMetadata[]) columns_;
+  immutable(ColumnMetadata[]) columnMetadata_;
   immutable(JSONValue) data_;
   immutable(QueryStats) stats_;
   //TODO: Did not translate the 'error' field from Java yet
@@ -156,7 +156,7 @@ version(unittest) {
       return parseJSON(toString());
     }
 
-    string toString() {
+    override string toString() {
       return js ~ "}";
     }
   }
@@ -166,7 +166,7 @@ unittest {
   auto qr = queryResults(new JSBuilder().withNext().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
-  assert(qr.columns.empty);
+  assert(qr.columnMetadata.empty);
   assert(qr.data.array.empty);
   assert(qr.byRow().empty);
 }
@@ -175,11 +175,11 @@ unittest {
   auto qr = queryResults(new JSBuilder().withNext().withColumns().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
-  assert(!qr.columns.empty);
+  assert(!qr.columnMetadata.empty);
   assert(qr.data.array.empty);
   assert(qr.byRow().empty);
   assert(qr.byRow!(long, "col2").empty);
-  assert(qr.columns[0].name == "col1");
+  assert(qr.columnMetadata[0].name == "col1");
   assertThrown!NoSuchColumn(qr.byRow!(long, "doesNotExist"));
 }
 
@@ -187,10 +187,10 @@ unittest {
   auto qr = queryResults(new JSBuilder().withNext().withColumns().withData().build());
   assert(qr.id == "123");
   assert(qr.nextURI == "localhost");
-  assert(!qr.columns.empty);
+  assert(!qr.columnMetadata.empty);
   assert(!qr.data.array.empty);
   assert(!qr.byRow().empty);
-  assert(qr.columns[0].name == "col1");
+  assert(qr.columnMetadata[0].name == "col1");
 
   auto rng = qr.byRow!(long, "col2");
   assert(rng.front[0] == 45);
@@ -249,7 +249,7 @@ unittest {
 }
 
 private void requireMatchingType(T)(size_t fieldIndex, const(QueryResults) qr, const JSONValue jsonRow) {
-  if (!typeMatchesColumnTypeName!T(qr.columns[fieldIndex].type)
+  if (!typeMatchesColumnTypeName!T(qr.columnMetadata[fieldIndex].type)
       || !typeMatchesJSONType!T(jsonRow[fieldIndex].type)) {
     throw new WrongTypeException!T;
   }
@@ -360,8 +360,8 @@ immutable(ColumnMetadata[]) parseColumnMetadata(JSONValue rawResult) {
 
   import std.array;
   import std.algorithm : map;
-  auto columns = appender!(ColumnMetadata[]);
-  columns.reserve(rawResult["columns"].array.length);
+  auto columnMetadata = appender!(ColumnMetadata[]);
+  columnMetadata.reserve(rawResult["columns"].array.length);
 
   return rawResult["columns"].array.map!(v => ColumnMetadata(v["name"].str, v["type"].str)).array.idup;
 }
