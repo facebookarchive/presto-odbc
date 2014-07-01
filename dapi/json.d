@@ -384,14 +384,14 @@ struct JSONValue
     }
 
     /// Implicitly calls $(D toJSON) on this JSONValue.
-    string toString()
+    string toString() const
     {
         return toJSON(&this);
     }
 
     /// Implicitly calls $(D toJSON) on this JSONValue, like $(D toString), but
     /// also passes $(I true) as $(I pretty) argument.
-    string toPrettyString()
+    string toPrettyString() const
     {
         return toJSON(&this, true);
     }
