@@ -15,8 +15,9 @@ import sqlext;
 import odbcinst;
 
 import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary, strlen, toDString;
-import util : OutputWChar, wcharsToBytes;
+import util : OutputWChar, wcharsToBytes, runQuery;
 import bindings;
+import prestoresults;
 
 //////  DLL entry point for global initializations/finalizations if any
 
@@ -227,7 +228,22 @@ SQLRETURN SQLExecute(OdbcStatement statementHandle) {
   return exceptionBoundary!(() => {
     logMessage("SQLExecute");
     with (statementHandle) {
-      latestOdbcResult = new FauxDataResult();
+      import bindings;
+      auto client = runQuery(text(query));
+      auto result = makeWithoutGC!PrestoResult();
+      foreach (batchNumber, resultBatch; client) {
+        logMessage("SQLExecute working on result batch", batchNumber);
+        result.columnMetadata = resultBatch.columnMetadata;
+        foreach (row; resultBatch.data.array) {
+          auto dataRow = makeWithoutGC!PrestoResultRow();
+          foreach (columnData; row.array) {
+            addToPrestoResultRow(columnData, dataRow);
+          }
+          dllEnforce(dataRow.numberOfColumns() != 0, "Row has at least 1 column");
+          result.addRow(dataRow);
+        }
+      }
+      latestOdbcResult = result;
     }
     return SQL_SUCCESS;
   }());
@@ -313,7 +329,10 @@ SQLRETURN SQLNumResultCols(
     with (statementHandle) {
       //TODO: Revisit this assert: Can actually call this function when the query
       //                           is prepared but before it has been executed.
-      assert(!latestOdbcResult.empty && latestOdbcResult.numberOfColumns);
+      logMessage(text(typeid(cast(Object) statementHandle.latestOdbcResult)));
+      bool couldBeEmptyPrestoResult = typeid(cast(Object) statementHandle.latestOdbcResult) == typeid(PrestoResult);
+      bool isAnOldResult = latestOdbcResult.empty && latestOdbcResult.numberOfColumns;
+      assert(!isAnOldResult || couldBeEmptyPrestoResult);
       *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);
     }
     return SQL_SUCCESS;
