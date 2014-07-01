@@ -9,6 +9,7 @@ import odbcinst;
 
 import bindings : OdbcResult, OdbcResultRow;
 import util : dllEnforce, logMessage;
+import queryresults : ColumnMetadata;
 
 void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
   final switch (columnData.type) {

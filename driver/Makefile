@@ -7,7 +7,7 @@ LIB_FLAGS = -Luser32.lib # -L-LIBPATH:"$(LIB_PATH)" -v
 CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
-MODULES = driver bindings columnresults typeinfo util odbcinst sql sqlext sqltypes sqlucode
+MODULES = driver bindings columnresults tableinfo prestoresults typeinfo util odbcinst sql sqlext sqltypes sqlucode
 DAPI_MODULES = statementclient queryresults mockcurl util json
 OBJS = $(addsuffix .prod.obj, $(MODULES))
 TEST_OBJS = $(addsuffix .unit.obj, $(MODULES))

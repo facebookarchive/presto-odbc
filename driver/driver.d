@@ -604,18 +604,31 @@ SQLRETURN SQLTablesW(
     SQLSMALLINT _catalogNameLength,
     in SQLWCHAR* _schemaName,
     SQLSMALLINT _schemaNameLength,
-    in SQLWCHAR* _tableName,
-    SQLSMALLINT _tableNameLength,
+    in SQLWCHAR* _tableNamePattern,
+    SQLSMALLINT _tableNamePatternLength,
     in SQLWCHAR* _tableType,
     SQLSMALLINT _tableTypeLength) {
   return exceptionBoundary!(() => {
+    import tableinfo;
     auto catalogName = toDString(_catalogName, _catalogNameLength);
     auto schemaName = toDString(_schemaName, _schemaNameLength);
-    auto tableName = toDString(_tableName, _tableNameLength);
+    auto tableNamePattern = toDString(_tableNamePattern, _tableNamePatternLength);
     auto tableType = toDString(_tableType, _tableTypeLength);
     with (statementHandle) {
-      logMessage("SQLTablesW", catalogName, schemaName, tableName, tableType);
-      latestOdbcResult = new TableInfoResult();
+      logMessage("SQLTablesW", catalogName, schemaName, tableNamePattern, tableType);
+
+      auto client = runQuery("SHOW TABLES");
+      auto result = makeWithoutGC!TableInfoResult();
+      foreach (resultBatch; client) {
+        foreach (row; resultBatch.data.array) {
+          auto tableName = row.array.front.str;
+          result.addTable(tableName);
+          logMessage("SQLTablesW found table:", tableName);
+        }
+      }
+
+      latestOdbcResult = result;
+      return SQL_SUCCESS;
       return SQL_SUCCESS;
     }
   }());
