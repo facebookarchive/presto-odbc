@@ -249,9 +249,9 @@ SQLRETURN SQLExecute(OdbcStatement statementHandle) {
       import bindings;
       auto client = runQuery(text(query));
       auto result = makeWithoutGC!PrestoResult();
-      import std.array : array; //TODO: Find a less hacky fix!
-      foreach (batchNumber, resultBatch; client.array) {
-        logMessage("SQLExecute working on result batch", batchNumber);
+      uint batchNumber;
+      foreach (resultBatch; client) {
+        logMessage("SQLExecute working on result batch", ++batchNumber);
         result.columnMetadata = resultBatch.columnMetadata;
         foreach (row; resultBatch.data.array) {
           auto dataRow = makeWithoutGC!PrestoResultRow();
