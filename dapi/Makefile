@@ -13,26 +13,20 @@ CFLAGS = -c
 FLAGS = -g -m64
 
 MODULES = main statementclient queryresults mockcurl util json
-OBJS = $(addsuffix .prod.$(OBJ_SUFFIX), $(MODULES))
-TEST_OBJS = $(addsuffix .unit.$(OBJ_SUFFIX), $(MODULES))
 
 PROGRAM = odbc
 TEST_PROGRAM = unittests
 
-.PHONY: default
-default: $(PROGRAM) $(TEST_PROGRAM)
+.PHONY: all
+all: inone
 
-$(PROGRAM): $(OBJS)
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -of$(PROGRAM)
+.PHONY: inone
+inone:
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) -of$(PROGRAM)
 
-$(TEST_PROGRAM): $(TEST_OBJS)
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(TEST_OBJS) -of$(TEST_PROGRAM)
-
-%.prod.$(OBJ_SUFFIX): %.d
-	$(DC) $(CFLAGS) $(FLAGS) $< -of$@
-
-%.unit.$(OBJ_SUFFIX): %.d
-	$(DC) $(CFLAGS) $(FLAGS) -unittest $< -of$@
+.PHONY: testsinone
+testsinone:
+	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(MODULES) -of$(TEST_PROGRAM)
 
 .PHONY: clean
 clean:

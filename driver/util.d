@@ -11,14 +11,15 @@ import statementclient : StatementClient, ClientSession;
 
 void logMessage(TList...)(auto ref TList vs) {
   import std.file : append, FileException;
+  enum logFile = "C:\\temp\\presto_odbc.log";
+
   auto message = buildDebugMessage(vs) ~ '\n';
   FileException fileException;
   for (;;) {
     try {
-      append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log", message);
+      append(logFile, message);
       if (fileException) {
-        append("C:\\Users\\markisaa\\Desktop\\presto_odbc.log",
-            "Had at least one file exception, latest:\n"w ~ wtext(fileException));
+        append(logFile, "Had at least one file exception, latest:\n"w ~ wtext(fileException));
       }
       break;
     } catch (FileException e) {

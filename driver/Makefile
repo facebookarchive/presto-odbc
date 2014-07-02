@@ -2,51 +2,38 @@
 DC = dmd
 
 LIB_PATH = \"C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\amd64\ \"
-LIB_FLAGS = -Luser32.lib # -L-LIBPATH:"$(LIB_PATH)" -v
+LIB_FLAGS = -Luser32.lib
 
 CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
-MODULES = driver bindings columnresults tableinfo prestoresults typeinfo util odbcinst sql sqlext sqltypes sqlucode
+SQL_MODULES = odbcinst sql sqlext sqltypes sqlucode
+MODULES = driver bindings columnresults tableinfo prestoresults typeinfo util $(SQL_MODULES)
 DAPI_MODULES = statementclient queryresults mockcurl util json
-OBJS = $(addsuffix .prod.obj, $(MODULES))
-TEST_OBJS = $(addsuffix .unit.obj, $(MODULES))
 
-PROGRAM = ODBCDRV1.dll
+PROGRAM = PrestoOdbc.dll
 TEST_PROGRAM = unittests
+
+.PHONY: all
+all: inone
 
 .PHONY: inone
 inone:
 	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -shared driver.def
 
-.PHONY: all
-all: $(PROGRAM) $(TEST_PROGRAM)
-
-.PHONY: driver
-driver: $(PROGRAM)
-
-$(PROGRAM): $(OBJS)
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(OBJS) -shared driver.def
-
-$(TEST_PROGRAM): $(TEST_OBJS)
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(TEST_OBJS) -of$(TEST_PROGRAM)
-
-%.prod.obj: %.d
-	$(DC) $(CFLAGS) $(FLAGS) -shared $< -of$@
-
-%.unit.obj: %.d
-	$(DC) $(CFLAGS) $(FLAGS) -unittest $< -of$@
+.PHONY: testsinone
+testsinone:
+	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -of$(TEST_PROGRAM)
 
 .PHONY: copy
 copy:
-	cp $(PROGRAM) /cygdrive/c/TEMP/$(PROGRAM)
-	rm -f /cygdrive/c/Users/markisaa/Desktop/SQL.LOG
-	mv -f /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log /cygdrive/c/Users/markisaa/Desktop/presto_odbc.last.log
+	cp $(PROGRAM) /cygdrive/c/temp/$(PROGRAM)
+	rm -f /cygdrive/c/temp/SQL.LOG
+	mv -f /cygdrive/c/temp/presto_odbc.log /cygdrive/c/temp/presto_odbc.last.log
 
 .PHONY: logdiff
 logdiff:
-	sdiff --text /cygdrive/c/Users/markisaa/Desktop/presto_odbc.log /cygdrive/c/Users/markisaa/Desktop/presto_odbc.last.log
-
+	sdiff --text /cygdrive/c/temp/presto_odbc.log /cygdrive/c/temp/presto_odbc.last.log
 
 .PHONY: clean
 clean:

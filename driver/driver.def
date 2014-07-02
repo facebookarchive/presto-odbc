@@ -1,5 +1,5 @@
-LIBRARY   ODBCDRV1
-DESCRIPTION "General ODBC Driver 0"
+LIBRARY PrestoOdbc
+DESCRIPTION "Presto ODBC Driver"
 EXPORTS
 	SQLAllocHandle
 	SQLBindCol

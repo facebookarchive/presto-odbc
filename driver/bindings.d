@@ -114,7 +114,8 @@ unittest {
 
 auto dispatchOnVariantType(alias fun, TList...)(Variant value, auto ref TList vs) {
   auto type = value.type();
-  foreach (T; TypeTuple!(string, short, ushort, int, uint, long, ulong, bool, SQL_TYPE_ID, typeof(null))) {
+  foreach (T; TypeTuple!(string, short, ushort, int, uint, long, ulong, bool,
+          double, Nullability, SQL_TYPE_ID, typeof(null))) {
     if(type == typeid(T)) {
       return fun!T(value, vs);
     }
