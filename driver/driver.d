@@ -206,11 +206,28 @@ SQLRETURN SQLDescribeColW(
     assert(nullable);
     logMessage("SQLDescribeCol", columnNumber);
     with (statementHandle) {
-      *_columnNameLengthChars = copyToBuffer("amount"w, columnName);
-      *sqlDataTypeOfColumn = SQL_TYPE_ID.SQL_INTEGER;
-      *columnSize = 10;
-      *decimalDigits = 0;
-      *nullable = Nullability.SQL_NO_NULLS;
+      //TODO: Technically this can be called after SQLPrepare, not just SQLExecute, fix this:
+      dllEnforce(latestOdbcResult !is null);
+      auto result = cast(PrestoResult) latestOdbcResult;
+      auto columnMetadata = result.columnMetadata[columnNumber - 1];
+      auto sourceOfTruth = prestoTypeToColumnsResult(columnMetadata.type, "", "", Nullability.SQL_NULLABLE_UNKNOWN, 1);
+      logMessage("SQLDescribeCol found column: ", columnMetadata.name, columnMetadata.type, typeid(sourceOfTruth));
+
+      *_columnNameLengthChars = copyToBuffer(wtext(columnMetadata.name), columnName);
+      *nullable = to!SQLSMALLINT(Nullability.SQL_NULLABLE_UNKNOWN);
+      with (ColumnsResultColumns) {
+        *sqlDataTypeOfColumn = to!SQLSMALLINT(sourceOfTruth.dataAt(SQL_DATA_TYPE).get!SQL_TYPE_ID);
+
+        auto columnSizeSigned = sourceOfTruth.dataAt(COLUMN_SIZE).get!int;
+        *columnSize = columnSizeSigned >= 0 ? to!SQLULEN(columnSizeSigned) : 0;
+
+        auto decimalDigitsVariant = sourceOfTruth.dataAt(DECIMAL_DIGITS);
+        if (decimalDigitsVariant.convertsTo!SQLSMALLINT) {
+          *decimalDigits = decimalDigitsVariant.coerce!SQLSMALLINT;
+        } else { //The Variant holds null
+          *decimalDigits = 0;
+        }
+      }
     }
     return SQL_SUCCESS;
   }());
