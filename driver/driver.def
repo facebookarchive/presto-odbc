@@ -20,7 +20,6 @@ EXPORTS
 	SQLEndTran
 	SQLExecDirectW
 	SQLExecute
-	SQLExtendedFetch
 	SQLFetch
 	SQLFetchScroll
 	SQLForeignKeysW

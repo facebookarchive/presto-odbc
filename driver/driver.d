@@ -47,6 +47,7 @@ extern(System):
 
 ///// SQLDriverConnect /////
 
+//Note: If making changes here, also look at SQLBrowseConnect
 SQLRETURN SQLDriverConnectW(
     SQLHDBC hdbc,
     SQLHWND hwnd,
@@ -82,14 +83,59 @@ SQLRETURN SQLDriverConnectW(
   }());
 }
 
+///// SQLBrowseConnect /////
+
+//Note: If making changes here, also look at SQLDriverConnect
+SQLRETURN SQLBrowseConnectW(
+    SQLHDBC hdbc,
+    in SQLWCHAR* _connStrIn,
+    SQLSMALLINT _connStrInChars,
+    SQLWCHAR* _connStrOut,
+    SQLSMALLINT _connStrOutMaxChars,
+    SQLSMALLINT* connStrOutChars) {
+  return exceptionBoundary!(() => {
+    auto connStr = toDString(_connStrIn, _connStrInChars);
+    auto connStrOut = OutputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof);
+
+    logMessage("SQLBrowseConnect (unimplemented)", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars);
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLConnect /////
+
+SQLRETURN SQLConnectW(
+    SQLHDBC hdbc,
+    in SQLWCHAR* _serverName,
+    SQLSMALLINT _serverNameLengthChars,
+    in SQLWCHAR* _userName,
+    SQLSMALLINT _userNameLengthChars,
+    in SQLWCHAR* _authenticationString,
+    SQLSMALLINT _authenticationStringLengthChars) {
+  logMessage("SQLConnect (unimplemented)");
+  return exceptionBoundary!(() => {
+    auto serverName = toDString(_serverName, _serverNameLengthChars);
+    auto userName = toDString(_userName, _userNameLengthChars);
+    auto authenticationName = toDString(_authenticationString, _authenticationStringLengthChars);
+    logMessage("SQLConnect (unimplemented)", serverName, userName, authenticationName);
+    return SQL_SUCCESS;
+  }());
+}
+
 ///// SQLExecDirect /////
 
 SQLRETURN SQLExecDirectW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szSqlStr,
-    SQLINTEGER TextLength) {
-  logMessage("SQLExecDirect", szSqlStr, TextLength);
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _statementText,
+    SQLINTEGER _textLengthChars) {
+  return exceptionBoundary!(() => {
+    auto statementText = toDString(_statementText, _textLengthChars);
+    logMessage("SQLExecDirectW (unimplemented)", statementText);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLAllocHandle /////
@@ -165,23 +211,14 @@ SQLRETURN SQLBindCol(
 
 ///// SQLCancel /////
 
-SQLRETURN SQLCancel(SQLHSTMT StatementHandle) {
-  logMessage("SQLCancel");
-  return SQL_SUCCESS;
-}
-
-///// SQLConnect /////
-
-SQLRETURN SQLConnectW(
-    SQLHDBC hdbc,
-    SQLWCHAR* szDSN,
-    SQLSMALLINT cchDSN,
-    SQLWCHAR* szUID,
-    SQLSMALLINT cchUID,
-    SQLWCHAR* szAuthStr,
-    SQLSMALLINT cchAuthStr) {
-  logMessage("SQLConnect");
-  return SQL_SUCCESS;
+SQLRETURN SQLCancel(OdbcStatement statementHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLCancel (unimplemented)");
+    with (statementHandle) {
+      //TODO -- Not relevant until we support concurrency
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLDescribeCol /////
@@ -233,11 +270,31 @@ SQLRETURN SQLDescribeColW(
   }());
 }
 
+///// SQLDescribeParam /////
+
+SQLRETURN SQLDescribeParam(
+    OdbcStatement statementHandle,
+    SQLUSMALLINT parameterNumber,
+    SQLSMALLINT* dataType,
+    SQLULEN* columnSize,
+    SQLSMALLINT* decimalDigits,
+    SQLSMALLINT* nullable) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLDescribeParam (unimplemented)", parameterNumber);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
+}
+
 ///// SQLDisconnect /////
 
-SQLRETURN SQLDisconnect(SQLHDBC ConnectionHandle) {
-  logMessage("SQLDisconnect");
-  return SQL_SUCCESS;
+SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLDisconnect (unimplemented)");
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLExecute /////
@@ -302,24 +359,22 @@ SQLRETURN SQLFreeStmt(
     FreeStmtOptions option) {
   import std.c.stdlib : free;
   return exceptionBoundary!(() => {
-    with (statementHandle) {
-      with (FreeStmtOptions) {
-        final switch(option) {
-        case SQL_CLOSE:
-          latestOdbcResult = null;
-          columnBindings = null;
-          break;
-        case SQL_DROP:
-          dllEnforce(false, "Deprecated option: SQL_DROP");
-          return SQL_ERROR;
-        case SQL_UNBIND:
-          columnBindings = null;
-          break;
-        case SQL_RESET_PARAMS:
-          break;
-        }
+    logMessage("SQLFreeStmt", option);
+    with (statementHandle) with (FreeStmtOptions) {
+      final switch(option) {
+      case SQL_CLOSE:
+        latestOdbcResult = null;
+        columnBindings = null;
+        break;
+      case SQL_DROP:
+        dllEnforce(false, "Deprecated option: SQL_DROP");
+        return SQL_ERROR;
+      case SQL_UNBIND:
+        columnBindings = null;
+        break;
+      case SQL_RESET_PARAMS:
+        break;
       }
-      logMessage("SQLFreeStmt", option);
     }
 
     return SQL_SUCCESS;
@@ -329,12 +384,34 @@ SQLRETURN SQLFreeStmt(
 ///// SQLGetCursorName /////
 
 SQLRETURN SQLGetCursorNameW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCursor,
-    SQLSMALLINT cchCursorMax,
-    SQLSMALLINT* pcchCursor) {
-  logMessage("SQLGetCursorName", szCursor, cchCursorMax, pcchCursor);
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLWCHAR* _cursorName,
+    SQLSMALLINT _cursorNameMaxLengthBytes,
+    SQLSMALLINT* _cursorNameLengthBytes) {
+    return exceptionBoundary!(() => {
+      auto cursorName = OutputWChar(_cursorName, _cursorNameMaxLengthBytes);
+      logMessage("SQLGetCursorName (unimplemented)");
+      with (statementHandle) {
+        //TODO
+      }
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLSetCursorName /////
+
+SQLRETURN SQLSetCursorNameW(
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _cursorName,
+    SQLSMALLINT _cursorNameLengthChars) {
+  return exceptionBoundary!(() => {
+    auto cursorName = toDString(_cursorName, _cursorNameLengthChars);
+    logMessage("SQLSetCursorName (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLNumResultCols /////
@@ -377,20 +454,15 @@ SQLRETURN SQLPrepareW(
 ///// SQLRowCount /////
 
 SQLRETURN SQLRowCount(
-    SQLHSTMT StatementHandle,
-    SQLLEN* RowCount) {
-  logMessage("SQLRowCount", RowCount);
-  return SQL_SUCCESS;
-}
-
-///// SQLSetCursorName /////
-
-SQLRETURN SQLSetCursorNameW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCursor,
-    SQLSMALLINT cchCursor) {
-  logMessage("SQLSetCursorName");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLLEN* rowCount) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLRowCount (unimplemented)", rowCount);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLColumns /////
@@ -411,25 +483,56 @@ SQLRETURN SQLColumnsW(
     auto tableName = toDString(_tableName, _tableNameLength);
     auto columnName = toDString(_columnName, _columnNameLength);
 
+    logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
     with (statementHandle) {
-      logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
       latestOdbcResult = listColumnsInTable(text(tableName));
-      return SQL_SUCCESS;
     }
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLColumnPrivileges /////
+
+SQLRETURN SQLColumnPrivilegesW(
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    in SQLWCHAR* _tableName,
+    SQLSMALLINT _tableNameLength,
+    in SQLWCHAR* _columnName,
+    SQLSMALLINT _columnNameLength) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto tableName = toDString(_tableName, _tableNameLength);
+    auto columnName = toDString(_columnName, _columnNameLength);
+
+    logMessage("SQLColumnPrivileges", catalogName, schemaName, tableName, columnName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
   }());
 }
 
 ///// SQLGetData /////
 
 SQLRETURN SQLGetData(
-    SQLHSTMT StatementHandle,
-    SQLUSMALLINT ColumnNumber,
-    SQLSMALLINT TargetType,
-    SQLPOINTER TargetValue,
-    SQLLEN BufferLength,
-    SQLLEN* StrLen_or_IndPtr) {
-  logMessage("SQLGetData");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLUSMALLINT columnNumber,
+    SQL_C_TYPE_ID targetType,
+    SQLPOINTER targetValue,
+    SQLLEN bufferLength,
+    SQLLEN* stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetData (unimplemented)", columnNumber, targetType);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetInfo /////
@@ -547,20 +650,30 @@ SQLRETURN SQLGetTypeInfoW(
 ///// SQLParamData /////
 
 SQLRETURN SQLParamData(
-    SQLHSTMT StatementHandle,
-    SQLPOINTER *Value) {
-  logMessage("SQLParamData");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLPOINTER *value) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLParamData (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLPutData /////
 
 SQLRETURN SQLPutData(
-    SQLHSTMT StatementHandle,
-    SQLPOINTER Data,
-    SQLLEN StrLen_or_Ind) {
-  logMessage("SQLPutData");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLPOINTER data,
+    SQLLEN stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLPutData (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLSpecialColumns /////
@@ -568,12 +681,12 @@ SQLRETURN SQLPutData(
 
 SQLRETURN SQLSpecialColumnsW(
     OdbcStatement statementHandle,
-    SQL_SPECIAL_COLUMN_REQUEST_TYPE identifierType,
-    SQLWCHAR* _catalogName,
+    SpecialColumnRequestType identifierType,
+    in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
-    SQLWCHAR* _schemaName,
+    in SQLWCHAR* _schemaName,
     SQLSMALLINT _schemaNameLength,
-    SQLWCHAR* _tableName,
+    in SQLWCHAR* _tableName,
     SQLSMALLINT _tableNameLength,
     SQLUSMALLINT minScope,
     SQLUSMALLINT nullable) {
@@ -581,17 +694,15 @@ SQLRETURN SQLSpecialColumnsW(
     auto catalogName = toDString(_catalogName, _catalogNameLength);
     auto schemaName = toDString(_schemaName, _schemaNameLength);
     auto tableName = toDString(_tableName, _tableNameLength);
-    with (statementHandle) {
-      with (SQL_SPECIAL_COLUMN_REQUEST_TYPE) {
-        logMessage("SQLSpecialColumns", identifierType, catalogName, schemaName, tableName, minScope, nullable);
-        final switch (identifierType) {
-        case SQL_BEST_ROWID:
-          latestOdbcResult = new EmptyOdbcResult();
-          break;
-        case SQL_ROWVER:
-          latestOdbcResult = new EmptyOdbcResult();
-          break;
-        }
+    with (statementHandle) with (SpecialColumnRequestType) {
+      logMessage("SQLSpecialColumns (unimplemented)", identifierType, catalogName, schemaName, tableName, minScope, nullable);
+      final switch (identifierType) {
+      case SQL_BEST_ROWID:
+        latestOdbcResult = new EmptyOdbcResult();
+        break;
+      case SQL_ROWVER:
+        latestOdbcResult = new EmptyOdbcResult();
+        break;
       }
     }
     return SQL_SUCCESS;
@@ -601,17 +712,25 @@ SQLRETURN SQLSpecialColumnsW(
 ///// SQLStatistics /////
 
 SQLRETURN SQLStatisticsW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName,
-    SQLUSMALLINT fUnique,
-    SQLUSMALLINT fAccuracy) {
-  logMessage("SQLStatistics");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLengthChars,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLengthChars,
+    in SQLWCHAR* _tableName,
+    SQLSMALLINT _tableNameLengthChars,
+    IndexType unique,
+    StatisticsUrgency urgency) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLengthChars);
+    auto schemaName = toDString(_schemaName, _schemaNameLengthChars);
+    auto tableName = toDString(_tableName, _tableNameLengthChars);
+    logMessage("SQLStatistics (unimplemented)", catalogName, schemaName, tableName, unique, urgency);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLTables /////
@@ -652,241 +771,280 @@ SQLRETURN SQLTablesW(
   }());
 }
 
-///// SQLBrowseConnect /////
-
-SQLRETURN SQLBrowseConnectW(
-    SQLHDBC hdbc,
-    SQLWCHAR* szConnStrIn,
-    SQLSMALLINT cchConnStrIn,
-    SQLWCHAR* szConnStrOut,
-    SQLSMALLINT cchConnStrOutMax,
-    SQLSMALLINT* pcchConnStrOut) {
-  logMessage("SQLBrowseConnect");
-  return SQL_SUCCESS;
-}
-
-///// SQLColumnPrivileges /////
-
-SQLRETURN SQLColumnPrivilegesW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName,
-    SQLWCHAR* szColumnName,
-    SQLSMALLINT cchColumnName) {
-  logMessage("SQLColumnPrivileges");
-  return SQL_SUCCESS;
-}
-
-///// SQLDescribeParam /////
-
-SQLRETURN SQLDescribeParam(
-    SQLHSTMT hstmt,
-    SQLUSMALLINT ipar,
-    SQLSMALLINT* pfSqlType,
-    SQLULEN* pcbParamDef,
-    SQLSMALLINT* pibScale,
-    SQLSMALLINT* pfNullable) {
-  logMessage("SQLDescribeParam");
-  return SQL_SUCCESS;
-}
-
-///// SQLExtendedFetch /////
-
-SQLRETURN SQLExtendedFetch(
-    SQLHSTMT hstmt,
-    SQLUSMALLINT fFetchType,
-    SQLLEN irow,
-    SQLULEN* pcrow,
-    SQLUSMALLINT* rgfRowStatus) {
-  logMessage("SQLExtendedFetch");
-  return SQL_SUCCESS;
-}
-
 ///// SQLForeignKeys /////
 
 SQLRETURN SQLForeignKeysW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szPkCatalogName,
-    SQLSMALLINT cchPkCatalogName,
-    SQLWCHAR* szPkSchemaName,
-    SQLSMALLINT cchPkSchemaName,
-    SQLWCHAR* szPkTableName,
-    SQLSMALLINT cchPkTableName,
-    SQLWCHAR* szFkCatalogName,
-    SQLSMALLINT cchFkCatalogName,
-    SQLWCHAR* szFkSchemaName,
-    SQLSMALLINT cchFkSchemaName,
-    SQLWCHAR* szFkTableName,
-    SQLSMALLINT cchFkTableName) {
-  logMessage("SQLForeignKeys");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _primaryKeyCatalogName,
+    SQLSMALLINT _primaryKeyCatalogNameLengthChars,
+    in SQLWCHAR* _primaryKeySchemaName,
+    SQLSMALLINT _primaryKeySchemaNameLengthChars,
+    in SQLWCHAR* _primaryKeyTableName,
+    SQLSMALLINT _primaryKeyTableNameLengthChars,
+    in SQLWCHAR* _foreignKeyCatalogName,
+    SQLSMALLINT _foreignKeyCatalogNameLengthChars,
+    in SQLWCHAR* _foreignKeySchemaName,
+    SQLSMALLINT _foreignKeySchemaNameLengthChars,
+    in SQLWCHAR* _foreignKeyTableName,
+    SQLSMALLINT _foreignKeyTableNameLengthChars) {
+  return exceptionBoundary!(() => {
+    auto primaryKeyCatalogName = toDString(_primaryKeyCatalogName, _primaryKeyCatalogNameLengthChars);
+    auto primaryKeySchemaName = toDString(_primaryKeySchemaName, _primaryKeySchemaNameLengthChars);
+    auto primaryKeyTableName = toDString(_primaryKeyTableName, _primaryKeyTableNameLengthChars);
+    auto foreignKeyCatalogName = toDString(_foreignKeyCatalogName, _foreignKeyCatalogNameLengthChars);
+    auto foreignKeySchemaName = toDString(_foreignKeySchemaName, _foreignKeySchemaNameLengthChars);
+    auto foreignKeyTableName = toDString(_foreignKeyTableName, _foreignKeyTableNameLengthChars);
+
+    logMessage("SQLForeignKeys (unimplemented)",
+        primaryKeyCatalogName, primaryKeySchemaName, primaryKeyTableName,
+        foreignKeyCatalogName, foreignKeySchemaName, foreignKeyTableName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLMoreResults /////
-SQLRETURN SQLMoreResults(SQLHSTMT hstmt) {
-  logMessage("SQLMoreResults");
-  return SQL_SUCCESS;
+SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLMoreResults (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLNativeSql /////
 
 SQLRETURN SQLNativeSqlW(
     SQLHDBC hdbc,
-    SQLWCHAR* szSqlStrIn,
-    SQLINTEGER cchSqlStrIn,
-    SQLWCHAR* szSqlStr,
-    SQLINTEGER cchSqlStrMax,
-    SQLINTEGER* pcchSqlStr) {
-  logMessage("SQLNativeSql");
-  return SQL_SUCCESS;
+    in SQLWCHAR* _inSql,
+    SQLINTEGER _inSqlLengthChars,
+    SQLWCHAR* _outSql,
+    SQLINTEGER _outSqlMaxLengthBytes,
+    SQLINTEGER* outSqlLengthBytes) {
+  return exceptionBoundary!(() => {
+    auto inSql = toDString(_inSql, _inSqlLengthChars);
+    auto outSql = OutputWChar(_outSql, _outSqlMaxLengthBytes);
+    logMessage("SQLNativeSql (unimplemented)", inSql);
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLNumParams /////
 
 SQLRETURN SQLNumParams(
-    SQLHSTMT hstmt,
-    SQLSMALLINT* pcpar) {
-  logMessage("SQLNumParams");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLSMALLINT* parameterCount) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLNumParams (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLPrimaryKeys /////
 
 SQLRETURN SQLPrimaryKeysW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName) {
-  logMessage("SQLPrimaryKeys");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    in SQLWCHAR* _tableName,
+    SQLSMALLINT _tableNameLength) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto tableName = toDString(_tableName, _tableNameLength);
+
+    logMessage("SQLPrimaryKeys (unimplemented)", catalogName, schemaName, tableName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLProcedureColumns /////
 
 SQLRETURN SQLProcedureColumnsW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szProcName,
-    SQLSMALLINT cchProcName,
-    SQLWCHAR* szColumnName,
-    SQLSMALLINT cchColumnName) {
-  logMessage("SQLProcedureColumns");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    in SQLWCHAR* _procedureName,
+    SQLSMALLINT _procedureNameLength,
+    in SQLWCHAR* _columnName,
+    SQLSMALLINT _columnNameLength) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto procedureName = toDString(_procedureName, _procedureNameLength);
+    auto columnName = toDString(_columnName, _columnNameLength);
+
+    logMessage("SQLProcedureColumns (unimplemented)", catalogName, schemaName, procedureName, columnName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLProcedures /////
 
 SQLRETURN SQLProceduresW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szProcName,
-    SQLSMALLINT cchProcName) {
-  logMessage("SQLProcedures");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    in SQLWCHAR* _procedureName,
+    SQLSMALLINT _procedureNameLength) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto procedureName = toDString(_procedureName, _procedureNameLength);
+
+    logMessage("SQLProcedures (unimplemented)", catalogName, schemaName, procedureName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLSetPos /////
 
 SQLRETURN SQLSetPos(
-    SQLHSTMT hstmt,
-    SQLSETPOSIROW irow,
-    SQLUSMALLINT fOption,
-    SQLUSMALLINT       fLock) {
-  logMessage("SQLSetPos");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLSETPOSIROW rowNumber,
+    SetPosOperation operation,
+    SetPosLockOperation lockType) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLSetPos (unimplemented)", rowNumber, operation, lockType);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLTablePrivileges /////
 
 SQLRETURN SQLTablePrivilegesW(
-    SQLHSTMT hstmt,
-    SQLWCHAR* szCatalogName,
-    SQLSMALLINT cchCatalogName,
-    SQLWCHAR* szSchemaName,
-    SQLSMALLINT cchSchemaName,
-    SQLWCHAR* szTableName,
-    SQLSMALLINT cchTableName) {
-  logMessage("SQLTablePrivileges");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    in SQLWCHAR* _catalogName,
+    SQLSMALLINT _catalogNameLength,
+    in SQLWCHAR* _schemaName,
+    SQLSMALLINT _schemaNameLength,
+    in SQLWCHAR* _tableName,
+    SQLSMALLINT _tableNameLength) {
+  return exceptionBoundary!(() => {
+    auto catalogName = toDString(_catalogName, _catalogNameLength);
+    auto schemaName = toDString(_schemaName, _schemaNameLength);
+    auto tableName = toDString(_tableName, _tableNameLength);
+
+    logMessage("SQLTablePrivileges (unimplemented)", catalogName, schemaName, tableName);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLBindParameter /////
 
 SQLRETURN SQLBindParameter(
-    SQLHSTMT hstmt,
-    SQLUSMALLINT ipar,
-    SQLSMALLINT fParamType,
-    SQLSMALLINT fCType,
-    SQLSMALLINT fSqlType,
-    SQLULEN cbColDef,
-    SQLSMALLINT ibScale,
-    SQLPOINTER rgbValue,
-    SQLLEN cbValueMax,
-    SQLLEN* pcbValue) {
-  logMessage("SQLBindParameter");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLUSMALLINT parameterNumber,
+    InputOutputType inputOutputType,
+    SQL_C_TYPE_ID valueType,
+    SQL_TYPE_ID parameterType,
+    SQLULEN columnSize,
+    SQLSMALLINT decimalDigits,
+    SQLPOINTER parameterValue,
+    SQLLEN bufferLength,
+    SQLLEN* stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLBindParameter (unimplemented)", parameterNumber, inputOutputType,
+        valueType, parameterType, columnSize, decimalDigits);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLCloseCursor /////
 
-SQLRETURN SQLCloseCursor(SQLHSTMT StatementHandle) {
-  logMessage("SQLCloseCursor");
-  return SQL_SUCCESS;
+SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLCloseCursor (unimplemented)");
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLColAttribute /////
 
 SQLRETURN SQLColAttributeW(
-    SQLHSTMT StatementHandle,
-    SQLUSMALLINT ColumnNumber,
-    SQLUSMALLINT FieldIdentifier,
-    SQLPOINTER CharacterAttribute,
-    SQLSMALLINT BufferLength,
-    SQLSMALLINT* StringLength,
-    SQLLEN* NumericAttribute) {
-  logMessage("SQLColAttribute");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    SQLUSMALLINT columnNumber,
+    SQLUSMALLINT fieldIdentifier,
+    SQLPOINTER characterAttribute,
+    SQLSMALLINT bufferLength,
+    SQLSMALLINT* stringLength,
+    SQLLEN* numericAttribute) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLColAttribute (unimplemented)", columnNumber, fieldIdentifier);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLCopyDesc /////
 
-SQLRETURN SQLCopyDesc(
-    SQLHDESC SourceDescHandle,
-    SQLHDESC TargetDescHandle) {
-  logMessage("SQLCopyDesc");
-  return SQL_SUCCESS;
+SQLRETURN SQLCopyDesc(SQLHDESC sourceDescHandle, SQLHDESC targetDescHandle) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLCopyDesc (unimplemented)");
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLEndTran /////
 SQLRETURN SQLEndTran(
-    SQLSMALLINT HandleType,
-    SQLHANDLE Handle,
-    SQLSMALLINT CompletionType) {
-  logMessage("SQLEndTran");
-  return SQL_SUCCESS;
+    SQL_HANDLE_TYPE handleType,
+    SQLHANDLE handle,
+    TransactionOption completionType) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLEndTran (unimplemented)", handleType, completionType);
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLFetchScroll /////
 
 SQLRETURN SQLFetchScroll(
-    SQLHSTMT StatementHandle,
-    SQLSMALLINT FetchOrientation,
-    SQLLEN FetchOffset) {
-  logMessage("SQLFetchScroll");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    FetchType fetchOrientation,
+    SQLLEN fetchOffset) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLFetchScroll (unimplemented)", fetchOrientation, fetchOffset);
+    with (statementHandle) {
+      //TODO
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLFreeHandle /////
@@ -898,12 +1056,10 @@ SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
     with(SQL_HANDLE_TYPE) {
       switch (handleType) {
       case DBC:
-        break;
       case DESC:
-        break;
       case ENV:
-        break;
       case SENV:
+        logMessage("SQLFreeHandle not implemented for handle type", handleType);
         break;
       case STMT:
         free(cast(void*) handle);
@@ -920,65 +1076,120 @@ SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
 ///// SQLGetConnectAttr /////
 
 SQLRETURN SQLGetConnectAttrW(
-    SQLHDBC ConnectionHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER BufferLength,
-    SQLINTEGER* StringLengthPtr) {
-  logMessage("SQLGetConnectAttr");
-  return SQL_SUCCESS;
+    SQLHDBC connectionHandle,
+    ConnectionAttribute attribute,
+    SQLPOINTER value,
+    SQLINTEGER bufferLengthBytes,
+    SQLINTEGER* stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetConnectAttr (unimplemented)", attribute);
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLSetConnectAttr /////
+
+SQLRETURN SQLSetConnectAttrW(
+    SQLHDBC connectionHandle,
+    ConnectionAttribute attribute,
+    SQLPOINTER value,
+    SQLINTEGER stringLength) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLSetConnectAttr (unimplemented)", attribute);
+    return SQL_SUCCESS;
+  }());
+
 }
 
 ///// SQLGetDescField /////
 
 SQLRETURN SQLGetDescFieldW(
-    SQLHDESC DescriptorHandle,
-    SQLSMALLINT RecNumber,
-    SQLSMALLINT FieldIdentifier,
-    SQLPOINTER Value,
-    SQLINTEGER BufferLength,
-    SQLINTEGER* StringLength) {
-  logMessage("SQLGetDescField");
-  return SQL_SUCCESS;
+    SQLHDESC descriptorHandle,
+    SQLSMALLINT recordNumber,
+    DescriptorField fieldIdentifier,
+    SQLPOINTER value,
+    SQLINTEGER bufferLength,
+    SQLINTEGER* stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetDescField (unimplemented)", recordNumber, fieldIdentifier);
+    return SQL_SUCCESS;
+  }());
 }
+
+///// SQLSetDescField /////
+
+SQLRETURN SQLSetDescFieldW(
+    SQLHDESC descriptorHandle,
+    SQLSMALLINT recordNumber,
+    DescriptorField fieldIdentifier,
+    SQLPOINTER value,
+    SQLINTEGER bufferLength) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLSetDescField (unimplemented)");
+    return SQL_SUCCESS;
+  }());
+}
+
 
 ///// SQLGetDescRec /////
 
 SQLRETURN SQLGetDescRecW(
-    SQLHDESC hdesc,
-    SQLSMALLINT iRecord,
-    SQLWCHAR* szName,
-    SQLSMALLINT cchNameMax,
-    SQLSMALLINT* pcchName,
-    SQLSMALLINT* pfType,
-    SQLSMALLINT* pfSubType,
-    SQLLEN* pLength,
-    SQLSMALLINT* pPrecision,
-    SQLSMALLINT* pScale,
-    SQLSMALLINT* pNullable) {
-  logMessage("SQLGetDescRec");
-  return SQL_SUCCESS;
+    SQLHDESC descriptorHandle,
+    SQLSMALLINT recordNumber,
+    SQLWCHAR* _name,
+    SQLSMALLINT _nameMaxLengthChars,
+    SQLSMALLINT* _nameLengthChars,
+    SQLSMALLINT* descType,
+    SQLSMALLINT* subType,
+    SQLLEN* length,
+    SQLSMALLINT* precision,
+    SQLSMALLINT* scale,
+    SQLSMALLINT* nullable) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetDescRec (unimplemented)", recordNumber);
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLSetDescRec /////
+
+SQLRETURN SQLSetDescRec(
+    SQLHDESC descriptorHandle,
+    SQLSMALLINT recordNumber,
+    SQLSMALLINT type,
+    SQLSMALLINT subType,
+    SQLLEN length,
+    SQLSMALLINT precision,
+    SQLSMALLINT scale,
+    SQLPOINTER data,
+    SQLLEN* stringLengthBytes,
+    SQLLEN* indicator) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLSetDescRec (unimplemented)", recordNumber, type, subType, length, precision, scale);
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetDiagField /////
 
 SQLRETURN SQLGetDiagFieldW(
-    SQLSMALLINT handleType,
+    SQL_HANDLE_TYPE handleType,
     SQLHANDLE handle,
-    SQLSMALLINT recNumber,
-    SQLSMALLINT diagIdentifier,
-    SQLPOINTER _diagInfo,
-    SQLSMALLINT _diagInfoLengthBytes,
+    SQLSMALLINT recordNumber,
+    SQLSMALLINT diagnosticIdentifier,
+    SQLPOINTER _diagnosticInfo,
+    SQLSMALLINT _diagnosticInfoLengthBytes,
     SQLSMALLINT* stringLength) {
   return exceptionBoundary!(() => {
-    auto diagInfo = OutputWChar(_diagInfo, _diagInfoLengthBytes);
-    if (diagInfo) {
-      diagInfo[0] = '\0';
+    auto diagnosticInfo = OutputWChar(_diagnosticInfo, _diagnosticInfoLengthBytes);
+    if (diagnosticInfo) {
+      diagnosticInfo[0] = '\0';
     }
     if (stringLength) {
       *stringLength = 0;
     }
-    logMessage("SQLGetDiagField", recNumber, diagIdentifier, diagInfo.length);
+    logMessage("SQLGetDiagField (unimplemented)", handleType, recordNumber,
+        diagnosticIdentifier, diagnosticInfo.length);
     return SQL_NO_DATA;
   }());
 }
@@ -986,28 +1197,55 @@ SQLRETURN SQLGetDiagFieldW(
 ///// SQLGetDiagRec /////
 
 SQLRETURN SQLGetDiagRecW(
-    SQLSMALLINT fHandleType,
+    SQL_HANDLE_TYPE handleType,
     SQLHANDLE handle,
-    SQLSMALLINT iRecord,
-    SQLWCHAR* szSqlState,
-    SQLINTEGER* pfNativeError,
-    SQLWCHAR* szErrorMsg,
-    SQLSMALLINT cchErrorMsgMax,
-    SQLSMALLINT* pcchErrorMsg) {
-  logMessage("SQLGetDiagRec", iRecord, pfNativeError, (szErrorMsg == null), cchErrorMsgMax);
-  return SQL_NO_DATA;
+    SQLSMALLINT recordNumber,
+    SQLWCHAR*  _sqlState,
+    SQLINTEGER* nativeError,
+    SQLWCHAR* _errorMessage,
+    SQLSMALLINT _errorMessageMaxLengthChars,
+    SQLSMALLINT* _errorMessageLengthChars) {
+  return exceptionBoundary!(() => {
+    //auto sqlState = OutputWChar(_sqlState, 5 * wchar.sizeof);
+    //auto errorMessage = OutputWChar(_errorMessage, _errorMessageMaxLengthChars * wchar.sizeof);
+    logMessage("SQLGetDiagRec (unimplemented)", handleType, recordNumber);
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetEnvAttr /////
 
 SQLRETURN SQLGetEnvAttr(
-    SQLHENV EnvironmentHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER BufferLength,
-    SQLINTEGER* StringLength) {
-  logMessage("SQLGetEnvAttr");
-  return SQL_SUCCESS;
+    SQLHENV environmentHandle,
+    EnvironmentAttribute attribute,
+    SQLPOINTER value,
+    SQLINTEGER bufferLength,
+    SQLINTEGER* stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLGetEnvAttr (unimplemented)", attribute);
+    return SQL_SUCCESS;
+  }());
+}
+
+///// SQLSetEnvAttr /////
+
+SQLRETURN SQLSetEnvAttr(
+    SQLHENV environmentHandle,
+    EnvironmentAttribute attribute,
+    SQLPOINTER value,
+    SQLINTEGER stringLengthBytes) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLSetEnvAttr (unimplemented)", attribute);
+    with (EnvironmentAttribute) {
+      switch (attribute) {
+      case SQL_ATTR_ODBC_VERSION:
+        break;
+      default:
+        return SQL_ERROR;
+      }
+    }
+    return SQL_SUCCESS;
+  }());
 }
 
 ///// SQLGetStmtAttr /////
@@ -1020,94 +1258,27 @@ SQLRETURN SQLGetStmtAttrW(
     SQLINTEGER* stringLength) {
   return exceptionBoundary!(() => {
     auto valueString = OutputWChar(value, valueLengthBytes);
-    with (statementHandle) {
-      with (StatementAttribute) {
-        switch (attribute) {
-        case SQL_ATTR_APP_ROW_DESC:
-          value = null;
-          break;
-        case SQL_ATTR_APP_PARAM_DESC:
-          value = null;
-          break;
-        case SQL_ATTR_IMP_ROW_DESC:
-          value = null;
-          break;
-        case SQL_ATTR_IMP_PARAM_DESC:
-          value = null;
-          break;
-        default:
-          return SQL_ERROR;
-        }
+    with (statementHandle) with (StatementAttribute) {
+      switch (attribute) {
+      case SQL_ATTR_APP_ROW_DESC:
+        value = null;
+        break;
+      case SQL_ATTR_APP_PARAM_DESC:
+        value = null;
+        break;
+      case SQL_ATTR_IMP_ROW_DESC:
+        value = null;
+        break;
+      case SQL_ATTR_IMP_PARAM_DESC:
+        value = null;
+        break;
+      default:
+        return SQL_ERROR;
       }
     }
-    logMessage("SQLGetStmtAttr", attribute);
+    logMessage("SQLGetStmtAttr (unimplemented)", attribute);
     return SQL_SUCCESS;
   }());
-}
-
-///// SQLSetConnectAttr /////
-
-SQLRETURN SQLSetConnectAttrW(
-    SQLHDBC ConnectionHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER StringLength) {
-  switch (Attribute) {
-  case SQL_LOGIN_TIMEOUT:
-    break;
-  default:
-    return SQL_ERROR;
-  }
-  logMessage("SQLSetConnectAttr", Attribute, Value, StringLength);
-  return SQL_SUCCESS;
-}
-
-///// SQLSetDescField /////
-
-SQLRETURN SQLSetDescFieldW(
-    SQLHDESC DescriptorHandle,
-    SQLSMALLINT RecNumber,
-    SQLSMALLINT FieldIdentifier,
-    SQLPOINTER Value,
-    SQLINTEGER BufferLength) {
-  logMessage("SQLSetDescField");
-  return SQL_SUCCESS;
-}
-
-///// SQLSetDescRec /////
-
-SQLRETURN SQLSetDescRec(
-    SQLHDESC DescriptorHandle,
-    SQLSMALLINT RecNumber,
-    SQLSMALLINT Type,
-    SQLSMALLINT SubType,
-    SQLLEN Length,
-    SQLSMALLINT Precision,
-    SQLSMALLINT Scale,
-    SQLPOINTER Data,
-    SQLLEN* StringLength,
-    SQLLEN* Indicator) {
-  logMessage("SQLSetDescRec");
-  return SQL_SUCCESS;
-}
-
-///// SQLSetEnvAttr /////
-
-SQLRETURN SQLSetEnvAttr(
-    SQLHENV EnvironmentHandle,
-    SQLINTEGER Attribute,
-    SQLPOINTER Value,
-    SQLINTEGER StringLength) {
-  switch (Attribute) {
-  case SQL_ATTR_ODBC_VERSION:
-
-    break;
-  default:
-    return SQL_ERROR;
-  }
-
-  logMessage("SQLSetEnvAttr", Attribute, Value, StringLength);
-  return SQL_SUCCESS;
 }
 
 ///// SQLSetStmtAttr /////
@@ -1118,28 +1289,27 @@ SQLRETURN SQLSetStmtAttrW(
   in SQLPOINTER _value,
   SQLINTEGER _valueLengthBytes) {
   return exceptionBoundary!(() => {
-        //dllEnforce(_valueLengthBytes % 2 == 0);
-        //auto stringValue = toDString(cast(wchar*) _value, _valueLengthBytes / wchar.sizeof);
-    with (statementHandle) {
-      logMessage("SQLSetStmtAttr", attribute);
-      with (StatementAttribute) {
-        switch (attribute) {
-        default:
-          logMessage("SQLGetInfo: Unhandled case:", attribute);
-          break;
-        }
+    logMessage("SQLSetStmtAttr (unimplemented)", attribute);
+    with (statementHandle) with (StatementAttribute) {
+      switch (attribute) {
+      default:
+        logMessage("SQLGetInfo: Unhandled case:", attribute);
+        break;
       }
     }
     return SQL_SUCCESS;
   }());
 }
 
-
 ///// SQLBulkOperations /////
 
 SQLRETURN SQLBulkOperations(
-    SQLHSTMT StatementHandle,
-    SQLSMALLINT Operation) {
-  logMessage("SQLBulkOperations");
-  return SQL_SUCCESS;
+    OdbcStatement statementHandle,
+    BulkOperation operation) {
+  return exceptionBoundary!(() => {
+    with (statementHandle) {
+      logMessage("SQLBulkOperations (unimplemented)", operation);
+      return SQL_SUCCESS;
+    }
+  }());
 }
