@@ -604,12 +604,11 @@ SQLRETURN SQLSpecialColumnsW(
     auto schemaName = toDString(_schemaName, _schemaNameLength);
     auto tableName = toDString(_tableName, _tableNameLength);
     with (statementHandle) with (SpecialColumnRequestType) {
-      logMessage("SQLSpecialColumns (unimplemented)", identifierType, catalogName, schemaName, tableName, minScope, nullable);
+      logMessage("SQLSpecialColumns", identifierType, catalogName, schemaName, tableName, minScope, nullable);
       final switch (identifierType) {
       case SQL_BEST_ROWID:
-        latestOdbcResult = new EmptyOdbcResult();
-        break;
       case SQL_ROWVER:
+        //For Presto this function will always return the empty set
         latestOdbcResult = new EmptyOdbcResult();
         break;
       }
