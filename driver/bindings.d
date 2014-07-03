@@ -22,7 +22,7 @@ import std.traits : isSomeString, Unqual;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToBuffer, dllEnforce, OutputWChar, wcharsToBytes;
+import util : logMessage, copyToNarrowBuffer, dllEnforce, OutputWChar, wcharsToBytes;
 
 /**
   An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
@@ -79,7 +79,7 @@ void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
           logMessage("Converting a non-string type to a string type for output");
           auto srcString = to!ResultType(value.get!VARIANT_TYPE);
         }
-        numberOfBytesWritten = copyToBuffer(srcString, cast(char[]) outputBuffer);
+        numberOfBytesWritten = copyToNarrowBuffer(srcString, cast(char[]) outputBuffer);
       } else {
         assert(!isSomeString!VARIANT_TYPE, "" ~ text(typeid(ResultType)) ~ " " ~ text(typeid(VARIANT_TYPE)));
 

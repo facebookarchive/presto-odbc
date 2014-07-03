@@ -106,7 +106,9 @@ unittest {
   auto src = "happySrcString"w;
   byte[] dest;
   dest.length = 12;
-  assert(5 == copyToBuffer(src, OutputWChar(dest)));
+  SQLSMALLINT numberOfBytesCopied;
+  assert(5 == copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied)));
+  assert(numberOfBytesCopied == 10);
   assert(cast(wchar[]) dest == "happy\0");
 }
 
@@ -125,13 +127,15 @@ unittest {
   auto src = "happySrcString"w;
   byte[] dest;
   dest.length = 100;
-  auto numCopied = copyToBuffer(src, OutputWChar(dest));
+  SQLSMALLINT numberOfBytesCopied;
+  auto numCopied = copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied));
   assert(numCopied == src.length);
+  assert(numberOfBytesCopied == src.length * wchar.sizeof);
   auto result = (cast(wchar[]) dest)[0 .. numCopied];
   assert(result == src);
 }
 
-SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
+void copyToBuffer(N)(const(wchar)[] src, OutputWChar!N dest) {
   import std.c.string : memcpy;
   const numberOfCharsCopied = min(src.length, dest.length - 1);
   if (numberOfCharsCopied < src.length) {
@@ -139,11 +143,10 @@ SQLSMALLINT copyToBuffer(const(wchar)[] src, OutputWChar dest) {
   }
   memcpy(dest.buffer.ptr, src.ptr, numberOfCharsCopied * wchar.sizeof);
   dest[numberOfCharsCopied] = 0;
-  //dest.length = numberOfCharsCopied + 1;
-  return to!SQLSMALLINT(numberOfCharsCopied);
+  dest.lengthBytes = wcharsToBytes(numberOfCharsCopied);
 }
 
-SQLSMALLINT copyToBuffer(const(char)[] src, char[] dest) {
+SQLSMALLINT copyToNarrowBuffer(const(char)[] src, char[] dest) {
   import std.c.string : memcpy;
   const numberOfCharsCopied = min(src.length, dest.length - 1);
   if (numberOfCharsCopied < src.length) {
@@ -155,8 +158,19 @@ SQLSMALLINT copyToBuffer(const(char)[] src, char[] dest) {
   return to!SQLSMALLINT(numberOfCharsCopied);
 }
 
-SQLSMALLINT wcharsToBytes(int count) {
-  return to!SQLSMALLINT(count * wchar.sizeof);
+size_t wcharsToBytes(size_t count) {
+  return count * wchar.sizeof;
+}
+
+size_t bytesToWchars(size_t count) {
+  return count / wchar.sizeof;
+}
+
+void convertPtrBytesToWChars(T)(T* lengthBytes) {
+  if (!lengthBytes) {
+    return;
+  }
+  *lengthBytes = cast(T) bytesToWchars(*lengthBytes);
 }
 
 
@@ -295,25 +309,54 @@ template UnqualString(T) {
   }
 }
 
-struct OutputWChar {
-  this(wchar* buffer, size_t lengthBytes) {
-    assert(buffer != null); //Revisit?
-    assert(lengthBytes % 2 == 0);
-    assert(lengthBytes >= 2);
+auto outputWChar(LengthType)(wchar* buffer, size_t maxLengthBytes, LengthType* lengthBytes) {
+  return OutputWChar!LengthType(buffer, maxLengthBytes, lengthBytes);
+}
 
-    this.buffer = buffer[0 .. lengthBytes / 2];
+auto outputWChar(LengthType)(SQLPOINTER buffer, size_t maxLengthBytes, LengthType* lengthBytes) {
+  return outputWChar(cast(wchar*) buffer, maxLengthBytes, lengthBytes);
+}
+
+auto outputWChar(LengthType)(void[] buffer, LengthType* lengthBytes) {
+  return outputWChar!LengthType(buffer.ptr, buffer.length, lengthBytes);
+}
+
+struct OutputWChar(LengthType) {
+  private this(wchar* buffer, size_t maxLengthBytes, LengthType* lengthBytes) {
+    lengthBytes_ = lengthBytes;
+    this.lengthBytes = 0;
+
+    if (buffer == null) {
+      this.buffer = null;
+      return;
+    }
+    assert(maxLengthBytes % 2 == 0);
+    assert(maxLengthBytes >= 2);
+    this.buffer = buffer[0 .. maxLengthBytes / 2];
   }
 
-  this(SQLPOINTER buffer, size_t lengthBytes) {
-    this(cast(wchar*) buffer, lengthBytes);
+  void lengthBytes(size_t lengthBytes) {
+    if (!lengthBytes_) {
+      return;
+    }
+    *lengthBytes_ = cast(LengthType) lengthBytes;
   }
 
-  this(void[] buffer) {
-    this(buffer.ptr, buffer.length);
+  bool opEquals(T : typeof(null))(T value) {
+    return buffer == null;
   }
 
+  bool opCast(T : bool)() {
+    return buffer != null;
+  }
+
+  unittest {
+    auto x = OutputWChar(null, 0, null);
+    assert(x == null);
+  }
 
   wchar[] buffer;
+  LengthType* lengthBytes_;
   alias buffer this;
 }
 

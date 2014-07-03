@@ -28,7 +28,7 @@ import sqlext;
 import odbcinst;
 
 import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary, strlen, toDString;
-import util : OutputWChar, wcharsToBytes, runQuery;
+import util : outputWChar, wcharsToBytes, runQuery, convertPtrBytesToWChars;
 import bindings;
 import prestoresults;
 import columnresults;
@@ -68,15 +68,13 @@ SQLRETURN SQLDriverConnectW(
     SQLSMALLINT _connStrInChars,
     SQLWCHAR* _connStrOut,
     SQLSMALLINT _connStrOutMaxChars,
-    SQLSMALLINT* connStrOutChars,
+    SQLSMALLINT* _connStrOutChars,
     SQLUSMALLINT driverCompletion) {
   return exceptionBoundary!(() => {
     auto connStr = toDString(_connStrIn, _connStrInChars);
-    auto connStrOut = OutputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof);
-    if (connStrOutChars) {
-      *connStrOutChars = 0;
-    }
-    logMessage("SQLDriverConnect", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars, driverCompletion);
+    auto connStrOut = outputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof, _connStrOutChars);
+    scope (exit) convertPtrBytesToWChars(_connStrOutChars);
+    logMessage("SQLDriverConnect", connStr, driverCompletion);
 
     if (connStr == null) {
       return SQL_SUCCESS;
@@ -84,12 +82,7 @@ SQLRETURN SQLDriverConnectW(
 
     //Copy input string to output string
     if (connStrOut) {
-      auto numCharsCopied = copyToBuffer(connStr, connStrOut);
-
-      if (connStrOutChars) {
-        *connStrOutChars = numCharsCopied;
-      }
-
+      copyToBuffer(connStr, connStrOut);
     }
 
     return SQL_SUCCESS;
@@ -105,12 +98,13 @@ SQLRETURN SQLBrowseConnectW(
     SQLSMALLINT _connStrInChars,
     SQLWCHAR* _connStrOut,
     SQLSMALLINT _connStrOutMaxChars,
-    SQLSMALLINT* connStrOutChars) {
+    SQLSMALLINT* _connStrOutChars) {
   return exceptionBoundary!(() => {
     auto connStr = toDString(_connStrIn, _connStrInChars);
-    auto connStrOut = OutputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof);
+    auto connStrOut = outputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof, _connStrOutChars);
+    scope (exit) convertPtrBytesToWChars(_connStrOutChars);
 
-    logMessage("SQLBrowseConnect (unimplemented)", connStr, _connStrInChars, _connStrOutMaxChars, connStrOutChars);
+    logMessage("SQLBrowseConnect (unimplemented)", connStr);
     return SQL_SUCCESS;
   }());
 }
@@ -247,7 +241,8 @@ SQLRETURN SQLDescribeColW(
     SQLSMALLINT* decimalDigits,
     SQLSMALLINT* nullable) {
   return exceptionBoundary!(() => {
-    auto columnName = OutputWChar(_columnName, _columnNameMaxLengthChars * wchar.sizeof);
+    auto columnName = outputWChar(_columnName, _columnNameMaxLengthChars * wchar.sizeof, _columnNameLengthChars);
+    scope (exit) convertPtrBytesToWChars(_columnNameLengthChars);
     assert(columnName);
     assert(_columnNameLengthChars);
     assert(sqlDataTypeOfColumn);
@@ -263,7 +258,7 @@ SQLRETURN SQLDescribeColW(
       auto sourceOfTruth = prestoTypeToColumnsResult(columnMetadata.type, "", "", Nullability.SQL_NULLABLE_UNKNOWN, 1);
       logMessage("SQLDescribeCol found column: ", columnMetadata.name, columnMetadata.type, typeid(sourceOfTruth));
 
-      *_columnNameLengthChars = copyToBuffer(wtext(columnMetadata.name), columnName);
+      copyToBuffer(wtext(columnMetadata.name), columnName);
       *nullable = to!SQLSMALLINT(Nullability.SQL_NULLABLE_UNKNOWN);
       with (ColumnsResultColumns) {
         *sqlDataTypeOfColumn = to!SQLSMALLINT(sourceOfTruth.dataAt(SQL_DATA_TYPE).get!SQL_TYPE_ID);
@@ -402,7 +397,7 @@ SQLRETURN SQLGetCursorNameW(
     SQLSMALLINT _cursorNameMaxLengthBytes,
     SQLSMALLINT* _cursorNameLengthBytes) {
     return exceptionBoundary!(() => {
-      auto cursorName = OutputWChar(_cursorName, _cursorNameMaxLengthBytes);
+      auto cursorName = outputWChar(_cursorName, _cursorNameMaxLengthBytes, _cursorNameLengthBytes);
       logMessage("SQLGetCursorName (unimplemented)");
       with (statementHandle) {
         //TODO
@@ -554,20 +549,17 @@ SQLRETURN SQLGetInfoW(
     SQLHDBC connectionHandle,
     OdbcInfo infoType,
     SQLPOINTER _infoValue,
-    SQLSMALLINT bufferLengthBytes,
-    SQLSMALLINT* stringLengthBytes) {
+    SQLSMALLINT _bufferMaxLengthBytes,
+    SQLSMALLINT* _stringLengthBytes) {
   return exceptionBoundary!(() => {
-    dllEnforce(bufferLengthBytes % 2 == 0);
-    auto stringResult = OutputWChar(_infoValue, bufferLengthBytes);
+    auto stringResult = outputWChar(_infoValue, _bufferMaxLengthBytes, _stringLengthBytes);
+    logMessage("SQLGetInfo", infoType);
     with (OdbcInfo) {
-      if (stringLengthBytes) {
-        *stringLengthBytes = 0;
-      }
       switch (infoType) {
 
       case SQL_DRIVER_ODBC_VER: // 77
         //Latest version of ODBC is 3.8 (as of 6/19/14)
-        *stringLengthBytes = wcharsToBytes(copyToBuffer(""w, stringResult));
+        copyToBuffer(""w, stringResult);
         break;
       case SQL_ASYNC_DBC_FUNCTIONS: //10023
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
@@ -585,19 +577,19 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_GD_ANY_ORDER;
         break;
       case SQL_DATA_SOURCE_NAME: //2
-        *stringLengthBytes = wcharsToBytes(copyToBuffer(""w, stringResult));
+        copyToBuffer(""w, stringResult);
         break;
       case SQL_MAX_CONCURRENT_ACTIVITIES: //1
         *cast(SQLUSMALLINT*)(_infoValue) = 1;
         break;
       case SQL_DATA_SOURCE_READ_ONLY: //25
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("Y"w, stringResult));
+        copyToBuffer("Y"w, stringResult);
         break;
       case SQL_DRIVER_NAME: //6
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("ODBCDRV0.dll"w, stringResult));
+        copyToBuffer("ODBCDRV0.dll"w, stringResult);
         break;
       case SQL_SEARCH_PATTERN_ESCAPE: //14
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("%"w, stringResult));
+        copyToBuffer("%"w, stringResult);
         break;
       case SQL_CORRELATION_NAME: //74
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_CN_ANY;
@@ -606,32 +598,31 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_NNC_NON_NULL;
         break;
       case SQL_CATALOG_NAME_SEPARATOR: //41
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("."w, stringResult));
+        copyToBuffer("."w, stringResult);
         break;
       case SQL_FILE_USAGE: //84
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_FILE_CATALOG;
         break;
       case SQL_CATALOG_TERM: //42
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("catalog"w, stringResult));
+        copyToBuffer("catalog"w, stringResult);
         break;
       case SQL_DATABASE_NAME: //16
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("dbname"w, stringResult));
+        copyToBuffer("dbname"w, stringResult);
         break;
       case SQL_MAX_SCHEMA_NAME_LEN: //32
         *cast(SQLUSMALLINT*)(_infoValue) = 0;
         break;
       case SQL_IDENTIFIER_QUOTE_CHAR: //29
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("\""w, stringResult));
+        copyToBuffer("\""w, stringResult);
         break;
       case SQL_OWNER_TERM: //39
-        *stringLengthBytes = wcharsToBytes(copyToBuffer("schema"w, stringResult));
+        copyToBuffer("schema"w, stringResult);
         break;
       default:
         logMessage("SQLGetInfo: Unhandled case: ", infoType);
         break;
       } //switch
     }
-    logMessage("SQLGetInfo", infoType, bufferLengthBytes);
     return SQL_SUCCESS;
   }());
 }
@@ -837,10 +828,10 @@ SQLRETURN SQLNativeSqlW(
     SQLINTEGER _inSqlLengthChars,
     SQLWCHAR* _outSql,
     SQLINTEGER _outSqlMaxLengthBytes,
-    SQLINTEGER* outSqlLengthBytes) {
+    SQLINTEGER* _outSqlLengthBytes) {
   return exceptionBoundary!(() => {
     auto inSql = toDString(_inSql, _inSqlLengthChars);
-    auto outSql = OutputWChar(_outSql, _outSqlMaxLengthBytes);
+    auto outSql = outputWChar(_outSql, _outSqlMaxLengthBytes, _outSqlLengthBytes);
     logMessage("SQLNativeSql (unimplemented)", inSql);
     return SQL_SUCCESS;
   }());
@@ -1192,14 +1183,11 @@ SQLRETURN SQLGetDiagFieldW(
     SQLSMALLINT diagnosticIdentifier,
     SQLPOINTER _diagnosticInfo,
     SQLSMALLINT _diagnosticInfoLengthBytes,
-    SQLSMALLINT* stringLength) {
+    SQLSMALLINT* _stringLengthBytes) {
   return exceptionBoundary!(() => {
-    auto diagnosticInfo = OutputWChar(_diagnosticInfo, _diagnosticInfoLengthBytes);
+    auto diagnosticInfo = outputWChar(_diagnosticInfo, _diagnosticInfoLengthBytes, _stringLengthBytes);
     if (diagnosticInfo) {
       diagnosticInfo[0] = '\0';
-    }
-    if (stringLength) {
-      *stringLength = 0;
     }
     logMessage("SQLGetDiagField (unimplemented)", handleType, recordNumber,
         diagnosticIdentifier, diagnosticInfo.length);
@@ -1219,8 +1207,10 @@ SQLRETURN SQLGetDiagRecW(
     SQLSMALLINT _errorMessageMaxLengthChars,
     SQLSMALLINT* _errorMessageLengthChars) {
   return exceptionBoundary!(() => {
-    //auto sqlState = OutputWChar(_sqlState, 5 * wchar.sizeof);
-    //auto errorMessage = OutputWChar(_errorMessage, _errorMessageMaxLengthChars * wchar.sizeof);
+    auto sqlState = outputWChar!(void*)(_sqlState, 5 * wchar.sizeof, null);
+    auto errorMessage = outputWChar(_errorMessage, _errorMessageMaxLengthChars * wchar.sizeof,
+                                                   _errorMessageLengthChars);
+    scope (exit) convertPtrBytesToWChars(_errorMessageLengthChars);
     logMessage("SQLGetDiagRec (unimplemented)", handleType, recordNumber);
     return SQL_SUCCESS;
   }());
@@ -1267,10 +1257,10 @@ SQLRETURN SQLGetStmtAttrW(
     OdbcStatement statementHandle,
     StatementAttribute attribute,
     SQLPOINTER value,
-    SQLINTEGER valueLengthBytes,
-    SQLINTEGER* stringLength) {
+    SQLINTEGER _valueLengthBytes,
+    SQLINTEGER* _stringLengthBytes) {
   return exceptionBoundary!(() => {
-    auto valueString = OutputWChar(value, valueLengthBytes);
+    auto valueString = outputWChar(value, _valueLengthBytes, _stringLengthBytes);
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
       case SQL_ATTR_APP_ROW_DESC:
