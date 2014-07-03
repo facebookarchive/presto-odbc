@@ -45,7 +45,7 @@ SQLRETURN SQLGetInfoW(
         copyToBuffer(""w, stringResult);
         break;
       case SQL_DRIVER_NAME: //6
-        copyToBuffer("ODBCDRV0.dll"w, stringResult);
+        copyToBuffer("PrestoOdbc.dll"w, stringResult);
         break;
       case SQL_DRIVER_VER: //7
         copyToBuffer("07.03.2014"w, stringResult);

@@ -138,11 +138,12 @@ SQLRETURN SQLExecDirectW(
     SQLINTEGER _textLengthChars) {
   return exceptionBoundary!(() => {
     auto statementText = toDString(_statementText, _textLengthChars);
-    logMessage("SQLExecDirectW (unimplemented)", statementText);
-    with (statementHandle) {
-      //TODO
+    logMessage("SQLExecDirectW", statementText);
+    auto returnCode = SQLPrepareW(statementHandle, _statementText, _textLengthChars);
+    if (returnCode != SQL_SUCCESS) {
+      return returnCode;
     }
-    return SQL_SUCCESS;
+    return SQLExecute(statementHandle);
   }());
 }
 
