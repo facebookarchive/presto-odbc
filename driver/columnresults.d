@@ -20,6 +20,7 @@ import sqlext;
 import odbcinst;
 
 import bindings : OdbcResult, OdbcResultRow;
+import typeinfo : columnSizeMap, decimalDigitsMap;
 import util : dllEnforce, logMessage, makeWithoutGC, runQuery;
 import dapi.util : asBool;
 
@@ -51,12 +52,28 @@ OdbcResultRow prestoTypeToColumnsResult(
   case "varchar":
     return makeWithoutGC!VarcharColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
   case "bigint":
-    return makeWithoutGC!IntegerColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
+    return makeWithoutGC!BigIntColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
   case "double":
     return makeWithoutGC!DoubleColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
   default:
-    logMessage("Unexpected type in listColumnsInTable: " ~ prestoType);
+    logMessage("Unexpected type in prestoTypeToColumnsResult: " ~ prestoType);
     return null;
+  }
+}
+
+SQL_TYPE_ID prestoTypeToSqlTypeId(string prestoType) {
+  with (SQL_TYPE_ID) {
+    switch (prestoType) {
+    case "varchar":
+      return SQL_VARCHAR;
+    case "bigint":
+      return SQL_BIGINT;
+    case "double":
+      return SQL_DOUBLE;
+    default:
+      logMessage("Unexpected type in prestoTypeToSqlTypeId: " ~ prestoType);
+      return SQL_UNKNOWN_TYPE;
+    }
   }
 }
 
@@ -93,12 +110,12 @@ private:
 }
 
 //bufferLengths taken from the Column Size MSDN page
-alias BigIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_BIGINT, 19);
-alias IntegerColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTEGER, 10);
-alias SmallIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_SMALLINT, 5);
-alias TinyIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TINYINT, 3);
+alias BigIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_BIGINT);
+alias IntegerColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTEGER);
+alias SmallIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_SMALLINT);
+alias TinyIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TINYINT);
 
-final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId, int bufferLength) : OdbcResultRow {
+final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
   this(string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
     this.tableName = tableName;
     this.columnName = columnName;
@@ -128,9 +145,9 @@ final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId, int bufferLength) : 
         return Variant("BIGINT");
       case COLUMN_SIZE:
       case BUFFER_LENGTH:
-        return Variant(bufferLength);
+        return Variant(columnSizeMap[typeId]);
       case DECIMAL_DIGITS:
-        return Variant(0);
+        return Variant(decimalDigitsMap[typeId]);
       case NUM_PREC_RADIX:
         return Variant(10);
       case NULLABLE:
@@ -160,11 +177,11 @@ private:
   int ordinalPosition;
 }
 
-alias DoubleColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_DOUBLE, 15);
-alias FloatColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_FLOAT, 15);
-alias RealColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_REAL, 7);
+alias DoubleColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_DOUBLE);
+alias FloatColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_FLOAT);
+alias RealColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_REAL);
 
-final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId, int bufferLength) : OdbcResultRow {
+final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
   this(string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
     this.tableName = tableName;
     this.columnName = columnName;
@@ -194,7 +211,7 @@ final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId, int bufferLength) : 
         return Variant("DOUBLE");
       case COLUMN_SIZE:
       case BUFFER_LENGTH:
-        return Variant(bufferLength);
+        return Variant(columnSizeMap[typeId]);
       case DECIMAL_DIGITS:
         return Variant(null);
       case NUM_PREC_RADIX:
@@ -247,12 +264,12 @@ final class VarcharColumnsResultRow : OdbcResultRow {
         return Variant(columnName);
       case DATA_TYPE:
       case SQL_DATA_TYPE:
-        return Variant(SQL_TYPE_ID.SQL_VARCHAR);
+        return Variant(typeId);
       case TYPE_NAME:
         return Variant("VARCHAR");
       case COLUMN_SIZE:
       case BUFFER_LENGTH:
-        return Variant(SQL_NO_TOTAL);
+        return Variant(columnSizeMap[typeId]);
       case DECIMAL_DIGITS:
         return Variant(null);
       case NUM_PREC_RADIX:
@@ -278,6 +295,7 @@ final class VarcharColumnsResultRow : OdbcResultRow {
     }
   }
 private:
+  enum typeId = SQL_TYPE_ID.SQL_VARCHAR;
   string tableName;
   string columnName;
   Nullability isNullable;
