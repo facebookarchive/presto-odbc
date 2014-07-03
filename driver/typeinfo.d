@@ -41,7 +41,7 @@ enum SQLSMALLINT[SQL_TYPE_ID] columnSizeMap = [
   SQL_TYPE_ID.SQL_GUID : 36,
 ];
 
-//Does not include interval types/SQL_DECIMAL/SQL_NUMERIC
+//Does not include SQL_DECIMAL/SQL_NUMERIC
 enum SQLSMALLINT[SQL_TYPE_ID] decimalDigitsMap = [
   SQL_TYPE_ID.SQL_CHAR : 0,
   SQL_TYPE_ID.SQL_VARCHAR : 0,
@@ -59,7 +59,54 @@ enum SQLSMALLINT[SQL_TYPE_ID] decimalDigitsMap = [
   SQL_TYPE_ID.SQL_TYPE_DATE : 0,
   SQL_TYPE_ID.SQL_TYPE_TIME : 3,
   SQL_TYPE_ID.SQL_TYPE_TIMESTAMP : 3,
+  SQL_TYPE_ID.SQL_INTERVAL_YEAR : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_MONTH : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_MINUTE : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_SECOND : 3,
+  SQL_TYPE_ID.SQL_INTERVAL_YEAR_TO_MONTH : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_HOUR : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_MINUTE : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_SECOND : 3,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR_TO_MINUTE : 0,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR_TO_SECOND : 3,
+  SQL_TYPE_ID.SQL_INTERVAL_MINUTE_TO_SECOND : 3,
   SQL_TYPE_ID.SQL_GUID : 0,
+];
+
+//Does not include SQL_DECIMAL/SQL_NUMERIC
+enum SQLSMALLINT[SQL_TYPE_ID] octetLengthMap = [
+  SQL_TYPE_ID.SQL_CHAR : SQL_NO_TOTAL,
+  SQL_TYPE_ID.SQL_VARCHAR : SQL_NO_TOTAL,
+  SQL_TYPE_ID.SQL_BINARY : SQL_NO_TOTAL,
+  SQL_TYPE_ID.SQL_VARBINARY : SQL_NO_TOTAL,
+  SQL_TYPE_ID.SQL_LONGVARBINARY : SQL_NO_TOTAL,
+  SQL_TYPE_ID.SQL_BIT : 1,
+  SQL_TYPE_ID.SQL_TINYINT : 1,
+  SQL_TYPE_ID.SQL_SMALLINT : 2,
+  SQL_TYPE_ID.SQL_INTEGER : 4,
+  SQL_TYPE_ID.SQL_BIGINT : 40,
+  SQL_TYPE_ID.SQL_REAL : 4,
+  SQL_TYPE_ID.SQL_FLOAT : 8,
+  SQL_TYPE_ID.SQL_DOUBLE : 8,
+  SQL_TYPE_ID.SQL_TYPE_DATE : 6,
+  SQL_TYPE_ID.SQL_TYPE_TIME : 6,
+  SQL_TYPE_ID.SQL_TYPE_TIMESTAMP : 16,
+  SQL_TYPE_ID.SQL_INTERVAL_YEAR : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_MONTH : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_MINUTE : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_SECOND : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_YEAR_TO_MONTH : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_HOUR : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_MINUTE : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_SECOND : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR_TO_MINUTE : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_HOUR_TO_SECOND : 34,
+  SQL_TYPE_ID.SQL_INTERVAL_MINUTE_TO_SECOND : 34,
+  SQL_TYPE_ID.SQL_GUID : 16,
 ];
 
 //Does not include interval types/SQL_DECIMAL/SQL_NUMERIC
@@ -82,6 +129,129 @@ enum SQLSMALLINT[SQL_TYPE_ID] displaySizeMap = [
   SQL_TYPE_ID.SQL_TYPE_TIMESTAMP : 22,
   SQL_TYPE_ID.SQL_GUID : 36,
 ];
+
+bool isNumericalTypeId(SQL_TYPE_ID typeId) {
+    with (SQL_TYPE_ID) {
+      switch (typeId) {
+      case SQL_BIT:
+      case SQL_TINYINT:
+      case SQL_SMALLINT:
+      case SQL_INTEGER:
+      case SQL_BIGINT:
+      case SQL_REAL:
+      case SQL_FLOAT:
+      case SQL_DOUBLE:
+        return true;
+      default:
+        return false;
+      }
+    }
+}
+
+bool isStringTypeId(SQL_TYPE_ID typeId) {
+  with (SQL_TYPE_ID) {
+    switch (typeId) {
+    case SQL_CHAR:
+    case SQL_VARCHAR:
+      return true;
+    default:
+      return false;
+    }
+  }
+}
+
+bool isTimeRelated(SQL_TYPE_ID typeId) {
+  with (SQL_TYPE_ID) {
+    switch (typeId) {
+    case SQL_TYPE_DATE:
+    case SQL_TYPE_TIME:
+    case SQL_TYPE_TIMESTAMP:
+    case SQL_INTERVAL_YEAR:
+    case SQL_INTERVAL_MONTH:
+    case SQL_INTERVAL_DAY:
+    case SQL_INTERVAL_HOUR:
+    case SQL_INTERVAL_MINUTE:
+    case SQL_INTERVAL_SECOND:
+    case SQL_INTERVAL_YEAR_TO_MONTH:
+    case SQL_INTERVAL_DAY_TO_HOUR:
+    case SQL_INTERVAL_DAY_TO_MINUTE:
+    case SQL_INTERVAL_DAY_TO_SECOND:
+    case SQL_INTERVAL_HOUR_TO_MINUTE:
+    case SQL_INTERVAL_HOUR_TO_SECOND:
+    case SQL_INTERVAL_MINUTE_TO_SECOND:
+      return true;
+    default:
+      return false;
+    }
+  }
+}
+
+bool isTimeOrDate(SQL_TYPE_ID typeId) {
+  with (SQL_TYPE_ID) {
+    switch (typeId) {
+    case SQL_TYPE_DATE:
+    case SQL_TYPE_TIME:
+    case SQL_TYPE_TIMESTAMP:
+      return true;
+    default:
+      return false;
+    }
+  }
+}
+
+bool isInterval(SQL_TYPE_ID typeId) {
+  with (SQL_TYPE_ID) {
+    switch (typeId) {
+    case SQL_INTERVAL_YEAR:
+    case SQL_INTERVAL_MONTH:
+    case SQL_INTERVAL_DAY:
+    case SQL_INTERVAL_HOUR:
+    case SQL_INTERVAL_MINUTE:
+    case SQL_INTERVAL_SECOND:
+    case SQL_INTERVAL_YEAR_TO_MONTH:
+    case SQL_INTERVAL_DAY_TO_HOUR:
+    case SQL_INTERVAL_DAY_TO_MINUTE:
+    case SQL_INTERVAL_DAY_TO_SECOND:
+    case SQL_INTERVAL_HOUR_TO_MINUTE:
+    case SQL_INTERVAL_HOUR_TO_SECOND:
+    case SQL_INTERVAL_MINUTE_TO_SECOND:
+      return true;
+    default:
+      return false;
+    }
+  }
+}
+
+SQL_TYPE_ID toVerboseType(SQL_TYPE_ID typeId) {
+  with (SQL_TYPE_ID) {
+    switch (typeId) {
+    case SQL_TYPE_DATE:
+    case SQL_TYPE_TIME:
+    case SQL_TYPE_TIMESTAMP:
+      return SQL_DATETIME;
+    case SQL_INTERVAL_YEAR:
+    case SQL_INTERVAL_MONTH:
+    case SQL_INTERVAL_DAY:
+    case SQL_INTERVAL_HOUR:
+    case SQL_INTERVAL_MINUTE:
+    case SQL_INTERVAL_SECOND:
+    case SQL_INTERVAL_YEAR_TO_MONTH:
+    case SQL_INTERVAL_DAY_TO_HOUR:
+    case SQL_INTERVAL_DAY_TO_MINUTE:
+    case SQL_INTERVAL_DAY_TO_SECOND:
+    case SQL_INTERVAL_HOUR_TO_MINUTE:
+    case SQL_INTERVAL_HOUR_TO_SECOND:
+    case SQL_INTERVAL_MINUTE_TO_SECOND:
+      return SQL_INTERVAL;
+    default:
+      return typeId;
+    }
+  }
+}
+
+int typeToNumPrecRadix(SQL_TYPE_ID typeId) {
+  return isNumericalTypeId(typeId) ? 10 : 0;
+}
 
 final class TypeInfoResult(RowT) : OdbcResult {
   this(TList...)(TList vs) {

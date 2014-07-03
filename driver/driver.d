@@ -32,6 +32,7 @@ import util : outputWChar, wcharsToBytes, runQuery, convertPtrBytesToWChars;
 import bindings;
 import prestoresults;
 import columnresults;
+import typeinfo;
 
 //////  DLL entry point for global initializations/finalizations if any
 
@@ -301,7 +302,6 @@ SQLRETURN SQLExecute(OdbcStatement statementHandle) {
   return exceptionBoundary!(() => {
     logMessage("SQLExecute");
     with (statementHandle) {
-      import bindings;
       auto client = runQuery(text(query));
       auto result = makeWithoutGC!PrestoResult();
       uint batchNumber;
@@ -622,7 +622,6 @@ SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQL_TYPE_ID dataType) {
   return exceptionBoundary!(() => {
-    import typeinfo;
     logMessage("SQLGetTypeInfo", dataType);
 
     with (statementHandle) with (Nullability) with (SQL_TYPE_ID) {
@@ -992,15 +991,109 @@ SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
 SQLRETURN SQLColAttributeW(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
-    SQLUSMALLINT fieldIdentifier,
-    SQLPOINTER characterAttribute,
-    SQLSMALLINT bufferLength,
-    SQLSMALLINT* stringLength,
+    DescriptorField fieldIdentifier,
+    SQLPOINTER _characterAttribute,
+    SQLSMALLINT _bufferMaxLengthBytes,
+    SQLSMALLINT* _stringLengthBytes,
     SQLLEN* numericAttribute) {
   return exceptionBoundary!(() => {
-    logMessage("SQLColAttribute (unimplemented)", columnNumber, fieldIdentifier);
-    with (statementHandle) {
-      //TODO
+    auto characterAttribute = outputWChar(_characterAttribute, _bufferMaxLengthBytes, _stringLengthBytes);
+    logMessage("SQLColAttribute (partial-implementation)", columnNumber, fieldIdentifier);
+    with (statementHandle) with (DescriptorField) {
+      if (fieldIdentifier == SQL_DESC_COUNT) {
+        *numericAttribute = latestOdbcResult.numberOfColumns;
+        return SQL_SUCCESS;
+      }
+
+      dllEnforce(columnNumber != 0, "Have not yet implemented this case");
+      auto result = cast(PrestoResult) latestOdbcResult;
+      auto columnMetadata = result.columnMetadata[columnNumber - 1];
+      auto sqlTypeId = prestoTypeToSqlTypeId(columnMetadata.type);
+
+      switch (fieldIdentifier) {
+      case SQL_COLUMN_DISPLAY_SIZE: //SQL_DESC_DISPLAY_SIZE
+        *numericAttribute = displaySizeMap[sqlTypeId];
+        break;
+      case SQL_COLUMN_AUTO_INCREMENT: //SQL_DESC_AUTO_UNIQUE_VALUE
+        *numericAttribute = SQL_FALSE;
+        break;
+      case SQL_DESC_BASE_COLUMN_NAME:
+        copyToBuffer(wtext(columnMetadata.name), characterAttribute);
+        break;
+      case SQL_DESC_BASE_TABLE_NAME:
+        logMessage("Unhandled case (dummy implementation) SQL_DESC_BASE_COLUMN_NAME");
+        copyToBuffer(""w, characterAttribute);
+        break;
+      case SQL_COLUMN_CASE_SENSITIVE: //SQL_DESC_CASE_SENSITIVE
+        *numericAttribute = SQL_FALSE;
+        break;
+      case SQL_COLUMN_QUALIFIER_NAME: //SQL_DESC_CATALOG_NAME
+        copyToBuffer("tpch"w, characterAttribute);
+        break;
+      case SQL_COLUMN_TYPE: //SQL_DESC_CONCISE_TYPE
+        *numericAttribute = sqlTypeId;
+        break;
+      case SQL_DESC_LITERAL_PREFIX:
+      case SQL_DESC_LITERAL_SUFFIX:
+        auto literal = isStringTypeId(sqlTypeId) ? "'"w : ""w;
+        copyToBuffer(literal, characterAttribute);
+      case SQL_DESC_LOCAL_TYPE_NAME:
+        copyToBuffer(""w, characterAttribute);
+        break;
+      case SQL_DESC_NUM_PREC_RADIX:
+        *numericAttribute = typeToNumPrecRadix(sqlTypeId);
+        break;
+      case SQL_COLUMN_OWNER_NAME: //SQL_DESC_SCHEMA_NAME
+        copyToBuffer("tiny"w, characterAttribute);
+        break;
+      case SQL_COLUMN_SEARCHABLE: //SQL_DESC_SEARCHABLE
+        *numericAttribute = Searchable.SQL_PRED_SEARCHABLE;
+        break;
+      case SQL_COLUMN_TABLE_NAME: //SQL_DESC_TABLE_NAME
+        logMessage("Unhandled case (dummy implementation) SQL_COLUMN_TABLE_NAME");
+        copyToBuffer(""w, characterAttribute);
+        break;
+      case SQL_COLUMN_TYPE_NAME: //SQL_DESC_TYPE_NAME
+        copyToBuffer(wtext(columnMetadata.type), characterAttribute);
+        break;
+      case SQL_COLUMN_UNSIGNED: //SQL_DESC_UNSIGNED
+        *numericAttribute = SQL_FALSE;
+        break;
+      case SQL_COLUMN_UPDATABLE: //SQL_DESC_UPDATABLE
+        *numericAttribute = ColumnUpdatable.SQL_ATTR_READONLY;
+        break;
+      case SQL_DESC_TYPE:
+        *numericAttribute = toVerboseType(sqlTypeId);
+        break;
+      case SQL_DESC_LENGTH:
+        *numericAttribute = columnSizeMap[sqlTypeId];
+        break;
+      case SQL_DESC_OCTET_LENGTH:
+        *numericAttribute = octetLengthMap[sqlTypeId];
+        break;
+      case SQL_DESC_PRECISION:
+        if (!isTimeRelated(sqlTypeId)) {
+          *numericAttribute = columnSizeMap[sqlTypeId];
+        }
+        logMessage("Unhandled case: SQL_DESC_PRECISION of a time-related type");
+        break;
+      case SQL_DESC_SCALE:
+        dllEnforce(false, "Intentionally Unsupported");
+      case SQL_DESC_NULLABLE:
+        *numericAttribute = Nullability.SQL_NULLABLE_UNKNOWN;
+        break;
+      case SQL_DESC_NAME:
+        copyToBuffer(wtext(columnMetadata.name), characterAttribute);
+        break;
+      case SQL_DESC_UNNAMED:
+        *numericAttribute = (columnMetadata.name == "") ? SQL_UNNAMED : SQL_NAMED;
+        break;
+      default:
+      case SQL_COLUMN_MONEY: //SQL_DESC_FIXED_PREC_SCALE
+      case SQL_COLUMN_LABEL: //SQL_DESC_LABEL
+        logMessage("SQLColAttribute Unhandled Case:", fieldIdentifier);
+        return SQL_ERROR;
+      }
     }
     return SQL_SUCCESS;
   }());

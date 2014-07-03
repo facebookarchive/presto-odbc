@@ -20,7 +20,7 @@ import sqlext;
 import odbcinst;
 
 import bindings : OdbcResult, OdbcResultRow;
-import typeinfo : columnSizeMap, decimalDigitsMap;
+import typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
 import util : dllEnforce, logMessage, makeWithoutGC, runQuery;
 import dapi.util : asBool;
 
@@ -149,7 +149,7 @@ final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
       case DECIMAL_DIGITS:
         return Variant(decimalDigitsMap[typeId]);
       case NUM_PREC_RADIX:
-        return Variant(10);
+        return Variant(typeToNumPrecRadix(typeId));
       case NULLABLE:
         return Variant(isNullable);
       case REMARKS:
@@ -215,7 +215,7 @@ final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
       case DECIMAL_DIGITS:
         return Variant(null);
       case NUM_PREC_RADIX:
-        return Variant(10);
+        return Variant(typeToNumPrecRadix(typeId));
       case NULLABLE:
         return Variant(isNullable);
       case REMARKS:
