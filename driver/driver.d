@@ -455,10 +455,8 @@ SQLRETURN SQLRowCount(
     OdbcStatement statementHandle,
     SQLLEN* rowCount) {
   return exceptionBoundary!(() => {
-    logMessage("SQLRowCount (unimplemented)", rowCount);
-    with (statementHandle) {
-      //TODO
-    }
+    logMessage("SQLRowCount");
+    *rowCount = 0;
     return SQL_SUCCESS;
   }());
 }
@@ -1029,7 +1027,7 @@ SQLRETURN SQLEndTran(
     SQLHANDLE handle,
     TransactionOption completionType) {
   return exceptionBoundary!(() => {
-    logMessage("SQLEndTran (unimplemented)", handleType, completionType);
+    logMessage("SQLEndTran (pseudo-implemented)", handleType, completionType);
     return SQL_SUCCESS;
   }());
 }
