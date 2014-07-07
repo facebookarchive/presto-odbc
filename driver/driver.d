@@ -533,90 +533,6 @@ SQLRETURN SQLGetData(
   }());
 }
 
-///// SQLGetInfo /////
-
-SQLRETURN SQLGetInfoW(
-    SQLHDBC connectionHandle,
-    OdbcInfo infoType,
-    SQLPOINTER _infoValue,
-    SQLSMALLINT _bufferMaxLengthBytes,
-    SQLSMALLINT* _stringLengthBytes) {
-  return exceptionBoundary!(() => {
-    auto stringResult = outputWChar(_infoValue, _bufferMaxLengthBytes, _stringLengthBytes);
-    logMessage("SQLGetInfo", infoType);
-    with (OdbcInfo) {
-      switch (infoType) {
-
-      case SQL_DRIVER_ODBC_VER: // 77
-        //Latest version of ODBC is 3.8 (as of 6/19/14)
-        copyToBuffer(""w, stringResult);
-        break;
-      case SQL_ASYNC_DBC_FUNCTIONS: //10023
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
-        break;
-      case SQL_ASYNC_NOTIFICATION: //10025
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_NOTIFICATION_NOT_CAPABLE;
-        break;
-      case SQL_CURSOR_COMMIT_BEHAVIOR: //23
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_CB_DELETE;
-        break;
-      case SQL_CURSOR_ROLLBACK_BEHAVIOR: //24
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_CB_DELETE;
-        break;
-      case SQL_GETDATA_EXTENSIONS: //81
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_GD_ANY_ORDER;
-        break;
-      case SQL_DATA_SOURCE_NAME: //2
-        copyToBuffer(""w, stringResult);
-        break;
-      case SQL_MAX_CONCURRENT_ACTIVITIES: //1
-        *cast(SQLUSMALLINT*)(_infoValue) = 1;
-        break;
-      case SQL_DATA_SOURCE_READ_ONLY: //25
-        copyToBuffer("Y"w, stringResult);
-        break;
-      case SQL_DRIVER_NAME: //6
-        copyToBuffer("ODBCDRV0.dll"w, stringResult);
-        break;
-      case SQL_SEARCH_PATTERN_ESCAPE: //14
-        copyToBuffer("%"w, stringResult);
-        break;
-      case SQL_CORRELATION_NAME: //74
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_CN_ANY;
-        break;
-      case SQL_NON_NULLABLE_COLUMNS: //75
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_NNC_NON_NULL;
-        break;
-      case SQL_CATALOG_NAME_SEPARATOR: //41
-        copyToBuffer("."w, stringResult);
-        break;
-      case SQL_FILE_USAGE: //84
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_FILE_CATALOG;
-        break;
-      case SQL_CATALOG_TERM: //42
-        copyToBuffer("catalog"w, stringResult);
-        break;
-      case SQL_DATABASE_NAME: //16
-        copyToBuffer("dbname"w, stringResult);
-        break;
-      case SQL_MAX_SCHEMA_NAME_LEN: //32
-        *cast(SQLUSMALLINT*)(_infoValue) = 0;
-        break;
-      case SQL_IDENTIFIER_QUOTE_CHAR: //29
-        copyToBuffer("\""w, stringResult);
-        break;
-      case SQL_OWNER_TERM: //39
-        copyToBuffer("schema"w, stringResult);
-        break;
-      default:
-        logMessage("SQLGetInfo: Unhandled case: ", infoType);
-        break;
-      } //switch
-    }
-    return SQL_SUCCESS;
-  }());
-}
-
 ///// SQLGetTypeInfo /////
 SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
@@ -1290,11 +1206,33 @@ SQLRETURN SQLGetDiagRecW(
     SQLSMALLINT _errorMessageMaxLengthChars,
     SQLSMALLINT* _errorMessageLengthChars) {
   return exceptionBoundary!(() => {
-    auto sqlState = outputWChar!(void*)(_sqlState, 5 * wchar.sizeof, null);
+    auto sqlState = outputWChar!(void*)(_sqlState, 6 * wchar.sizeof, null);
     auto errorMessage = outputWChar(_errorMessage, _errorMessageMaxLengthChars * wchar.sizeof,
                                                    _errorMessageLengthChars);
     scope (exit) convertPtrBytesToWChars(_errorMessageLengthChars);
-    logMessage("SQLGetDiagRec (unimplemented)", handleType, recordNumber);
+
+    with (SQL_HANDLE_TYPE) {
+      switch (handleType) {
+      case STMT:
+        logMessage("SQLGetDiagRec", handleType, recordNumber);
+        with (cast(OdbcStatement) handle) {
+          if (recordNumber > errors.length) {
+            return SQL_NO_DATA;
+          }
+
+          auto error = errors[recordNumber - 1];
+          copyToBuffer(error.sqlState, sqlState);
+          *nativeError = error.code;
+          if (errorMessage) {
+            copyToBuffer(error.message, errorMessage);
+          }
+        }
+        break;
+      default:
+        logMessage("SQLGetDiagRec (unimplemented)", handleType, recordNumber);
+        return SQL_NO_DATA;
+      }
+    }
     return SQL_SUCCESS;
   }());
 }
@@ -1344,25 +1282,18 @@ SQLRETURN SQLGetStmtAttrW(
     SQLINTEGER* _stringLengthBytes) {
   return exceptionBoundary!(() => {
     auto valueString = outputWChar(value, _valueLengthBytes, _stringLengthBytes);
+    logMessage("SQLGetStmtAttr (unimplemented)", attribute);
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
       case SQL_ATTR_APP_ROW_DESC:
-        value = null;
-        break;
       case SQL_ATTR_APP_PARAM_DESC:
-        value = null;
-        break;
       case SQL_ATTR_IMP_ROW_DESC:
-        value = null;
-        break;
       case SQL_ATTR_IMP_PARAM_DESC:
-        value = null;
-        break;
       default:
+        errors ~= OdbcError("HYC00", "Unsupported attribute"w);
         return SQL_ERROR;
       }
     }
-    logMessage("SQLGetStmtAttr (unimplemented)", attribute);
     return SQL_SUCCESS;
   }());
 }
@@ -1378,6 +1309,9 @@ SQLRETURN SQLSetStmtAttrW(
     logMessage("SQLSetStmtAttr (unimplemented)", attribute);
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
+      case SQL_ATTR_ASYNC_ENABLE:
+        errors ~= OdbcError("HYC00"w, "Async not supported"w);
+        return SQL_ERROR;
       default:
         logMessage("SQLGetInfo: Unhandled case:", attribute);
         break;

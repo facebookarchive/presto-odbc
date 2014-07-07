@@ -35,6 +35,22 @@ final class OdbcStatement {
   ColumnBinding[uint] columnBindings;
   OdbcResult latestOdbcResult;
   wstring query;
+  OdbcError[] errors;
+}
+
+struct OdbcError {
+  this(wstring sqlState, wstring message, int code = 1, string file = __FILE__, int line = __LINE__) {
+    import core.exception : Exception;
+    dllEnforce(sqlState.length == 5);
+    logMessage("OdbcError:", new Exception(text(message), file, line));
+    this.sqlState = sqlState;
+    this.message = message;
+    this.code = code;
+  }
+
+  immutable wstring sqlState;
+  immutable wstring message;
+  immutable int code;
 }
 
 unittest {
