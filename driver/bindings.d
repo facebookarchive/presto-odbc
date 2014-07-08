@@ -24,35 +24,6 @@ import odbcinst;
 
 import util : logMessage, copyToNarrowBuffer, dllEnforce, OutputWChar, wcharsToBytes;
 
-/**
-  An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
-*/
-final class OdbcStatement {
-  this() {
-    latestOdbcResult = new EmptyOdbcResult();
-  }
-
-  ColumnBinding[uint] columnBindings;
-  OdbcResult latestOdbcResult;
-  wstring query;
-  OdbcError[] errors;
-}
-
-struct OdbcError {
-  this(wstring sqlState, wstring message, int code = 1, string file = __FILE__, int line = __LINE__) {
-    import core.exception : Exception;
-    dllEnforce(sqlState.length == 5);
-    logMessage("OdbcError:", new Exception(text(message), file, line));
-    this.sqlState = sqlState;
-    this.message = message;
-    this.code = code;
-  }
-
-  immutable wstring sqlState;
-  immutable wstring message;
-  immutable int code;
-}
-
 unittest {
   enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;
   alias testSqlType = int;

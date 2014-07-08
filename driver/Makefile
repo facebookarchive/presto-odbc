@@ -8,7 +8,7 @@ CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64
 
 SQL_MODULES = odbcinst sql sqlext sqltypes sqlucode
-MODULES = driver bindings columnresults tableinfo prestoresults typeinfo getinfo util $(SQL_MODULES)
+MODULES = driver handles bindings columnresults tableinfo prestoresults typeinfo getinfo util $(SQL_MODULES)
 DAPI_MODULES = statementclient queryresults mockcurl util json
 
 PROGRAM = PrestoOdbc.dll

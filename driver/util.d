@@ -17,6 +17,7 @@ import std.stdio : writeln;
 import std.conv : to, text, wtext;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
+import core.exception : Exception;
 
 import sqlext;
 import odbcinst;
@@ -91,14 +92,44 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
 SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
   try {
     return fun(args);
-  } catch(Exception e) {
+  } catch (OdbcException e) {
+    logMessage("OdbcException:", e.file ~ ":" ~ text(e.line), e.msg);
+    return SQL_ERROR;
+  } catch (Exception e) {
     logMessage(e);
     return SQL_ERROR;
-  } catch(Error e) {
+  } catch (Error e) {
     logMessage(e);
     abort();
     assert(false, "Silence compiler errors about not returning");
   }
+}
+
+unittest {
+  try {
+    throw new OdbcException("HY000", "Test");
+  } catch (OdbcException e) {}
+}
+
+class OdbcException : Exception {
+  import handles : OdbcStatement;
+
+  this(OdbcStatement handle, wstring sqlState, wstring message,
+      int code = 1, string file = __FILE__, int line = __LINE__) {
+    this(sqlState, message, code, file, line);
+    handle.errors ~= this;
+  }
+  this(wstring sqlState, wstring message, int code = 1, string file = __FILE__, int line = __LINE__) {
+    super(text(message), file, line);
+    dllEnforce(sqlState.length == 5);
+    this.sqlState = sqlState;
+    this.message = message;
+    this.code = code;
+  }
+
+  immutable wstring sqlState;
+  immutable wstring message;
+  immutable int code;
 }
 
 ///wstring source, dest < src
@@ -110,16 +141,6 @@ unittest {
   assert(5 == copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied)));
   assert(numberOfBytesCopied == 10);
   assert(cast(wchar[]) dest == "happy\0");
-}
-
-///string source, dest < src
-unittest {
-/*  auto src = "happySrcString";
-  byte[] dest;
-  dest.length = 6;
-  assert(5 == copyToBuffer(src, cast(char*) dest, dest.length));
-  assert(cast(char[]) dest == "happy\0");
-*/
 }
 
 ///wstring source, dest > src
@@ -171,6 +192,19 @@ void convertPtrBytesToWChars(T)(T* lengthBytes) {
     return;
   }
   *lengthBytes = cast(T) bytesToWchars(*lengthBytes);
+}
+
+unittest {
+  auto testArray = [1, 2, 3, 4, 5];
+  assert(popAndSave(testArray) == 1);
+  assert(popAndSave(testArray) == 2);
+  assert(popAndSave(testArray) == 3);
+}
+
+auto popAndSave(Range)(Range r) {
+  auto result = r.front;
+  r.popFront;
+  return result;
 }
 
 

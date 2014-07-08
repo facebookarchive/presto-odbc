@@ -27,8 +27,8 @@ import std.c.windows.windows;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToBuffer, makeWithoutGC, dllEnforce, exceptionBoundary, strlen, toDString;
-import util : outputWChar, wcharsToBytes, runQuery, convertPtrBytesToWChars;
+import util;
+import handles;
 import bindings;
 import prestoresults;
 import columnresults;
@@ -151,31 +151,36 @@ SQLRETURN SQLExecDirectW(
 
 SQLRETURN SQLAllocHandle(
     SQL_HANDLE_TYPE	handleType,
-    SQLHANDLE handleParent,
+    SQLHANDLE _parentHandle,
     SQLHANDLE* newHandlePointer) {
   dllEnforce(newHandlePointer != null);
+  logMessage("SQLAllocHandle", handleType, handleType);
 
   with(SQL_HANDLE_TYPE) {
     switch (handleType) {
-    case DBC:
+    case DBC: //Connection Handle
+      auto parentHandle = cast(OdbcEnvironment) _parentHandle;
+      *newHandlePointer = cast(void*) makeWithoutGC!OdbcConnection(parentHandle);
       break;
-    case DESC:
+    case DESC: //Descriptor Handle
+      auto parentHandle = cast(OdbcConnection) _parentHandle;
+      *newHandlePointer = cast(void*) makeWithoutGC!OdbcDescriptor(parentHandle);
       break;
-    case ENV:
+    case ENV: //Environment Handle
+      *newHandlePointer = cast(void*) makeWithoutGC!OdbcEnvironment();
       break;
-    case SENV:
+    case SENV: //???? (This might mean 'Shared Environment Handle', not sure)
+      logMessage("Unimplemented handle type: SENV");
       break;
-    case STMT:
-      *newHandlePointer = cast(void*) makeWithoutGC!OdbcStatement();
+    case STMT: //Statement Handle
+      auto parentHandle = cast(OdbcConnection) _parentHandle;
+      *newHandlePointer = cast(void*) makeWithoutGC!OdbcStatement(parentHandle);
       break;
     default:
       *newHandlePointer = null;
       return SQL_ERROR;
     }
   }
-
-  logMessage("SQLAllocHandle", handleType, handleType);
-
   return SQL_SUCCESS;
 }
 
@@ -191,7 +196,7 @@ SQLRETURN SQLBindCol(
   return exceptionBoundary!(() => {
     logMessage("SQLBindCol", columnNumber, columnType, bufferLengthBytes);
     dllEnforce(statementHandle !is null);
-    with (statementHandle) {
+    with (statementHandle) with (applicationRowDescriptor) {
       if (outputBuffer == null) {
         columnBindings.remove(columnNumber);
         return SQL_SUCCESS;
@@ -331,24 +336,29 @@ SQLRETURN SQLFetch(OdbcStatement statementHandle) {
     logMessage("SQLFetch");
 
     dllEnforce(statementHandle !is null);
-    with (statementHandle) {
-      if (latestOdbcResult.empty) {
-        return SQL_NO_DATA;
-      }
-
-      logMessage("SQLFetch -- Showing something!");
-      auto row = latestOdbcResult.front;
-      latestOdbcResult.popFront;
-      foreach (col, binding; statementHandle.columnBindings) {
-        if (col > latestOdbcResult.numberOfColumns) {
-          return SQL_ERROR;
-        }
-        logMessage("SQLFetching column:", col);
-        dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(col), binding);
-      }
+    with (statementHandle) with (applicationRowDescriptor) {
+      return bindDataFromColumns(statementHandle, columnBindings);
     }
-    return SQL_SUCCESS;
   }());
+}
+
+SQLRETURN bindDataFromColumns(OdbcStatement statementHandle, ColumnBinding[uint] columnBindings) {
+  with (statementHandle) {
+    if (latestOdbcResult.empty) {
+      return SQL_NO_DATA;
+    }
+
+    logMessage("bindDataFromColumns -- Showing something!");
+    auto row = popAndSave(latestOdbcResult);
+    foreach (columnNumber, binding; columnBindings) {
+      if (columnNumber > latestOdbcResult.numberOfColumns) {
+        throw new OdbcException(statementHandle, "HY000"w, "Column "w ~ wtext(columnNumber) ~ " does not exist"w);
+      }
+      logMessage("Binding data from column:", columnNumber);
+      dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(columnNumber), binding);
+    }
+  }
+  return SQL_SUCCESS;
 }
 
 ///// SQLFreeStmt /////
@@ -359,17 +369,17 @@ SQLRETURN SQLFreeStmt(
   import std.c.stdlib : free;
   return exceptionBoundary!(() => {
     logMessage("SQLFreeStmt", option);
-    with (statementHandle) with (FreeStmtOptions) {
+    with (statementHandle) with (applicationRowDescriptor) with (FreeStmtOptions) {
       final switch(option) {
       case SQL_CLOSE:
         latestOdbcResult = null;
-        columnBindings = null;
+        applicationRowDescriptor = new ApplicationRowDescriptor(connection);
         break;
       case SQL_DROP:
         dllEnforce(false, "Deprecated option: SQL_DROP");
         return SQL_ERROR;
       case SQL_UNBIND:
-        columnBindings = null;
+        applicationRowDescriptor = new ApplicationRowDescriptor(connection);
         break;
       case SQL_RESET_PARAMS:
         break;
@@ -519,17 +529,35 @@ SQLRETURN SQLColumnPrivilegesW(
 SQLRETURN SQLGetData(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
-    SQL_C_TYPE_ID targetType,
-    SQLPOINTER targetValue,
-    SQLLEN bufferLength,
+    SQLSMALLINT _targetType,
+    SQLPOINTER outputBuffer,
+    SQLLEN bufferLengthMaxBytes,
     SQLLEN* stringLengthBytes) {
+  //Note: Does not support retrieving parameter data
   return exceptionBoundary!(() => {
-    logMessage("SQLGetData (unimplemented)", columnNumber, targetType);
-    with (statementHandle) {
-      //TODO
+    with (statementHandle) with (applicationRowDescriptor) {
+      auto targetType = getColumnTargetType(statementHandle, columnNumber, _targetType);
+      logMessage("SQLGetData (untested)", columnNumber, targetType);
+
+      auto binding = ColumnBinding(stringLengthBytes);
+      binding.columnType = targetType;
+      binding.outputBuffer = outputBuffer[0 .. bufferLengthMaxBytes];
+      return bindDataFromColumns(statementHandle, [ columnNumber : binding ]);
     }
     return SQL_SUCCESS;
   }());
+}
+
+SQL_C_TYPE_ID getColumnTargetType(
+    OdbcStatement statementHandle,
+    SQLUSMALLINT columnNumber,
+    SQLSMALLINT _targetType) {
+  with (statementHandle) with (applicationRowDescriptor) {
+    if (_targetType == SQL_ARD_TYPE) {
+      return columnBindings[columnNumber - 1].columnType;
+    }
+    return cast(SQL_C_TYPE_ID) _targetType;
+  }
 }
 
 ///// SQLGetTypeInfo /////
@@ -1288,8 +1316,7 @@ SQLRETURN SQLGetStmtAttrW(
       case SQL_ATTR_IMP_ROW_DESC:
       case SQL_ATTR_IMP_PARAM_DESC:
       default:
-        errors ~= OdbcError("HYC00", "Unsupported attribute"w);
-        return SQL_ERROR;
+        throw new OdbcException(statementHandle, "HYC00", "Unsupported attribute"w);
       }
     }
     return SQL_SUCCESS;
@@ -1308,8 +1335,7 @@ SQLRETURN SQLSetStmtAttrW(
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
       case SQL_ATTR_ASYNC_ENABLE:
-        errors ~= OdbcError("HYC00"w, "Async not supported"w);
-        return SQL_ERROR;
+        throw new OdbcException(statementHandle, "HYC00"w, "Async not supported"w);
       default:
         logMessage("SQLGetInfo: Unhandled case:", attribute);
         break;
