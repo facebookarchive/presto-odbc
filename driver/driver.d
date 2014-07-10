@@ -18,6 +18,7 @@ import std.array : front, popFront, empty;
 import std.algorithm;
 import std.stdio : writeln;
 import std.conv : to;
+import std.regex : ctRegex, matchFirst;
 
 import std.c.stdio;
 import std.c.stdlib;
@@ -453,11 +454,32 @@ SQLRETURN SQLPrepareW(
   return exceptionBoundary!(() => {
     auto statementText = toDString(_statementText, _textLengthChars);
     logMessage("SQLPrepare", statementText);
+
+    enum regexPattern = disallowedSQLKeywordsRegexPattern("DROP"w, "CREATE"w, "INDEX"w, "TEMPORARY"w, "INSERT"w, "TOP"w);
+    pragma(msg, text(regexPattern));
+    auto regexEngine = ctRegex!regexPattern;
+    auto captures = matchFirst(statementText, regexEngine);
+    if (!captures.empty) {
+      throw new OdbcException(statementHandle, "HYC00"w,
+          ("Invalid query ("w ~ wtext(captures.front) ~ ") "w ~ statementText).idup);
+    }
+
     with (statementHandle) {
       query = statementText.idup;
     }
     return SQL_SUCCESS;
   }());
+}
+
+wstring disallowedSQLKeywordsRegexPattern(wstring[] keywords...) {
+  if (keywords.empty) {
+    return ""w;
+  }
+  wstring pattern = ""w;
+  foreach(keyword; keywords) {
+    pattern ~= "("w ~ keyword ~ " )|"w;
+  }
+  return pattern[0 .. $ - 1];
 }
 
 ///// SQLRowCount /////
