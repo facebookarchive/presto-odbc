@@ -51,12 +51,12 @@ SQLRETURN SQLGetInfoW(
         copyToBuffer("07.03.2014"w, stringResult);
         break;
       case SQL_FETCH_DIRECTION: //8
-        auto bitmask = SQL_FD_FETCH_NEXT & SQL_FD_FETCH_FIRST & SQL_FD_FETCH_LAST
-          & SQL_FD_FETCH_PRIOR & SQL_FD_FETCH_ABSOLUTE & SQL_FD_FETCH_RELATIVE;
+        enum bitmask = SQL_FD_FETCH_NEXT | SQL_FD_FETCH_FIRST | SQL_FD_FETCH_LAST
+          | SQL_FD_FETCH_PRIOR | SQL_FD_FETCH_ABSOLUTE | SQL_FD_FETCH_RELATIVE;
         *cast(SQLINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_ODBC_API_CONFORMANCE: //9
-        *cast(SQLSMALLINT*)(_infoValue) = SQL_OAC_LEVEL2;
+        *cast(SQLSMALLINT*)(_infoValue) = SQL_OAC_NONE;
         break;
       case SQL_ODBC_VER: //10
         copyToBuffer("03.00"w, stringResult);
@@ -65,13 +65,13 @@ SQLRETURN SQLGetInfoW(
         copyToBuffer("N"w, stringResult);
         break;
       case SQL_ODBC_SAG_CLI_CONFORMANCE: //12
-        *cast(SQLUINTEGER*)(_infoValue) = SQL_SCC_ISO92_CLI;
+        *cast(SQLUINTEGER*)(_infoValue) = SQL_OSCC_NOT_COMPLIANT;
         break;
       case SQL_SEARCH_PATTERN_ESCAPE: //14
         copyToBuffer("%"w, stringResult);
         break;
       case SQL_ODBC_SQL_CONFORMANCE: //15
-        *cast(SQLSMALLINT*)(_infoValue) = SQL_SC_SQL92_INTERMEDIATE;
+        *cast(SQLSMALLINT*)(_infoValue) = SQL_OSC_MINIMUM;
         break;
       case SQL_DATABASE_NAME: //16
         copyToBuffer("tiny"w, stringResult);
@@ -126,34 +126,37 @@ SQLRETURN SQLGetInfoW(
       case SQL_TABLE_TERM: //45
         copyToBuffer("table"w, stringResult);
         break;
+      case SQL_TRANSACTION_CAPABLE: //46
+        *cast(SQLUSMALLINT*)(_infoValue) = SQL_TC_NONE;
+        break;
       case SQL_CONVERT_FUNCTIONS: //48
-        auto bitmask = SQL_FN_CVT_CAST;
+        enum bitmask = SQL_FN_CVT_CAST;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_NUMERIC_FUNCTIONS: //49
-        auto bitmask = SQL_FN_NUM_ABS & SQL_FN_NUM_ACOS & SQL_FN_NUM_ASIN
-          & SQL_FN_NUM_ATAN & SQL_FN_NUM_ATAN2 & SQL_FN_NUM_CEILING
-          & SQL_FN_NUM_COS & SQL_FN_NUM_EXP & SQL_FN_NUM_FLOOR
-          & SQL_FN_NUM_LOG & SQL_FN_NUM_MOD & SQL_FN_NUM_SQRT
-          & SQL_FN_NUM_TAN & SQL_FN_NUM_PI & SQL_FN_NUM_RAND
-          & SQL_FN_NUM_LOG10 & SQL_FN_NUM_POWER & SQL_FN_NUM_ROUND;
+        enum bitmask = SQL_FN_NUM_ABS | SQL_FN_NUM_ACOS | SQL_FN_NUM_ASIN
+          | SQL_FN_NUM_ATAN | SQL_FN_NUM_ATAN2 | SQL_FN_NUM_CEILING
+          | SQL_FN_NUM_COS | SQL_FN_NUM_EXP | SQL_FN_NUM_FLOOR
+          | SQL_FN_NUM_LOG | SQL_FN_NUM_MOD | SQL_FN_NUM_SQRT
+          | SQL_FN_NUM_TAN | SQL_FN_NUM_PI | SQL_FN_NUM_RAND
+          | SQL_FN_NUM_LOG10 | SQL_FN_NUM_POWER | SQL_FN_NUM_ROUND;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_STRING_FUNCTIONS: //50
-        auto bitmask = SQL_FN_STR_CONCAT & SQL_FN_STR_LTRIM & SQL_FN_STR_LENGTH
-          & SQL_FN_STR_LCASE & SQL_FN_STR_REPLACE & SQL_FN_STR_RTRIM
-          & SQL_FN_STR_SUBSTRING & SQL_FN_STR_UCASE & SQL_FN_STR_CHAR
-          & SQL_FN_STR_CHARACTER_LENGTH;
+        enum bitmask = SQL_FN_STR_CONCAT | SQL_FN_STR_LTRIM | SQL_FN_STR_LENGTH
+          | SQL_FN_STR_LCASE | SQL_FN_STR_REPLACE | SQL_FN_STR_RTRIM
+          | SQL_FN_STR_SUBSTRING | SQL_FN_STR_UCASE | SQL_FN_STR_CHAR
+          | SQL_FN_STR_CHARACTER_LENGTH;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_SYSTEM_FUNCTIONS: //51
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_TIMEDATE_FUNCTIONS: //52
-        auto bitmask = SQL_FN_TD_NOW & SQL_FN_TD_CURRENT_DATE & SQL_FN_TD_DAYOFMONTH
-          & SQL_FN_TD_DAYOFWEEK & SQL_FN_TD_DAYOFYEAR & SQL_FN_TD_MONTH
-          & SQL_FN_TD_QUARTER & SQL_FN_TD_SECOND & SQL_FN_TD_CURRENT_TIME
-          & SQL_FN_TD_CURRENT_TIMESTAMP & SQL_FN_TD_EXTRACT;
+        enum bitmask = SQL_FN_TD_NOW | SQL_FN_TD_CURRENT_DATE | SQL_FN_TD_DAYOFMONTH
+          | SQL_FN_TD_DAYOFWEEK | SQL_FN_TD_DAYOFYEAR | SQL_FN_TD_MONTH
+          | SQL_FN_TD_QUARTER | SQL_FN_TD_SECOND | SQL_FN_TD_CURRENT_TIME
+          | SQL_FN_TD_CURRENT_TIMESTAMP | SQL_FN_TD_EXTRACT;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_CONVERT_BIGINT: //53
@@ -164,9 +167,9 @@ SQLRETURN SQLGetInfoW(
       case SQL_CONVERT_SMALLINT: //65
       case SQL_CONVERT_TINYINT: //68
       case SQL_CONVERT_VARCHAR: //70
-        auto bitmask = SQL_CVT_BIGINT & SQL_CVT_BIT & SQL_CVT_CHAR
-          & SQL_CVT_INTEGER & SQL_CVT_LONGVARCHAR & SQL_CVT_SMALLINT
-          & SQL_CVT_TINYINT & SQL_CVT_VARCHAR;
+        enum bitmask = SQL_CVT_BIGINT | SQL_CVT_BIT | SQL_CVT_CHAR
+          | SQL_CVT_INTEGER | SQL_CVT_LONGVARCHAR | SQL_CVT_SMALLINT
+          | SQL_CVT_TINYINT | SQL_CVT_VARCHAR;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_CONVERT_BINARY: //54
@@ -197,11 +200,11 @@ SQLRETURN SQLGetInfoW(
       case SQL_DRIVER_ODBC_VER: // 77
         //Latest version of ODBC is 3.8 (as of 6/19/14)
         //TODO: Investigate crashes when this is 03.00; works fine with 02.00
-        copyToBuffer(""w, stringResult);
+        copyToBuffer("03.00"w, stringResult);
         break;
       case SQL_POS_OPERATIONS: //79
-        auto bitmask = SQL_CA1_POS_POSITION & SQL_CA1_POS_UPDATE
-          & SQL_CA1_POS_DELETE & SQL_CA1_POS_REFRESH;
+        enum bitmask = SQL_CA1_POS_POSITION | SQL_CA1_POS_UPDATE
+          | SQL_CA1_POS_DELETE | SQL_CA1_POS_REFRESH;
         *cast(SQLINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_POSITIONED_STATEMENTS: //80
@@ -223,7 +226,7 @@ SQLRETURN SQLGetInfoW(
         copyToBuffer("N"w, stringResult);
         break;
       case SQL_GROUP_BY: //88
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_GB_GROUP_BY_EQUALS_SELECT;
+        *cast(SQLUSMALLINT*)(_infoValue) = SQL_GB_GROUP_BY_CONTAINS_SELECT;
         break;
       case SQL_KEYWORDS: //89
         copyToBuffer("EXPLAIN,CATALOGS,COLUMNS,FUNCTIONS,PARTITIONS,SCHEMAS,TABLES"w, stringResult);
@@ -231,8 +234,16 @@ SQLRETURN SQLGetInfoW(
       case SQL_ORDER_BY_COLUMNS_IN_SELECT: //90
         copyToBuffer("N"w, stringResult);
         break;
+      case SQL_SCHEMA_USAGE: //91
+        auto bitmask = SQL_SU_DML_STATEMENTS | SQL_SU_PROCEDURE_INVOCATION
+          | SQL_SU_TABLE_DEFINITION | SQL_SU_INDEX_DEFINITION
+          | SQL_SU_PRIVILEGE_DEFINITION;
+        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
       case SQL_CATALOG_USAGE: //92
-        *cast(SQLUINTEGER*)(_infoValue) = SQL_CU_DML_STATEMENTS;
+        auto bitmask = SQL_CU_DML_STATEMENTS | SQL_CU_PROCEDURE_INVOCATION
+          | SQL_CU_TABLE_DEFINITION | SQL_CU_INDEX_DEFINITION
+          | SQL_CU_PRIVILEGE_DEFINITION;
+        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_QUOTED_IDENTIFIER_CASE: //93
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_IC_SENSITIVE;
@@ -240,8 +251,11 @@ SQLRETURN SQLGetInfoW(
       case SQL_SPECIAL_CHARACTERS: //94
         copyToBuffer(""w, stringResult);
         break;
+      case SQL_SUBQUERIES: //95
+        *cast(SQLUINTEGER*)(_infoValue) = SQL_SQ_IN;
+        break;
       case SQL_UNION: //96
-        *cast(SQLUINTEGER*)(_infoValue) = SQL_U_UNION & SQL_U_UNION_ALL;
+        *cast(SQLUINTEGER*)(_infoValue) = SQL_U_UNION | SQL_U_UNION_ALL;
         break;
       case SQL_MAXIMUM_COLUMNS_IN_GROUP_BY: //97
       case SQL_MAXIMUM_COLUMNS_IN_INDEX: //98
@@ -263,8 +277,8 @@ SQLRETURN SQLGetInfoW(
         break;
       case SQL_TIMEDATE_ADD_INTERVALS: //109
       case SQL_TIMEDATE_DIFF_INTERVALS: //110
-        auto bitmask = SQL_FN_TSI_SECOND & SQL_FN_TSI_MINUTE & SQL_FN_TSI_HOUR
-          & SQL_FN_TSI_DAY & SQL_FN_TSI_MONTH & SQL_FN_TSI_YEAR;
+        enum bitmask = SQL_FN_TSI_SECOND | SQL_FN_TSI_MINUTE | SQL_FN_TSI_HOUR
+          | SQL_FN_TSI_DAY | SQL_FN_TSI_MONTH | SQL_FN_TSI_YEAR;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_NEED_LONG_DATA_LEN: //111
@@ -280,8 +294,8 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_CL_START;
         break;
       case SQL_OUTER_JOIN_CAPABILITIES: //115
-        auto bitmask = SQL_OJ_LEFT & SQL_OJ_RIGHT & SQL_OJ_FULL & SQL_OJ_NESTED
-          & SQL_OJ_NOT_ORDERED & SQL_OJ_INNER & SQL_OJ_ALL_COMPARISON_OPS;
+        enum bitmask = SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED
+          | SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_ACTIVE_ENVIRONMENTS: //116
@@ -290,9 +304,12 @@ SQLRETURN SQLGetInfoW(
       case SQL_ALTER_DOMAIN: //117
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
+      case SQL_SQL_CONFORMANCE: //118
+        *cast(SQLUINTEGER*)(_infoValue) = 0;
+        break;
       case SQL_DATETIME_LITERALS: //119
-        auto bitmask = SQL_DL_SQL92_DATE & SQL_DL_SQL92_TIME & SQL_DL_SQL92_TIMESTAMP
-          & SQL_DL_SQL92_INTERVAL_YEAR_TO_MONTH & SQL_DL_SQL92_INTERVAL_DAY_TO_SECOND;
+        enum bitmask = SQL_DL_SQL92_DATE | SQL_DL_SQL92_TIME | SQL_DL_SQL92_TIMESTAMP
+          | SQL_DL_SQL92_INTERVAL_YEAR_TO_MONTH | SQL_DL_SQL92_INTERVAL_DAY_TO_SECOND;
           *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_BATCH_SUPPORT: //121
@@ -303,6 +320,10 @@ SQLRETURN SQLGetInfoW(
       case SQL_CREATE_COLLATION: //129
       case SQL_CREATE_DOMAIN: //130
       case SQL_CREATE_SCHEMA: //131
+      case SQL_CREATE_TABLE: //132
+      case SQL_CREATE_VIEW: //134
+      case SQL_DROP_TABLE: //141
+      case SQL_DROP_VIEW: //143
       case SQL_CREATE_TRANSLATION: //133
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
@@ -315,7 +336,7 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_INDEX_KEYWORDS: //148
-        *cast(SQLUINTEGER*)(_infoValue) = SQL_IK_ASC & SQL_IK_DESC;
+        *cast(SQLUINTEGER*)(_infoValue) = SQL_IK_ASC | SQL_IK_DESC;
         break;
       case SQL_ODBC_INTERFACE_CONFORMANCE: //152
         *cast(SQLUINTEGER*)(_infoValue) = SQL_OIC_CORE;
@@ -327,7 +348,7 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = SQL_PARC_NO_BATCH;
         break;
       case SQL_SQL92_DATETIME_FUNCTIONS: //155
-        auto bitmask = SQL_SDF_CURRENT_DATE & SQL_SDF_CURRENT_TIME & SQL_SDF_CURRENT_TIMESTAMP;
+        enum bitmask = SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME | SQL_SDF_CURRENT_TIMESTAMP;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_SQL92_FOREIGN_KEY_DELETE_RULE: //156
@@ -340,17 +361,17 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_SQL92_STRING_FUNCTIONS: //164
-        auto bitmask = SQL_SSF_LOWER & SQL_SSF_UPPER & SQL_SSF_SUBSTRING
-          & SQL_SSF_TRIM_BOTH & SQL_SSF_TRIM_LEADING & SQL_SSF_TRIM_TRAILING;
+        enum bitmask = SQL_SSF_LOWER | SQL_SSF_UPPER | SQL_SSF_SUBSTRING
+          | SQL_SSF_TRIM_BOTH | SQL_SSF_TRIM_LEADING | SQL_SSF_TRIM_TRAILING;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_STANDARD_CLI_CONFORMANCE: //166
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_AGGREGATE_FUNCTIONS: //169
-        auto bitmask = SQL_AF_AVG & SQL_AF_COUNT & SQL_AF_MAX
-          & SQL_AF_MIN & SQL_AF_SUM;
-        *cast(SQLUINTEGER*)(_infoValue) = 0;
+        enum bitmask = SQL_AF_AVG | SQL_AF_COUNT | SQL_AF_MAX
+          | SQL_AF_MIN | SQL_AF_SUM;
+        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_DDL_INDEX: //170
         *cast(SQLUINTEGER*)(_infoValue) = 0;
@@ -400,21 +421,13 @@ SQLRETURN SQLGetInfoW(
       case SQL_PROCEDURE_TERM: //40
       case SQL_SCROLL_CONCURRENCY: //43
       case SQL_SCROLL_OPTIONS: //44
-      case SQL_TRANSACTION_CAPABLE: //46
       case SQL_USER_NAME: //47
       case SQL_TRANSACTION_ISOLATION_OPTION: //72
       case SQL_INTEGRITY: //73
       case SQL_LOCK_TYPES: //78
       case SQL_BOOKMARK_PERSISTENCE: //82
       case SQL_NULL_COLLATION: //85
-      case SQL_SCHEMA_USAGE: //91
-      case SQL_SUBQUERIES: //95
-      case SQL_SQL_CONFORMANCE: //118
       case SQL_BATCH_ROW_COUNT: //120
-      case SQL_CREATE_TABLE: //132
-      case SQL_CREATE_VIEW: //134
-      case SQL_DROP_TABLE: //141
-      case SQL_DROP_VIEW: //143
       case SQL_DYNAMIC_CURSOR_ATTRIBUTES1: //144
       case SQL_DYNAMIC_CURSOR_ATTRIBUTES2: //145
       case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1: //146
