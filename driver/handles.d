@@ -118,7 +118,17 @@ final class OdbcStatement {
 
   OdbcConnection connection;
 
-  wstring query;
+  wstring query() {
+    return query_;
+  }
+
+  void query(wstring query) {
+    executedQuery = false;
+    query_ = query;
+  }
+
+  private wstring query_;
+  bool executedQuery;
   OdbcResult latestOdbcResult;
   OdbcException[] errors;
 
