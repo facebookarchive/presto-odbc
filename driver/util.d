@@ -364,8 +364,13 @@ struct OutputWChar(LengthType) {
       this.buffer = null;
       return;
     }
-    assert(maxLengthBytes % 2 == 0);
-    assert(maxLengthBytes >= 2);
+
+    if (maxLengthBytes % 2 != 0 || maxLengthBytes < 2) {
+      logMessage("Warning! maxLengthBytes is", maxLengthBytes);
+      this.buffer = null;
+      return;
+    }
+
     this.buffer = buffer[0 .. maxLengthBytes / 2];
   }
 

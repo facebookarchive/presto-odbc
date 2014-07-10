@@ -191,17 +191,17 @@ SQLRETURN SQLBindCol(
     SQLUSMALLINT columnNumber,
     SQL_C_TYPE_ID columnType,
     SQLPOINTER outputBuffer,
-    SQLLEN bufferLengthBytes,
+    SQLLEN bufferLengthMaxBytes,
     SQLLEN* numberOfBytesWritten) {
   return exceptionBoundary!(() => {
-    logMessage("SQLBindCol", columnNumber, columnType, bufferLengthBytes);
+    logMessage("SQLBindCol", columnNumber, columnType, bufferLengthMaxBytes);
     dllEnforce(statementHandle !is null);
     with (statementHandle) with (applicationRowDescriptor) {
       if (outputBuffer == null) {
         columnBindings.remove(columnNumber);
         return SQL_SUCCESS;
       }
-      if (bufferLengthBytes < 0) {
+      if (bufferLengthMaxBytes < 0) {
         return SQL_ERROR;
       }
       if (numberOfBytesWritten) {
@@ -215,7 +215,7 @@ SQLRETURN SQLBindCol(
 
       auto binding = ColumnBinding(numberOfBytesWritten);
       binding.columnType = columnType;
-      binding.outputBuffer = outputBuffer[0 .. bufferLengthBytes];
+      binding.outputBuffer = outputBuffer[0 .. bufferLengthMaxBytes];
       columnBindings[columnNumber] = binding;
     }
 
@@ -430,14 +430,14 @@ SQLRETURN SQLNumResultCols(
     SQLSMALLINT* columnCount) {
   return exceptionBoundary!(() => {
     logMessage("SQLNumResultCols (pseudo-implemented)");
-    assert(columnCount);
+    dllEnforce(columnCount != null);
     with (statementHandle) {
       //TODO: Revisit this assert: Can actually call this function when the query
       //                           is prepared but before it has been executed.
       logMessage(text(typeid(cast(Object) statementHandle.latestOdbcResult)));
       bool couldBeEmptyPrestoResult = typeid(cast(Object) statementHandle.latestOdbcResult) == typeid(PrestoResult);
       bool isAnOldResult = latestOdbcResult.empty && latestOdbcResult.numberOfColumns;
-      assert(!isAnOldResult || couldBeEmptyPrestoResult);
+      dllEnforce(!isAnOldResult || couldBeEmptyPrestoResult);
       *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);
     }
     return SQL_SUCCESS;
