@@ -22,7 +22,7 @@ import std.traits : isSomeString, Unqual;
 import sqlext;
 import odbcinst;
 
-import util : logMessage, copyToNarrowBuffer, dllEnforce, OutputWChar, wcharsToBytes;
+import util;
 
 unittest {
   enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;
@@ -63,12 +63,27 @@ void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
         static if (is(VARIANT_TYPE == string)) {
           auto srcString = value.get!VARIANT_TYPE;
         } else {
-          logMessage("Converting a non-string type to a string type for output");
+          logMessage("Converting a non-string", VARIANT_TYPE.stringof, "to a string for output");
           auto srcString = to!ResultType(value.get!VARIANT_TYPE);
         }
         numberOfBytesWritten = copyToNarrowBuffer(srcString, cast(char[]) outputBuffer);
+      } else static if (is(ResultType == wstring)) {
+        static if (is(VARIANT_TYPE == wstring)) {
+          auto srcString = value.get!VARIANT_TYPE;
+        } else {
+          static if (!is(VARIANT_TYPE == string)) {
+            logMessage("Converting a non-string type", VARIANT_TYPE.stringof, "to a wstring for output");
+          }
+          auto srcString = to!ResultType(value.get!VARIANT_TYPE);
+        }
+        auto outputWCharBuffer = outputWChar(outputBuffer, indicator);
+        if (!outputWCharBuffer) {
+          numberOfBytesWritten = SQL_NO_TOTAL;
+          return;
+        }
+        copyToBuffer(srcString, outputWCharBuffer);
       } else {
-        assert(!isSomeString!VARIANT_TYPE, "" ~ text(typeid(ResultType)) ~ " " ~ text(typeid(VARIANT_TYPE)));
+        assert(!isSomeString!VARIANT_TYPE, "" ~ ResultType.stringof ~ " " ~ VARIANT_TYPE.stringof);
 
         auto resultPtr = cast(ResultType*) outputBuffer.ptr;
         *resultPtr = to!ResultType(value.get!VARIANT_TYPE);
