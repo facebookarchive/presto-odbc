@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 
+import std.array : front, popFront, empty, appender;
 import std.algorithm : min;
 import std.stdio : writeln;
 import std.conv : to, text, wtext;
@@ -23,20 +24,37 @@ import sqlext;
 import odbcinst;
 import statementclient : StatementClient, ClientSession;
 
+auto logBuffer = appender!wstring;
+
 void logMessage(TList...)(auto ref TList vs) {
+  logBuffer ~= buildDebugMessage(vs) ~= '\n';
+  if (logBuffer.data.length > 100000) {
+    flushLogBuffer();
+  }
+}
+
+void logCriticalMessage(TList...)(auto ref TList vs) {
+  logBuffer ~= buildDebugMessage(vs) ~= '\n';
+  flushLogBuffer();
+}
+
+void flushLogBuffer() {
   import std.file : append, FileException;
   enum logFile = "C:\\temp\\presto_odbc.log";
 
-  auto message = buildDebugMessage(vs) ~ '\n';
   FileException fileException;
   for (;;) {
     try {
-      append(logFile, message);
+      append(logFile, logBuffer.data);
+      logBuffer.clear();
       if (fileException) {
         append(logFile, "Had at least one file exception, latest:\n"w ~ wtext(fileException));
       }
       break;
     } catch (FileException e) {
+      if (fileException) {
+        e.next = fileException;
+      }
       fileException = e;
     }
   }
@@ -83,7 +101,7 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
 
   if (!condition) {
     auto ex = new Exception(message, file, line);
-    logMessage(ex);
+    logCriticalMessage(ex);
     showPopupMessage(ex);
     abort();
   }
@@ -93,13 +111,13 @@ SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
   try {
     return fun(args);
   } catch (OdbcException e) {
-    logMessage("OdbcException:", e.file ~ ":" ~ text(e.line), e.msg);
+    logCriticalMessage("OdbcException:", e.file ~ ":" ~ text(e.line), e.msg);
     return SQL_ERROR;
   } catch (Exception e) {
-    logMessage(e);
+    logCriticalMessage(e);
     return SQL_ERROR;
   } catch (Error e) {
-    logMessage(e);
+    logCriticalMessage(e);
     abort();
     assert(false, "Silence compiler errors about not returning");
   }
