@@ -967,7 +967,7 @@ SQLRETURN SQLColAttributeW(
     SQLLEN* numericAttribute) {
   return exceptionBoundary!(() => {
     auto characterAttribute = outputWChar(_characterAttribute, _bufferMaxLengthBytes, _stringLengthBytes);
-    logMessage("SQLColAttribute (partial-implementation)", columnNumber, fieldIdentifier);
+    logMessage("SQLColAttribute", columnNumber, fieldIdentifier);
     with (statementHandle) with (DescriptorField) {
       if (fieldIdentifier == SQL_DESC_COUNT) {
         *numericAttribute = latestOdbcResult.numberOfColumns;
@@ -978,15 +978,23 @@ SQLRETURN SQLColAttributeW(
       auto result = cast(PrestoResult) latestOdbcResult;
       auto columnMetadata = result.columnMetadata[columnNumber - 1];
       auto sqlTypeId = prestoTypeToSqlTypeId(columnMetadata.type);
+      logMessage("SQLColAttribute's column type is", sqlTypeId);
 
       switch (fieldIdentifier) {
       case SQL_COLUMN_DISPLAY_SIZE: //SQL_DESC_DISPLAY_SIZE
-        *numericAttribute = displaySizeMap[sqlTypeId];
+        *numericAttribute = toColAttributeSizeUnknownFormat(displaySizeMap[sqlTypeId]);
+        break;
+      case SQL_DESC_LENGTH:
+        *numericAttribute = toColAttributeSizeUnknownFormat(columnSizeMap[sqlTypeId]);
+        break;
+      case SQL_DESC_OCTET_LENGTH:
+        *numericAttribute = toColAttributeSizeUnknownFormat(octetLengthMap[sqlTypeId]);
         break;
       case SQL_COLUMN_AUTO_INCREMENT: //SQL_DESC_AUTO_UNIQUE_VALUE
         *numericAttribute = SQL_FALSE;
         break;
       case SQL_DESC_BASE_COLUMN_NAME:
+      case SQL_COLUMN_LABEL: //SQL_DESC_LABEL
         copyToBuffer(wtext(columnMetadata.name), characterAttribute);
         break;
       case SQL_DESC_BASE_TABLE_NAME:
@@ -1034,20 +1042,17 @@ SQLRETURN SQLColAttributeW(
       case SQL_DESC_TYPE:
         *numericAttribute = toVerboseType(sqlTypeId);
         break;
-      case SQL_DESC_LENGTH:
-        *numericAttribute = columnSizeMap[sqlTypeId];
-        break;
-      case SQL_DESC_OCTET_LENGTH:
-        *numericAttribute = octetLengthMap[sqlTypeId];
-        break;
       case SQL_DESC_PRECISION:
         if (!isTimeRelated(sqlTypeId)) {
           *numericAttribute = columnSizeMap[sqlTypeId];
+          break;
         }
-        logMessage("Unhandled case: SQL_DESC_PRECISION of a time-related type");
+        logMessage("Unhandled case: SQL_DESC_PRECISION of a time-related type", sqlTypeId);
         break;
       case SQL_DESC_SCALE:
-        dllEnforce(false, "Intentionally Unsupported");
+        //TODO: This value is undefined for all but the SQL_NUMERIC and SQL_DECIMAL
+        //      types, which are presently unsupported.
+        *numericAttribute = 0;
       case SQL_DESC_NULLABLE:
         *numericAttribute = Nullability.SQL_NULLABLE_UNKNOWN;
         break;
@@ -1059,13 +1064,37 @@ SQLRETURN SQLColAttributeW(
         break;
       default:
       case SQL_COLUMN_MONEY: //SQL_DESC_FIXED_PREC_SCALE
-      case SQL_COLUMN_LABEL: //SQL_DESC_LABEL
         logMessage("SQLColAttribute Unhandled Case:", fieldIdentifier);
         return SQL_ERROR;
       }
     }
     return SQL_SUCCESS;
   }());
+}
+
+/*
+ * For calls to: SQL_COLUMN_DISPLAY_SIZE SQL_DESC_LENGTH, SQL_DESC_OCTET_LENGTH with string SQL IDs
+ *
+ * A value of -1 is how I specify that for string types Tableau needs to just "figure it out".
+ *
+ * The appropriate 'figure it out' value for SQLGetData (for the same stats) is SQL_NO_TOTAL, which has a value of -4.
+ * SQL_NO_TOTAL is also the recommended "don't know" value on the specific pages for these various data type sizes
+ * If I use that, Tableau gives me buffers of size 1.
+ * If I give Tableau -1 for these values, it seems to recognize that and does the right thing.
+ *
+ * Unfortunately, searching for all named constants -1 in sql.d and sqlext.d does not come up with anything appropriate for this case.
+ * This is appears to be a bit of a magic number, and might be an application-specific magic number at that.
+ *
+ * Reference:
+ * http://msdn.microsoft.com/en-us/library/ms713558%28v=vs.85%29.aspx
+ * http://msdn.microsoft.com/en-us/library/ms712499%28v=vs.85%29.aspx
+ * http://msdn.microsoft.com/en-us/library/ms711786%28v=vs.85%29.aspx
+ */
+N toColAttributeSizeUnknownFormat(N)(N size) if (isNumeric!N) {
+  if (size == SQL_NO_TOTAL) {
+    return -1;
+  }
+  return size;
 }
 
 ///// SQLCopyDesc /////
