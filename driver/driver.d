@@ -752,11 +752,11 @@ SQLRETURN SQLForeignKeysW(
     auto foreignKeySchemaName = toDString(_foreignKeySchemaName, _foreignKeySchemaNameLengthChars);
     auto foreignKeyTableName = toDString(_foreignKeyTableName, _foreignKeyTableNameLengthChars);
 
-    logMessage("SQLForeignKeys (unimplemented)",
+    logMessage("SQLForeignKeys",
         primaryKeyCatalogName, primaryKeySchemaName, primaryKeyTableName,
         foreignKeyCatalogName, foreignKeySchemaName, foreignKeyTableName);
     with (statementHandle) {
-      //TODO
+      latestOdbcResult = new EmptyOdbcResult();
     }
     return SQL_SUCCESS;
   }());
@@ -819,9 +819,9 @@ SQLRETURN SQLPrimaryKeysW(
     auto schemaName = toDString(_schemaName, _schemaNameLength);
     auto tableName = toDString(_tableName, _tableNameLength);
 
-    logMessage("SQLPrimaryKeys (unimplemented)", catalogName, schemaName, tableName);
+    logMessage("SQLPrimaryKeys", catalogName, schemaName, tableName);
     with (statementHandle) {
-      //TODO
+      latestOdbcResult = new EmptyOdbcResult();
     }
     return SQL_SUCCESS;
   }());
