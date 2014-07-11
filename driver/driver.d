@@ -48,7 +48,7 @@ version(unittest) {
       Runtime.initialize();
       import core.memory;
       GC.disable();
-      logMessage("ODBCDRV0 loaded by application or driver manager");
+      logMessage("Presto ODBC Driver loaded by application or driver manager");
     } else if (fdwReason == DLL_PROCESS_DETACH) {   // DLL is being unloaded
       Runtime.terminate();
     }
@@ -64,7 +64,7 @@ extern(System):
 
 //Note: If making changes here, also look at SQLBrowseConnect
 SQLRETURN SQLDriverConnectW(
-    SQLHDBC hdbc,
+    OdbcConnection connectionHandle,
     SQLHWND hwnd,
     in SQLWCHAR* _connStrIn,
     SQLSMALLINT _connStrInChars,
@@ -95,7 +95,7 @@ SQLRETURN SQLDriverConnectW(
 
 //Note: If making changes here, also look at SQLDriverConnect
 SQLRETURN SQLBrowseConnectW(
-    SQLHDBC hdbc,
+    OdbcConnection connectionHandle,
     in SQLWCHAR* _connStrIn,
     SQLSMALLINT _connStrInChars,
     SQLWCHAR* _connStrOut,
@@ -114,7 +114,7 @@ SQLRETURN SQLBrowseConnectW(
 ///// SQLConnect /////
 
 SQLRETURN SQLConnectW(
-    SQLHDBC hdbc,
+    OdbcConnection connectionHandle,
     in SQLWCHAR* _serverName,
     SQLSMALLINT _serverNameLengthChars,
     in SQLWCHAR* _userName,
@@ -155,7 +155,7 @@ SQLRETURN SQLAllocHandle(
     SQLHANDLE _parentHandle,
     SQLHANDLE* newHandlePointer) {
   dllEnforce(newHandlePointer != null);
-  logMessage("SQLAllocHandle", handleType, handleType);
+  logMessage("SQLAllocHandle", handleType);
 
   with(SQL_HANDLE_TYPE) {
     switch (handleType) {
@@ -214,9 +214,7 @@ SQLRETURN SQLBindCol(
         return SQL_ERROR;
       }
 
-      auto binding = ColumnBinding(numberOfBytesWritten);
-      binding.columnType = columnType;
-      binding.outputBuffer = outputBuffer[0 .. bufferLengthMaxBytes];
+      auto binding = ColumnBinding(columnType, outputBuffer[0 .. bufferLengthMaxBytes], numberOfBytesWritten);
       columnBindings[columnNumber] = binding;
     }
 
@@ -362,11 +360,11 @@ SQLRETURN bindDataFromColumns(OdbcStatement statementHandle, ColumnBinding[uint]
       return SQL_NO_DATA;
     }
 
-    logMessage("bindDataFromColumns -- Showing something!");
     auto row = popAndSave(latestOdbcResult);
     foreach (columnNumber, binding; columnBindings) {
       if (columnNumber > latestOdbcResult.numberOfColumns) {
-        throw new OdbcException(statementHandle, "HY000"w, "Column "w ~ wtext(columnNumber) ~ " does not exist"w);
+        throw new OdbcException(statementHandle, StatusCode.GENERAL_ERROR,
+            "Column "w ~ wtext(columnNumber) ~ " does not exist"w);
       }
       logMessage("Binding data from column:", columnNumber);
       dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(columnNumber), binding);
@@ -465,12 +463,11 @@ SQLRETURN SQLPrepareW(
     auto statementText = toDString(_statementText, _textLengthChars);
     logMessage("SQLPrepare", statementText);
 
-    enum regexPattern = disallowedSQLKeywordsRegexPattern("DROP"w, "CREATE"w, "INDEX"w, "TEMPORARY"w, "INSERT"w, "TOP"w);
-    pragma(msg, text(regexPattern));
+    enum regexPattern = r"(?:^|\s)(DROP|CREATE|INDEX|TEMPORARY|INSERT|TOP)\s"w;
     auto regexEngine = ctRegex!regexPattern;
     auto captures = matchFirst(statementText, regexEngine);
     if (!captures.empty) {
-      throw new OdbcException(statementHandle, "HYC00"w,
+      throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE,
           ("Invalid query ("w ~ wtext(captures.front) ~ ") "w ~ statementText).idup);
     }
 
@@ -479,17 +476,6 @@ SQLRETURN SQLPrepareW(
     }
     return SQL_SUCCESS;
   }());
-}
-
-wstring disallowedSQLKeywordsRegexPattern(wstring[] keywords...) {
-  if (keywords.empty) {
-    return ""w;
-  }
-  wstring pattern = ""w;
-  foreach(keyword; keywords) {
-    pattern ~= "("w ~ keyword ~ " )|"w;
-  }
-  return pattern[0 .. $ - 1];
 }
 
 ///// SQLRowCount /////
@@ -571,9 +557,7 @@ SQLRETURN SQLGetData(
       auto targetType = getColumnTargetType(statementHandle, columnNumber, _targetType);
       logMessage("SQLGetData (untested)", columnNumber, targetType);
 
-      auto binding = ColumnBinding(stringLengthBytes);
-      binding.columnType = targetType;
-      binding.outputBuffer = outputBuffer[0 .. bufferLengthMaxBytes];
+      auto binding = ColumnBinding(targetType, outputBuffer[0 .. bufferLengthMaxBytes], stringLengthBytes);
       return bindDataFromColumns(statementHandle, [ columnNumber : binding ]);
     }
     return SQL_SUCCESS;
@@ -786,7 +770,7 @@ SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
 ///// SQLNativeSql /////
 
 SQLRETURN SQLNativeSqlW(
-    SQLHDBC hdbc,
+    OdbcConnection connectionHandle,
     in SQLWCHAR* _inSql,
     SQLINTEGER _inSqlLengthChars,
     SQLWCHAR* _outSql,
@@ -1348,7 +1332,8 @@ SQLRETURN SQLGetStmtAttrW(
       case SQL_ATTR_IMP_ROW_DESC:
       case SQL_ATTR_IMP_PARAM_DESC:
       default:
-        throw new OdbcException(statementHandle, "HYC00", "Unsupported attribute"w);
+        //Will be supported in an incoming diff.
+        throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Unsupported attribute"w);
       }
     }
     return SQL_SUCCESS;
@@ -1367,7 +1352,7 @@ SQLRETURN SQLSetStmtAttrW(
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
       case SQL_ATTR_ASYNC_ENABLE:
-        throw new OdbcException(statementHandle, "HYC00"w, "Async not supported"w);
+        throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Async not supported"w);
       default:
         logMessage("SQLGetInfo: Unhandled case:", attribute);
         break;

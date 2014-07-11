@@ -90,16 +90,14 @@ struct StatementClient {
     terminateQuery();
   }
 
-  @property {
-    ClientSession session() const {
-      return session_;
-    }
-    string query() const {
-      return query_;
-    }
-    bool queryTerminated() {
-      return queryTerminated_;
-    }
+  ClientSession session() const {
+    return session_;
+  }
+  string query() const {
+    return query_;
+  }
+  bool queryTerminated() {
+    return queryTerminated_;
   }
 
   immutable(QueryResults) front() const nothrow pure {

@@ -27,8 +27,7 @@ import util;
 unittest {
   enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;
   alias testSqlType = int;
-  auto binding = ColumnBinding(new SQLLEN);
-  binding.columnType = testSqlTypeId;
+  auto binding = ColumnBinding(testSqlTypeId, [], new SQLLEN);
   binding.outputBuffer.length = testSqlType.sizeof;
   binding.numberOfBytesWritten = -1;
 
@@ -40,8 +39,7 @@ unittest {
 unittest {
   enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_CHAR;
   alias testSqlType = string;
-  auto binding = ColumnBinding(new SQLLEN);
-  binding.columnType = testSqlTypeId;
+  auto binding = ColumnBinding(testSqlTypeId, [], new SQLLEN);
   binding.outputBuffer.length = 10;
   binding.numberOfBytesWritten = -1;
 
@@ -158,7 +156,9 @@ template firstNonVoidType(TList...) {
  * Stores information about how to return results to the user for a particular column.
  */
 struct ColumnBinding {
-  this(SQLLEN* indicator) {
+  this(SQL_C_TYPE_ID columnType, void[] outputBuffer, SQLLEN* indicator) {
+    this.columnType = columnType;
+    this.outputBuffer = outputBuffer;
     this.indicator = indicator;
   }
 
@@ -166,15 +166,14 @@ struct ColumnBinding {
   void[] outputBuffer;
   SQLLEN* indicator;
 
-  @property {
-    SQLLEN numberOfBytesWritten() {
-      assert(indicator != null);
-      return *indicator;
-    }
-    void numberOfBytesWritten(SQLLEN value) {
-      if (indicator != null) {
-        *indicator = value;
-      }
+  SQLLEN numberOfBytesWritten() {
+    assert(indicator != null);
+    return *indicator;
+  }
+
+  void numberOfBytesWritten(SQLLEN value) {
+    if (indicator != null) {
+      *indicator = value;
     }
   }
 }
@@ -183,23 +182,19 @@ struct ColumnBinding {
  * A range that allows retrieving one row at a time from the result set of a query.
  */
 interface OdbcResult {
-  @property {
-    bool empty();
-    OdbcResultRow front();
-    void popFront();
+  bool empty() const;
+  inout(OdbcResultRow) front() inout;
+  void popFront();
 
-    uint numberOfColumns();
-  }
+  size_t numberOfColumns();
 }
 
 final class EmptyOdbcResult : OdbcResult {
-  @property {
-    bool empty() { return true; }
-    OdbcResultRow front() { return null; }
-    void popFront() {}
+  override bool empty() const { return true; }
+  override inout(OdbcResultRow) front() inout { return null; }
+  override void popFront() {}
 
-    uint numberOfColumns() { return 0; }
-  }
+  override size_t numberOfColumns() { return 0; }
 }
 
 interface OdbcResultRow {

@@ -59,39 +59,37 @@ final class PrestoResult : OdbcResult {
     numberOfColumns_ = r.numberOfColumns();
   }
 
-  @property {
-    bool empty() {
-      return results_.empty;
-    }
+  override bool empty() const {
+    return results_.empty;
+  }
 
-    PrestoResultRow front() {
-      assert(!empty);
-      return results_.front;
-    }
+  override inout(PrestoResultRow) front() inout {
+    assert(!empty);
+    return results_.front;
+  }
 
-    void popFront() {
-      results_.popFront();
-    }
+  override void popFront() {
+    results_.popFront();
+  }
 
-    uint numberOfColumns() {
-      return numberOfColumns_;
-    }
+  override size_t numberOfColumns() {
+    return numberOfColumns_;
+  }
 
-    void columnMetadata(immutable(ColumnMetadata)[] data) {
-      if (!columnMetadata_) {
-        columnMetadata_ = data;
-      }
+  void columnMetadata(immutable(ColumnMetadata)[] data) {
+    if (!columnMetadata_) {
+      columnMetadata_ = data;
     }
+  }
 
-    auto columnMetadata() const {
-      return columnMetadata_;
-    }
+  auto columnMetadata() const {
+    return columnMetadata_;
   }
 
 private:
   PrestoResultRow[] results_;
   immutable(ColumnMetadata)[] columnMetadata_ = null;
-  uint numberOfColumns_ = 0;
+  size_t numberOfColumns_ = 0;
 }
 
 final class PrestoResultRow : OdbcResultRow {
@@ -99,12 +97,12 @@ final class PrestoResultRow : OdbcResultRow {
     data ~= v;
   }
 
-  Variant dataAt(int column) {
+  override Variant dataAt(int column) {
     assert(column >= 1);
     return data[column - 1];
   }
 
-  uint numberOfColumns() {
+  size_t numberOfColumns() {
     dllEnforce(!data.empty, "Row has 0 columns");
     return cast(uint) data.length;
   }

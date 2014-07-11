@@ -56,6 +56,7 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_ODBC_API_CONFORMANCE: //9
+        //Can probably increase this in the future.
         *cast(SQLSMALLINT*)(_infoValue) = SQL_OAC_NONE;
         break;
       case SQL_ODBC_VER: //10
@@ -199,7 +200,6 @@ SQLRETURN SQLGetInfoW(
         break;
       case SQL_DRIVER_ODBC_VER: // 77
         //Latest version of ODBC is 3.8 (as of 6/19/14)
-        //TODO: Investigate crashes when this is 03.00; works fine with 02.00
         copyToBuffer("03.00"w, stringResult);
         break;
       case SQL_POS_OPERATIONS: //79

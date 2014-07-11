@@ -20,6 +20,7 @@ import odbcinst;
 import bindings : OdbcResult, OdbcResultRow;
 
 
+// http://msdn.microsoft.com/en-us/library/ms711786(v=vs.85).aspx
 //Does not include interval types/SQL_DECIMAL/SQL_NUMERIC
 enum SQLSMALLINT[SQL_TYPE_ID] columnSizeMap = [
   SQL_TYPE_ID.SQL_CHAR : SQL_NO_TOTAL,
@@ -45,6 +46,7 @@ enum SQLSMALLINT[SQL_TYPE_ID] columnSizeMap = [
   SQL_TYPE_ID.SQL_GUID : 36,
 ];
 
+// http://msdn.microsoft.com/en-us/library/ms709314(v=vs.85).aspx
 //Does not include SQL_DECIMAL/SQL_NUMERIC
 enum SQLSMALLINT[SQL_TYPE_ID] decimalDigitsMap = [
   SQL_TYPE_ID.SQL_CHAR : 0,
@@ -83,6 +85,7 @@ enum SQLSMALLINT[SQL_TYPE_ID] decimalDigitsMap = [
   SQL_TYPE_ID.SQL_GUID : 0,
 ];
 
+// http://msdn.microsoft.com/en-us/library/ms713979(v=vs.85).aspx
 //Does not include SQL_DECIMAL/SQL_NUMERIC
 enum SQLSMALLINT[SQL_TYPE_ID] octetLengthMap = [
   SQL_TYPE_ID.SQL_CHAR : SQL_NO_TOTAL,
@@ -121,6 +124,7 @@ enum SQLSMALLINT[SQL_TYPE_ID] octetLengthMap = [
   SQL_TYPE_ID.SQL_GUID : 16,
 ];
 
+// http://msdn.microsoft.com/en-us/library/ms713974(v=vs.85).aspx
 //Does not include interval types/SQL_DECIMAL/SQL_NUMERIC
 enum SQLSMALLINT[SQL_TYPE_ID] displaySizeMap = [
   SQL_TYPE_ID.SQL_CHAR : SQL_NO_TOTAL,
@@ -269,6 +273,10 @@ SQL_TYPE_ID toVerboseType(SQL_TYPE_ID typeId) {
   }
 }
 
+// http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
+// (When looking at the reference on the above page and the values
+//  from the source listed for column size, this seems to be the
+//  appropriate result)
 int typeToNumPrecRadix(SQL_TYPE_ID typeId) {
   return isNumericalTypeId(typeId) ? 10 : 0;
 }
@@ -278,40 +286,38 @@ final class TypeInfoResult(RowT) : OdbcResult {
     result = new RowT(vs);
   }
 
-  @property {
-    bool empty() {
-      return poppedContents;
-    }
+  override bool empty() const {
+    return result is null;
+  }
 
-    RowT front() {
-      assert(!empty);
-      return result;
-    }
+  override inout(RowT) front() inout {
+    assert(!empty);
+    return result;
+  }
 
-    void popFront() {
-      poppedContents = true;
-    }
+  override void popFront() {
+    result = null;
+  }
 
-    uint numberOfColumns() {
-      return TypeInfoResultColumns.max;
-    }
+  override size_t numberOfColumns() {
+    return TypeInfoResultColumns.max;
   }
 
 private:
   RowT result;
-  bool poppedContents = false;
 }
 
 alias SQL_SIGNED = SQL_FALSE;
 alias SQL_UNSIGNED = SQL_TRUE;
 enum SQL_HAS_NO_SIGN = null;
 
+// http://msdn.microsoft.com/en-us/library/ms714632%28v=vs.85%29.aspx
 final class VarcharTypeInfoResultRow : OdbcResultRow {
   this(Nullability isNullable) {
     this.isNullable = isNullable;
   }
 
-  Variant dataAt(int column) {
+  override Variant dataAt(int column) {
     switch(column) {
     case TypeInfoResultColumns.TYPE_NAME:
     case TypeInfoResultColumns.LOCAL_TYPE_NAME:

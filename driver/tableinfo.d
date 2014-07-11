@@ -27,35 +27,35 @@ final class TableInfoResult : OdbcResult {
     results ~= new TableInfoResultRow(name);
   }
 
-  @property {
-    bool empty() {
-      return results.empty;
-    }
+  override bool empty() const {
+    return results.empty;
+  }
 
-    TableInfoResultRow front() {
-      assert(!empty);
-      return results.front;
-    }
+  override inout(TableInfoResultRow) front() inout {
+    assert(!empty);
+    return results.front;
+  }
 
-    void popFront() {
-      results.popFront;
-    }
+  override void popFront() {
+    results.popFront;
+  }
 
-    uint numberOfColumns() {
-      return TableInfoResultColumns.max;
-    }
+  override size_t numberOfColumns() {
+    return TableInfoResultColumns.max;
   }
 
 private:
   TableInfoResultRow[] results;
 }
 
+
+// http://msdn.microsoft.com/en-us/library/ms711831%28v=vs.85%29.aspx
 final class TableInfoResultRow : OdbcResultRow {
   this(string tableName) {
     this.tableName = tableName;
   }
 
-  Variant dataAt(int column) {
+  override Variant dataAt(int column) {
     with (TableInfoResultColumns) {
       switch (column) {
       case TABLE_CAT:

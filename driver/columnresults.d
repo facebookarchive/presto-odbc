@@ -24,7 +24,9 @@ import typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
 import util : dllEnforce, logMessage, makeWithoutGC, runQuery;
 import dapi.util : asBool;
 
-auto listColumnsInTable(string tableName) {
+// http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
+
+ColumnsResult listColumnsInTable(string tableName) {
   auto client = runQuery("SHOW COLUMNS FROM " ~ text(tableName));
   auto result = makeWithoutGC!ColumnsResult();
   foreach (resultBatch; client) {
@@ -82,34 +84,31 @@ final class ColumnsResult : OdbcResult {
     results_ ~= column;
   }
 
-  @property {
-    auto results() const {
-      return results_;
-    }
+  auto results() const {
+    return results_;
+  }
 
-    bool empty() {
-      return results_.empty;
-    }
+  override bool empty() const {
+    return results_.empty;
+  }
 
-    OdbcResultRow front() {
-      assert(!empty);
-      return results_.front;
-    }
+  override inout(OdbcResultRow) front() inout {
+    assert(!empty);
+    return results_.front;
+  }
 
-    void popFront() {
-      results_.popFront();
-    }
+  override void popFront() {
+    results_.popFront();
+  }
 
-    uint numberOfColumns() {
-      return ColumnsResultColumns.max;
-    }
+  override size_t numberOfColumns() {
+    return ColumnsResultColumns.max;
   }
 
 private:
   OdbcResultRow[] results_;
 }
 
-//bufferLengths taken from the Column Size MSDN page
 alias BigIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_BIGINT);
 alias IntegerColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTEGER);
 alias SmallIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_SMALLINT);
@@ -127,7 +126,7 @@ final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
     return dataAt(cast(int) column);
   }
 
-  Variant dataAt(int column) {
+  override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:
@@ -193,7 +192,7 @@ final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
     return dataAt(cast(int) column);
   }
 
-  Variant dataAt(int column) {
+  override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:
@@ -251,7 +250,8 @@ final class VarcharColumnsResultRow : OdbcResultRow {
     this.isNullable = isNullable;
     this.ordinalPosition = cast(int) ordinalPosition;
   }
-  Variant dataAt(int column) {
+
+  override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:

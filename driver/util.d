@@ -132,7 +132,7 @@ unittest {
 class OdbcException : Exception {
   import handles : OdbcStatement;
 
-  this(OdbcStatement handle, wstring sqlState, wstring message,
+  this(OdbcStatement handle, StatusCode sqlState, wstring message,
       int code = 1, string file = __FILE__, int line = __LINE__) {
     this(sqlState, message, code, file, line);
     handle.errors ~= this;

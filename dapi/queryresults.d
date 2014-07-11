@@ -48,7 +48,7 @@ final class QueryResults {
     }
   }
 
-  @property const nothrow {
+  const nothrow {
     string id() { return id_; }
     string infoURI() { return infoURI_; }
     string partialCancelURI() { return partialCancelURI_; }
@@ -83,7 +83,7 @@ final class QueryResults {
       }
     }
 
-    @property const {
+    const {
       Tuple!RowTList front() {
         assert(!data.empty);
 

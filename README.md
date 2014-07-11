@@ -20,43 +20,43 @@ This driver is written in the [D Programming Language](http://dlang.org)
 * Full support on Windows/Mac/Linux
 * Seamless integration with Tableau
 
-# Setting up the development environmnet:
+# Setting up the development environment:
 
 ## Installation Prerequisites:
 1. Cygwin with the GNUMake package
-2. [dmd 2.065](http://dlang.org/downloads)
-3. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
-4. Acess to a running [Presto](http://prestodb.io) instance
+1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/downloads)
+1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
+1. Acess to a running [Presto](http://prestodb.io) instance
 
 ## Manual Labor:
 1. Add `C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin` to `PATH`
-2. Copy `C:\D\dmd2\windows\bin64\libcurl.dll` into `C:\temp\` (make this directory if it does not exist)
-3. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo
-4. Press the Windows key and search for `ODBC Data Sources`; open the 64 bit version
+1. Copy `C:\D\dmd2\windows\bin64\libcurl.dll` into `C:\temp\` (make this directory if it does not exist)
+1. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo
+1. Press the Windows key and search for `ODBC Data Sources`; open the 64 bit version
   1. Sanity Check: Look at the `Drivers` tab, make sure you see `Presto ODBC Driver` (if not, try rebooting)
-  2. Go to the `File DSN` tab
-  3. Click Add
-  4. Select `Presto ODBC Driver`
-  5. Click Next
-  6. Click Browse
-  7. Enter a name for your driver DSN. `PrestoDriver.dsn` should be fine.
-  8. Click Next/Ok/Yes until it goes back to the main window
-5. Enabling the Driver Manager Logfile (from the ODBC Data Sources window):
+  1. Go to the `File DSN` tab
+  1. Click Add
+  1. Select `Presto ODBC Driver`
+  1. Click Next
+  1. Click Browse
+  1. Enter a name for your driver DSN. `PrestoDriver.dsn` should be fine.
+  1. Click Next/Ok/Yes until it goes back to the main window
+1. Enabling the Driver Manager Logfile (from the ODBC Data Sources window):
   1. Go to the `Tracing` tab
-  2. Set the `Log File Path` to `C:\temp\SQL.LOG`
-  3. Click `Start Tracing Now`
-  4. Click Ok to close the program
-5. Change the IP in the `runQuery` function in `util.d` to point at your Presto instance
-6. Build the Presto ODBC Driver
+  1. Set the `Log File Path` to `C:\temp\SQL.LOG`
+  1. Click `Start Tracing Now`
+  1. Click Ok to close the program
+1. Change the IP in the `runQuery` function in `util.d` to point at your Presto instance
+1. Build the Presto ODBC Driver
   1. Navigate to your checkout of this repo
-  2. `cd driver`
-  3. `make clean; make` - builds the driver
-  4. `make copy` - copies the DLL to `C:\temp\` and backs up the log files
-7. Start `C:\Program Files\Microsoft Office\Office15\MSQRY32.EXE`
+  1. `cd driver`
+  1. `make clean; make` - builds the driver
+  1. `make copy` - copies the DLL to `C:\temp\` and backs up the log files
+1. Start `C:\Program Files\Microsoft Office\Office15\MSQRY32.EXE`
   1. Go to File->New
-  2. Click Browse, and select `PrestoDriver.dsn`
-  3. Click Ok
-  4. Run a query!
+  1. Click Browse, and select `PrestoDriver.dsn`
+  1. Click Ok
+  1. Run a query!
 
 # Coding Conventions:
 
@@ -68,9 +68,11 @@ Not all of the conventions have been applied to the source yet.
 * All ODBC functions must have their contents wrapped with a call to `exceptionBoundary`
 * As appropriate, change integer types to enum types (use `StatementAttribute` instead of `SQLSMALLINT`, etc)
 * Always wrap C types with safer D abstractions (see `toDString` and `OutputWChar`); prefix the C-style variables with an underscore
+* Also prefix variables with an underscore to express that the variable should be cast/converted to or encapsulated in another type before use
 * Use dllEnforce instead of assert
 * Avoid fully qualifying enum values (`MyEnumType.MyEnumValue`); use a `with` statement instead
 * Always use a `with` statement when accessing ODBC handles
+* Always specify whether lengths are in bytes or characters
 
 # References:
 
