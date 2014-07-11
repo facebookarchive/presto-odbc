@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+import sqlext;
+
 import bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
 import util;
 
@@ -131,6 +133,9 @@ final class OdbcStatement {
   bool executedQuery;
   OdbcResult latestOdbcResult;
   OdbcException[] errors;
+  SQLULEN rowArraySize = 1;
+  SQLULEN* rowsFetched;
+  RowStatus* rowStatusPtr;
 
 
   void applicationParameterDescriptor(ApplicationParameterDescriptor apd) {

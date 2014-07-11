@@ -370,6 +370,17 @@ SQLRETURN bindDataFromColumns(OdbcStatement statementHandle, ColumnBinding[uint]
       dispatchOnSqlCType!(copyToOutput)(binding.columnType, row.dataAt(columnNumber), binding);
     }
   }
+
+  enum rowsFetched = 1;
+  if (statementHandle.rowsFetched) {
+    *statementHandle.rowsFetched = rowsFetched;
+  }
+  if (statementHandle.rowStatusPtr) {
+    foreach (ref status; statementHandle.rowStatusPtr[0 .. rowsFetched]) {
+      status = RowStatus.SQL_ROW_SUCCESS;
+    }
+  }
+
   return SQL_SUCCESS;
 }
 
@@ -1328,11 +1339,27 @@ SQLRETURN SQLGetStmtAttrW(
     with (statementHandle) with (StatementAttribute) {
       switch (attribute) {
       case SQL_ATTR_APP_ROW_DESC:
+        *(cast(void**) value) = cast(void*) applicationParameterDescriptor_;
+        break;
       case SQL_ATTR_APP_PARAM_DESC:
+        *(cast(void**) value) = cast(void*) implementationParameterDescriptor_;
+        break;
       case SQL_ATTR_IMP_ROW_DESC:
+        *(cast(void**) value) = cast(void*) applicationRowDescriptor_;
+        break;
       case SQL_ATTR_IMP_PARAM_DESC:
+        *(cast(void**) value) = cast(void*) implementationRowDescriptor_;
+        break;
+      case SQL_ATTR_ROW_ARRAY_SIZE:
+        *cast(SQLULEN*) value = rowArraySize;
+        break;
+      case SQL_ATTR_ROWS_FETCHED_PTR:
+        *cast(SQLULEN**) value = rowsFetched;
+        break;
+      case SQL_ATTR_ROW_STATUS_PTR:
+        *cast(RowStatus**) value = rowStatusPtr;
+        break;
       default:
-        //Will be supported in an incoming diff.
         throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Unsupported attribute"w);
       }
     }
@@ -1353,9 +1380,31 @@ SQLRETURN SQLSetStmtAttrW(
       switch (attribute) {
       case SQL_ATTR_ASYNC_ENABLE:
         throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Async not supported"w);
-      default:
-        logMessage("SQLGetInfo: Unhandled case:", attribute);
+      case SQL_ATTR_ROW_ARRAY_SIZE:
+        //This value determines how many rows should be returned at once by fetch. We limit it to 1
+        throw new OdbcException(statementHandle, "01S02"w, "Not allowed to modify this value"w);
+      case SQL_ATTR_ROWS_FETCHED_PTR:
+        //A pointer in which to store how many rows actually *are* returned during a fetch
+        rowsFetched = cast(SQLULEN*) _value;
         break;
+      case SQL_ATTR_ROW_STATUS_PTR:
+        //A pointer to an array where the driver writes RowStatuses for each of the returned rows
+        rowStatusPtr = (cast(RowStatus*) _value);
+        break;
+      case SQL_ATTR_ROW_BIND_TYPE:
+        dllEnforce(false, "Involves a lot of work in SQLBindCol and others");
+      case SQL_ATTR_APP_ROW_DESC:
+        applicationParameterDescriptor_ = cast(OdbcDescriptor) _value;
+        break;
+      case SQL_ATTR_APP_PARAM_DESC:
+        implementationParameterDescriptor_ = cast(OdbcDescriptor) _value;
+        break;
+      case SQL_ATTR_IMP_ROW_DESC:
+      case SQL_ATTR_IMP_PARAM_DESC:
+        throw new OdbcException(statementHandle,
+            StatusCode.GENERAL_ERROR, "ODBC disallows modifying the IRD/IPD"w);
+      default:
+        throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Unsupported attribute"w);
       }
     }
     return SQL_SUCCESS;
