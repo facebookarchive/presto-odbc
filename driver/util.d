@@ -27,14 +27,16 @@ import statementclient : StatementClient, ClientSession;
 auto logBuffer = appender!wstring;
 
 void logMessage(TList...)(auto ref TList vs) {
-  logBuffer ~= buildDebugMessage(vs) ~= '\n';
+  logBuffer ~= buildDebugMessage(vs);
+  logBuffer ~= '\n';
   if (logBuffer.data.length > 100000) {
     flushLogBuffer();
   }
 }
 
 void logCriticalMessage(TList...)(auto ref TList vs) {
-  logBuffer ~= buildDebugMessage(vs) ~= '\n';
+  logBuffer ~= buildDebugMessage(vs);
+  logBuffer ~= '\n';
   flushLogBuffer();
 }
 

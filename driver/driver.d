@@ -1411,7 +1411,8 @@ SQLRETURN SQLSetStmtAttrW(
         throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Async not supported"w);
       case SQL_ATTR_ROW_ARRAY_SIZE:
         //This value determines how many rows should be returned at once by fetch. We limit it to 1
-        throw new OdbcException(statementHandle, "01S02"w, "Not allowed to modify this value"w);
+        throw new OdbcException(statementHandle,
+            StatusCode.MODIFIED_USER_VALUE, "Not allowed to modify this value"w);
       case SQL_ATTR_ROWS_FETCHED_PTR:
         //A pointer in which to store how many rows actually *are* returned during a fetch
         rowsFetched = cast(SQLULEN*) _value;
