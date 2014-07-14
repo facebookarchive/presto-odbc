@@ -52,11 +52,25 @@ This driver is written in the [D Programming Language](http://dlang.org)
   1. `cd driver`
   1. `make clean; make` - builds the driver
   1. `make copy` - copies the DLL to `C:\temp\` and backs up the log files
+
+###Using the driver with Microsoft Query (requires Microsoft Excel):
 1. Start `C:\Program Files\Microsoft Office\Office15\MSQRY32.EXE`
-  1. Go to File->New
-  1. Click Browse, and select `PrestoDriver.dsn`
-  1. Click Ok
-  1. Run a query!
+1. Go to File->New
+1. Click Browse, and select `PrestoDriver.dsn`
+1. Click Ok
+1. Run a query!
+
+###Using the driver with Tableau (requires Tableau):
+1. Double click the presto.tds "Tableau Datasource" file included in the top-level directory of this repo
+1. On the left panel, just under `Data`, it should list `presto`. Right click this and select `Edit Data Source`
+1. Change any `connection attributes` as desired and click `OK`
+  1. Security Warning: The password field's contents are written to the logfile along with all of the other connection attributes. This will be fixed in a future version.
+  1. Note: The connection attributes are currently ignored by the driver.
+1. Select what `database` (catalog) you want to use on the left
+1. Search for `tables` (or press enter to see all of them) and drag any table you wish to use to the right. By default, only the `nation` table is included.
+1. Click `Go to Worksheet`
+1. Click `OK` to go past the warning dialog
+1. Analyze!
 
 # Coding Conventions:
 
