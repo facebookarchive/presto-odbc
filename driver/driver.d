@@ -85,6 +85,14 @@ SQLRETURN SQLDriverConnectW(
       return SQL_SUCCESS;
     }
 
+    if (driverCompletion != DriverCompletion.NOPROMPT) {
+      return SQL_SUCCESS;
+          if (connectionArgumentsOut) {
+      copyToBuffer(connectionArguments, connectionArgumentsOut);
+    }
+
+    }
+
     with (connectionHandle) {
       auto connectionArguments = parseConnectionString(text(connectionArguments));
       dllEnforce(("SERVER" in connectionArguments) != null);
@@ -793,7 +801,7 @@ SQLRETURN SQLTablesW(
       logMessage("SQLTablesW", catalogName, schemaName, tableNamePattern, tableType);
 
       auto client = statementHandle.runQuery("SHOW TABLES");
-      auto result = makeWithoutGC!TableInfoResult();
+      auto result = makeWithoutGC!TableInfoResult(statementHandle);
       foreach (resultBatch; client) {
         foreach (row; resultBatch.data.array) {
           auto tableName = row.array.front.str;

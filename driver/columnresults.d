@@ -28,36 +28,43 @@ import dapi.util : asBool;
 // http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
 
 ColumnsResult listColumnsInTable(OdbcStatement statementHandle, string tableName) {
-  auto client = statementHandle.runQuery("SHOW COLUMNS FROM " ~ text(tableName));
-  auto result = makeWithoutGC!ColumnsResult();
-  foreach (resultBatch; client) {
-    foreach (i, row; resultBatch.data.array) {
-      auto columnName = row.array[0].str;
-      auto type = row.array[1].str;
-      auto isNullable = asBool(row.array[2]) ? Nullability.SQL_NULLABLE : Nullability.SQL_NO_NULLS;
-      auto partitionKey = asBool(row.array[3]);
+  with (statementHandle) with (connection) {
+    auto client = statementHandle.runQuery("SHOW COLUMNS FROM " ~ text(tableName));
+    auto result = makeWithoutGC!ColumnsResult();
+    foreach (resultBatch; client) {
+      foreach (i, row; resultBatch.data.array) {
+        auto columnName = row.array[0].str;
+        auto type = row.array[1].str;
+        auto isNullable = asBool(row.array[2]) ? Nullability.SQL_NULLABLE : Nullability.SQL_NO_NULLS;
+        auto partitionKey = asBool(row.array[3]);
 
-      auto columnsResult = prestoTypeToColumnsResult(type, text(tableName), columnName, isNullable, i + 1);
-      if (columnsResult) {
-        result.addColumn(columnsResult);
+        auto columnsResult = prestoTypeToColumnsResult(type, catalog, schema,
+            text(tableName), columnName, isNullable, i + 1);
+
+        if (columnsResult) {
+          result.addColumn(columnsResult);
+        }
+        logMessage("listColumnsInTable found column: ", columnName, type, isNullable, i + 1);
       }
-      logMessage("listColumnsInTable found column: ", columnName, type, isNullable, i + 1);
     }
+    return result;
   }
-  return result;
 }
 
 OdbcResultRow prestoTypeToColumnsResult(
-    string prestoType, string tableName, string columnName,
-    Nullability isNullable, size_t ordinalPosition) {
+    string prestoType, string catalogName, string schemaName,
+    string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
   dllEnforce(ordinalPosition != 0, "Columns are 1-indexed");
   switch (prestoType) {
   case "varchar":
-    return makeWithoutGC!VarcharColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
+    return makeWithoutGC!VarcharColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
   case "bigint":
-    return makeWithoutGC!BigIntColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
+    return makeWithoutGC!BigIntColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
   case "double":
-    return makeWithoutGC!DoubleColumnsResultRow(tableName, columnName, isNullable, ordinalPosition);
+    return makeWithoutGC!DoubleColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
   default:
     logMessage("Unexpected type in prestoTypeToColumnsResult: " ~ prestoType);
     return null;
@@ -110,30 +117,50 @@ private:
   OdbcResultRow[] results_;
 }
 
-alias BigIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_BIGINT);
-alias IntegerColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTEGER);
-alias SmallIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_SMALLINT);
-alias TinyIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TINYINT);
-
-final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
-  this(string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
+private class ColumnsResultRow : OdbcResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    this.catalogName = catalogName;
+    this.schemaName = schemaName;
     this.tableName = tableName;
     this.columnName = columnName;
     this.isNullable = isNullable;
     this.ordinalPosition = to!int(ordinalPosition);
   }
 
-  Variant dataAt(ColumnsResultColumns column) {
+  abstract override Variant dataAt(int column);
+
+  final Variant dataAt(ColumnsResultColumns column) {
     return dataAt(cast(int) column);
+  }
+
+protected:
+  string catalogName;
+  string schemaName;
+  string tableName;
+  string columnName;
+  Nullability isNullable;
+  int ordinalPosition;
+}
+
+alias BigIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_BIGINT);
+alias IntegerColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTEGER);
+alias SmallIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_SMALLINT);
+alias TinyIntColumnsResultRow = BigIntBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TINYINT);
+
+final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : ColumnsResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    super(catalogName, schemaName, tableName, columnName, isNullable, ordinalPosition);
   }
 
   override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:
-        return Variant("tpch");
+        return Variant(catalogName);
       case TABLE_SCHEM:
-        return Variant("tiny");
+        return Variant(schemaName);
       case TABLE_NAME:
         return Variant(tableName);
       case COLUMN_NAME:
@@ -171,35 +198,25 @@ final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
     }
   }
 private:
-  string tableName;
-  string columnName;
-  Nullability isNullable;
-  int ordinalPosition;
 }
 
 alias DoubleColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_DOUBLE);
 alias FloatColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_FLOAT);
 alias RealColumnsResultRow = DoubleBasedColumnsResultRow!(SQL_TYPE_ID.SQL_REAL);
 
-final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
-  this(string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
-    this.tableName = tableName;
-    this.columnName = columnName;
-    this.isNullable = isNullable;
-    this.ordinalPosition = to!int(ordinalPosition);
-  }
-
-  Variant dataAt(ColumnsResultColumns column) {
-    return dataAt(cast(int) column);
+final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : ColumnsResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    super(catalogName, schemaName, tableName, columnName, isNullable, ordinalPosition);
   }
 
   override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:
-        return Variant("tpch");
+        return Variant(catalogName);
       case TABLE_SCHEM:
-        return Variant("tiny");
+        return Variant(schemaName);
       case TABLE_NAME:
         return Variant(tableName);
       case COLUMN_NAME:
@@ -237,28 +254,22 @@ final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : OdbcResultRow {
     }
   }
 private:
-  string tableName;
-  string columnName;
-  Nullability isNullable;
-  int ordinalPosition;
 }
 
 
-final class VarcharColumnsResultRow : OdbcResultRow {
-  this(string tableName, string columnName, Nullability isNullable, size_t ordinalPosition) {
-    this.tableName = tableName;
-    this.columnName = columnName;
-    this.isNullable = isNullable;
-    this.ordinalPosition = cast(int) ordinalPosition;
+final class VarcharColumnsResultRow : ColumnsResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    super(catalogName, schemaName, tableName, columnName, isNullable, ordinalPosition);
   }
 
   override Variant dataAt(int column) {
     with (ColumnsResultColumns) {
       switch (column) {
       case TABLE_CAT:
-        return Variant("tpch");
+        return Variant(catalogName);
       case TABLE_SCHEM:
-        return Variant("tiny");
+        return Variant(schemaName);
       case TABLE_NAME:
         return Variant(tableName);
       case COLUMN_NAME:
@@ -297,10 +308,6 @@ final class VarcharColumnsResultRow : OdbcResultRow {
   }
 private:
   enum typeId = SQL_TYPE_ID.SQL_VARCHAR;
-  string tableName;
-  string columnName;
-  Nullability isNullable;
-  int ordinalPosition;
 }
 
 enum ColumnsResultColumns {

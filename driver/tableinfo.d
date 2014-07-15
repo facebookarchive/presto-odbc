@@ -19,12 +19,19 @@ import std.variant : Variant;
 import sqlext;
 import odbcinst;
 
+import handles : OdbcStatement;
 import bindings : OdbcResult, OdbcResultRow;
 import util : dllEnforce, logMessage;
 
 final class TableInfoResult : OdbcResult {
+  this(OdbcStatement statementHandle) {
+    this.statementHandle = statementHandle;
+  }
+
   void addTable(string name) {
-    results ~= new TableInfoResultRow(name);
+    with (statementHandle) with (connection) {
+      results ~= new TableInfoResultRow(catalog, schema, name);
+    }
   }
 
   override bool empty() const {
@@ -45,13 +52,16 @@ final class TableInfoResult : OdbcResult {
   }
 
 private:
+  OdbcStatement statementHandle;
   TableInfoResultRow[] results;
 }
 
 
 // http://msdn.microsoft.com/en-us/library/ms711831%28v=vs.85%29.aspx
 final class TableInfoResultRow : OdbcResultRow {
-  this(string tableName) {
+  this(string catalogName, string schemaName, string tableName) {
+    this.catalogName = catalogName;
+    this.schemaName = schemaName;
     this.tableName = tableName;
   }
 
@@ -59,9 +69,9 @@ final class TableInfoResultRow : OdbcResultRow {
     with (TableInfoResultColumns) {
       switch (column) {
       case TABLE_CAT:
-        return Variant("tpch");
+        return Variant(catalogName);
       case TABLE_SCHEM:
-        return Variant("tiny");
+        return Variant(schemaName);
       case TABLE_NAME:
         return Variant(tableName);
       case TABLE_TYPE:
@@ -75,6 +85,8 @@ final class TableInfoResultRow : OdbcResultRow {
     }
   }
 private:
+  string catalogName;
+  string schemaName;
   string tableName;
 }
 
