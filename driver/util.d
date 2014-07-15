@@ -24,6 +24,8 @@ import sqlext;
 import odbcinst;
 import statementclient : StatementClient, ClientSession;
 
+import handles : OdbcStatement;
+
 auto logBuffer = appender!wstring;
 
 void logMessage(TList...)(auto ref TList vs) {
@@ -158,7 +160,7 @@ unittest {
   byte[] dest;
   dest.length = 12;
   SQLSMALLINT numberOfBytesCopied;
-  assert(5 == copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied)));
+  copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied));
   assert(numberOfBytesCopied == 10);
   assert(cast(wchar[]) dest == "happy\0");
 }
@@ -169,10 +171,9 @@ unittest {
   byte[] dest;
   dest.length = 100;
   SQLSMALLINT numberOfBytesCopied;
-  auto numCopied = copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied));
-  assert(numCopied == src.length);
+  copyToBuffer(src, outputWChar(dest, &numberOfBytesCopied));
   assert(numberOfBytesCopied == src.length * wchar.sizeof);
-  auto result = (cast(wchar[]) dest)[0 .. numCopied];
+  auto result = cast(wchar[]) (dest[0 .. numberOfBytesCopied]);
   assert(result == src);
 }
 
@@ -221,7 +222,7 @@ unittest {
   assert(popAndSave(testArray) == 3);
 }
 
-auto popAndSave(Range)(Range r) {
+auto popAndSave(Range)(ref Range r) {
   auto result = r.front;
   r.popFront;
   return result;
@@ -419,10 +420,25 @@ struct OutputWChar(LengthType) {
   alias buffer this;
 }
 
-StatementClient runQuery(string query) {
-  auto session = ClientSession("localhost:8080", "ODBC Driver");
-  session.catalog = "tpch";
-  session.schema = "tiny";
+unittest {
+  auto associativeArray = ["bob":1, "joe":2];
+  assert(associativeArray.getOrDefault("bob") == 1);
+  assert(associativeArray.getOrDefault("frank") == 0);
+}
 
-  return StatementClient(session, query);
+V getOrDefault(K, V)(V[K] associativeArray, K key, V default_ = V.init) {
+  if (auto valuePointer = key in associativeArray) {
+    return *valuePointer;
+  }
+  return default_;
+}
+
+StatementClient runQuery(OdbcStatement statementHandle, string query) {
+  with (statementHandle.connection) {
+    auto session = ClientSession(endpoint, "ODBC Driver");
+    session.catalog = catalog;
+    session.schema = schema.empty ? "tiny" : schema;
+
+    return StatementClient(session, query);
+  }
 }

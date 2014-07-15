@@ -13,11 +13,12 @@
  */
 
 import std.array : front, empty, popFront;
-import std.conv : text, to;
+import std.conv : text, wtext, to;
 
 import sqlext;
 import odbcinst;
 
+import handles : OdbcConnection;
 import util : exceptionBoundary, dllEnforce, logMessage, outputWChar, wcharsToBytes, copyToBuffer;
 
 
@@ -25,7 +26,7 @@ import util : exceptionBoundary, dllEnforce, logMessage, outputWChar, wcharsToBy
 
 extern(System)
 SQLRETURN SQLGetInfoW(
-    SQLHDBC connectionHandle,
+    OdbcConnection connectionHandle,
     OdbcInfo infoType,
     SQLPOINTER _infoValue,
     SQLSMALLINT _bufferMaxLengthBytes,
@@ -33,7 +34,7 @@ SQLRETURN SQLGetInfoW(
   return exceptionBoundary!(() => {
     auto stringResult = outputWChar(_infoValue, _bufferMaxLengthBytes, _stringLengthBytes);
     logMessage("SQLGetInfo", infoType);
-    with (OdbcInfo) {
+    with (OdbcInfo) with(connectionHandle) {
       switch (infoType) {
       case SQL_MAX_DRIVER_CONNECTIONS: //0
         *cast(SQLUSMALLINT*)(_infoValue) = 1;
@@ -75,7 +76,7 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLSMALLINT*)(_infoValue) = SQL_OSC_MINIMUM;
         break;
       case SQL_DATABASE_NAME: //16
-        copyToBuffer("tiny"w, stringResult);
+        copyToBuffer(wtext(catalog), stringResult);
         break;
       case SQL_DBMS_NAME: //17
         copyToBuffer("Presto"w, stringResult);

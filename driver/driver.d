@@ -15,10 +15,11 @@
 import core.runtime;
 
 import std.array : front, popFront, empty;
+import std.string : toUpper;
 import std.algorithm;
 import std.stdio : writeln;
 import std.conv : to;
-import std.regex : ctRegex, matchFirst;
+import std.regex : ctRegex, matchFirst, matchAll;
 
 import std.c.stdio;
 import std.c.stdlib;
@@ -44,12 +45,12 @@ version(unittest) {
 } else {
   extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
   {
-    if (fdwReason == DLL_PROCESS_ATTACH) {        // DLL is being loaded
+    if (fdwReason == DLL_PROCESS_ATTACH) { // DLL is being loaded
       Runtime.initialize();
       import core.memory;
       GC.disable();
       logMessage("Presto ODBC Driver loaded by application or driver manager");
-    } else if (fdwReason == DLL_PROCESS_DETACH) {   // DLL is being unloaded
+    } else if (fdwReason == DLL_PROCESS_DETACH) { // DLL is being unloaded
       Runtime.terminate();
     }
 
@@ -66,29 +67,97 @@ extern(System):
 SQLRETURN SQLDriverConnectW(
     OdbcConnection connectionHandle,
     SQLHWND hwnd,
-    in SQLWCHAR* _connStrIn,
-    SQLSMALLINT _connStrInChars,
-    SQLWCHAR* _connStrOut,
-    SQLSMALLINT _connStrOutMaxChars,
-    SQLSMALLINT* _connStrOutChars,
-    SQLUSMALLINT driverCompletion) {
-  return exceptionBoundary!(() => {
-    auto connStr = toDString(_connStrIn, _connStrInChars);
-    auto connStrOut = outputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof, _connStrOutChars);
-    scope (exit) convertPtrBytesToWChars(_connStrOutChars);
-    logMessage("SQLDriverConnect", connStr, driverCompletion);
+    in SQLWCHAR* _connectionArgumentsIn,
+    SQLSMALLINT _connectionArgumentsInChars,
+    SQLWCHAR* _connectionArgumentsOut,
+    SQLSMALLINT _connectionArgumentsOutMaxChars,
+    SQLSMALLINT* _connectionArgumentsOutChars,
+    DriverCompletion driverCompletion) {
+  auto connectionArguments = toDString(_connectionArgumentsIn, _connectionArgumentsInChars);
+  auto connectionArgumentsOut = outputWChar(_connectionArgumentsOut,
+      _connectionArgumentsOutMaxChars * wchar.sizeof, _connectionArgumentsOutChars);
+  scope (exit) convertPtrBytesToWChars(_connectionArgumentsOutChars);
 
-    if (connStr == null) {
+  return exceptionBoundary!(() => {
+    logMessage("SQLDriverConnect", connectionArguments, driverCompletion);
+
+    if (connectionArguments == null) {
       return SQL_SUCCESS;
     }
 
+    with (connectionHandle) {
+      auto connectionArguments = parseConnectionString(text(connectionArguments));
+      dllEnforce(("SERVER" in connectionArguments) != null);
+      endpoint = connectionArguments.getOrDefault("SERVER");
+      if ("PORT" in connectionArguments) {
+        endpoint ~= ':';
+        endpoint ~= connectionArguments["PORT"];
+      }
+      catalog = connectionArguments.getOrDefault("DATABASE");
+      schema = connectionArguments.getOrDefault("SCHEMA");
+      userId = connectionArguments.getOrDefault("UID");
+      authentication = connectionArguments.getOrDefault("PWD");
+    }
+
     //Copy input string to output string
-    if (connStrOut) {
-      copyToBuffer(connStr, connStrOut);
+    if (connectionArgumentsOut) {
+      copyToBuffer(connectionArguments, connectionArgumentsOut);
     }
 
     return SQL_SUCCESS;
   }());
+}
+
+/**
+ * Parses connection strings according to the grammar specified in the 'Comments' section of:
+ * http://msdn.microsoft.com/en-us/library/ms715433%28v=vs.85%29.aspx
+ */
+unittest {
+  assert(parseConnectionString("").keys.empty);
+  assert(parseConnectionString(";").keys.empty);
+  assert(parseConnectionString(";;;").keys.empty);
+
+  auto arguments = parseConnectionString("bob=joe;tom=frank");
+  assert(arguments["BOB"] == "joe");
+  assert(arguments["TOM"] == "frank");
+  assert(arguments.length == 2);
+  arguments = parseConnectionString(";;;bob=joe;;;;;tom=frank;;;;");
+  assert(arguments["BOB"] == "joe");
+  assert(arguments["TOM"] == "frank");
+  assert(arguments.length == 2);
+  arguments = parseConnectionString(";;;bob={joe;alice=sally;;;b};;;;;tom=frank;;;;");
+  assert(arguments["BOB"] == "joe;alice=sally;;;b");
+  assert(arguments["TOM"] == "frank");
+  assert(arguments.length == 2);
+}
+
+string[string] parseConnectionString(string connectionString) {
+  string[string] result;
+
+  enum attributePattern = r"(?:^|;)([^;]+)=(?:(?:\{([^\}]+)\})|([^;\{]+))";
+  auto regexEngine = ctRegex!attributePattern;
+  auto matches = matchAll(connectionString, regexEngine);
+
+  foreach (match; matches) {
+    if (match.length < 4) {
+      continue;
+    }
+    auto key = match[1];
+    auto value = match[2];
+    if (value.empty) {
+      value = match[3];
+    }
+    result[toUpper(key)] = value;
+  }
+
+  if (auto pwdPtr = "PWD" in result) {
+    auto password = *pwdPtr;
+    result["PWD"] = (password.empty ? "" : "*******");
+    logMessage(result);
+    result["PWD"] = password;
+  }
+
+  return result;
 }
 
 ///// SQLBrowseConnect /////
@@ -96,17 +165,18 @@ SQLRETURN SQLDriverConnectW(
 //Note: If making changes here, also look at SQLDriverConnect
 SQLRETURN SQLBrowseConnectW(
     OdbcConnection connectionHandle,
-    in SQLWCHAR* _connStrIn,
-    SQLSMALLINT _connStrInChars,
-    SQLWCHAR* _connStrOut,
-    SQLSMALLINT _connStrOutMaxChars,
-    SQLSMALLINT* _connStrOutChars) {
+    in SQLWCHAR* _connectionArgumentsIn,
+    SQLSMALLINT _connectionArgumentsInChars,
+    SQLWCHAR* _connectionArgumentsOut,
+    SQLSMALLINT _connectionArgumentsOutMaxChars,
+    SQLSMALLINT* _connectionArgumentsOutChars) {
   return exceptionBoundary!(() => {
-    auto connStr = toDString(_connStrIn, _connStrInChars);
-    auto connStrOut = outputWChar(_connStrOut, _connStrOutMaxChars * wchar.sizeof, _connStrOutChars);
-    scope (exit) convertPtrBytesToWChars(_connStrOutChars);
+    auto connectionArguments = toDString(_connectionArgumentsIn, _connectionArgumentsInChars);
+    auto connectionArgumentsOut = outputWChar(_connectionArgumentsOut,
+        _connectionArgumentsOutMaxChars * wchar.sizeof, _connectionArgumentsOutChars);
+    scope (exit) convertPtrBytesToWChars(_connectionArgumentsOutChars);
 
-    logMessage("SQLBrowseConnect (unimplemented)", connStr);
+    logMessage("SQLBrowseConnect (unimplemented)", connectionArguments);
     return SQL_SUCCESS;
   }());
 }
@@ -319,9 +389,15 @@ SQLRETURN SQLExecute(OdbcStatement statementHandle) {
 // http://msdn.microsoft.com/en-us/library/ms716365%28v=vs.85%29.aspx
 
 void SQLExecuteImpl(OdbcStatement statementHandle) {
-  logMessage("SQLExecuteImpl");
   with (statementHandle) {
-    auto client = runQuery(text(query));
+    logMessage("SQLExecuteImpl", query);
+
+    if (query.empty) {
+      latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+      return;
+    }
+
+    auto client = statementHandle.runQuery(text(query));
     auto result = makeWithoutGC!PrestoResult();
     executedQuery = true;
     uint batchNumber;
@@ -521,7 +597,7 @@ SQLRETURN SQLColumnsW(
 
     logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
     with (statementHandle) {
-      latestOdbcResult = listColumnsInTable(text(tableName));
+      latestOdbcResult = statementHandle.listColumnsInTable(text(tableName));
     }
     return SQL_SUCCESS;
   }());
@@ -716,7 +792,7 @@ SQLRETURN SQLTablesW(
     with (statementHandle) {
       logMessage("SQLTablesW", catalogName, schemaName, tableNamePattern, tableType);
 
-      auto client = runQuery("SHOW TABLES");
+      auto client = statementHandle.runQuery("SHOW TABLES");
       auto result = makeWithoutGC!TableInfoResult();
       foreach (resultBatch; client) {
         foreach (row; resultBatch.data.array) {
@@ -968,7 +1044,7 @@ SQLRETURN SQLColAttributeW(
   return exceptionBoundary!(() => {
     auto characterAttribute = outputWChar(_characterAttribute, _bufferMaxLengthBytes, _stringLengthBytes);
     logMessage("SQLColAttribute", columnNumber, fieldIdentifier);
-    with (statementHandle) with (DescriptorField) {
+    with (statementHandle) with (connection) with (DescriptorField) {
       if (fieldIdentifier == SQL_DESC_COUNT) {
         *numericAttribute = latestOdbcResult.numberOfColumns;
         return SQL_SUCCESS;
@@ -1005,7 +1081,7 @@ SQLRETURN SQLColAttributeW(
         *numericAttribute = SQL_FALSE;
         break;
       case SQL_COLUMN_QUALIFIER_NAME: //SQL_DESC_CATALOG_NAME
-        copyToBuffer("tpch"w, characterAttribute);
+        copyToBuffer(wtext(catalog), characterAttribute);
         break;
       case SQL_COLUMN_TYPE: //SQL_DESC_CONCISE_TYPE
         *numericAttribute = sqlTypeId;
@@ -1021,7 +1097,7 @@ SQLRETURN SQLColAttributeW(
         *numericAttribute = typeToNumPrecRadix(sqlTypeId);
         break;
       case SQL_COLUMN_OWNER_NAME: //SQL_DESC_SCHEMA_NAME
-        copyToBuffer("tiny"w, characterAttribute);
+        copyToBuffer(wtext(schema), characterAttribute);
         break;
       case SQL_COLUMN_SEARCHABLE: //SQL_DESC_SEARCHABLE
         *numericAttribute = Searchable.SQL_PRED_SEARCHABLE;

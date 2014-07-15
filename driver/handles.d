@@ -184,6 +184,11 @@ final class OdbcConnection {
 
   OdbcEnvironment environment;
   bool[OdbcDescriptor] explicitlyAllocatedDescriptors;
+  string endpoint; //Host and port
+  string catalog;
+  string schema;
+  string userId;
+  string authentication;
 }
 
 final class OdbcEnvironment {

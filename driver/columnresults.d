@@ -19,6 +19,7 @@ import std.variant : Variant;
 import sqlext;
 import odbcinst;
 
+import handles : OdbcStatement;
 import bindings : OdbcResult, OdbcResultRow;
 import typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
 import util : dllEnforce, logMessage, makeWithoutGC, runQuery;
@@ -26,8 +27,8 @@ import dapi.util : asBool;
 
 // http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
 
-ColumnsResult listColumnsInTable(string tableName) {
-  auto client = runQuery("SHOW COLUMNS FROM " ~ text(tableName));
+ColumnsResult listColumnsInTable(OdbcStatement statementHandle, string tableName) {
+  auto client = statementHandle.runQuery("SHOW COLUMNS FROM " ~ text(tableName));
   auto result = makeWithoutGC!ColumnsResult();
   foreach (resultBatch; client) {
     foreach (i, row; resultBatch.data.array) {

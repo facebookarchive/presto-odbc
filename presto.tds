@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8' ?>
 
-<datasource formatted-name='genericodbc.41829.706175601852' inline='true' source-platform='win' version='8.3' xmlns:user='http://www.tableausoftware.com/xml/user'>
+<datasource formatted-name='presto' inline='true' source-platform='win' version='8.3' xmlns:user='http://www.tableausoftware.com/xml/user'>
   <!-- build 8200.14.0616.0146                                -->
-  <connection class='genericodbc' dbname='tpch' odbc-connect-string-extras='' odbc-dbms-name='Presto' odbc-driver='Presto ODBC Driver' odbc-dsn='' odbc-suppress-connection-pooling='' odbc-use-connection-pooling='' port='' server='' username=''>
+  <connection class='genericodbc' dbname='tpch' odbc-connect-string-extras='' odbc-dbms-name='Presto' odbc-driver='Presto ODBC Driver' odbc-dsn='' odbc-suppress-connection-pooling='' odbc-use-connection-pooling='' port='8080' server='127.0.0.1' username=''>
     <relation name='nation' table='[tiny].[nation]' type='table' />
     <connection-customization class='genericodbc' enabled='true' version='8.3'>
       <vendor name='Presto' />
@@ -131,7 +131,7 @@
         <ordinal>2</ordinal>
         <local-type>string</local-type>
         <aggregation>Count</aggregation>
-        <width>-4</width>
+        <width>-1</width>
         <contains-null>true</contains-null>
         <collation flag='0' name='binary' />
         <attributes>
@@ -165,7 +165,7 @@
         <ordinal>4</ordinal>
         <local-type>string</local-type>
         <aggregation>Count</aggregation>
-        <width>-4</width>
+        <width>-1</width>
         <contains-null>true</contains-null>
         <collation flag='0' name='binary' />
         <attributes>
