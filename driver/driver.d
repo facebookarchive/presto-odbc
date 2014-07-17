@@ -539,6 +539,7 @@ SQLRETURN SQLNumResultCols(
         SQLExecute(statementHandle);
       }
       *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);
+      logMessage("SQLNumResultCols columnCount", *columnCount, typeid(cast(Object) latestOdbcResult));
     }
     return SQL_SUCCESS;
   }());
@@ -1078,7 +1079,7 @@ SQLRETURN SQLColAttributeW(
       auto result = cast(PrestoResult) latestOdbcResult;
       auto columnMetadata = result.columnMetadata[columnNumber - 1];
       auto sqlTypeId = prestoTypeToSqlTypeId(columnMetadata.type);
-      logMessage("SQLColAttribute's column type is", sqlTypeId);
+      logMessage("SQLColAttribute's column type is", columnMetadata.type, sqlTypeId, typeid(cast(Object) latestOdbcResult));
 
       switch (fieldIdentifier) {
       case SQL_COLUMN_DISPLAY_SIZE: //SQL_DESC_DISPLAY_SIZE
@@ -1236,18 +1237,22 @@ SQLRETURN SQLFetchScroll(
 
 SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
   return exceptionBoundary!(() => {
-    logMessage("SQLFreeHandle", handleType);
+    logMessage("SQLFreeHandle", handleType, cast(void*) handle);
 
     with(SQL_HANDLE_TYPE) {
       switch (handleType) {
       case DBC:
-      case DESC:
+        cleanupHandle!OdbcStatement(cast(OdbcConnection) handle);
+        break;
       case ENV:
-      case SENV:
-        logMessage("SQLFreeHandle not implemented for handle type", handleType);
+        cleanupHandle!OdbcStatement(cast(OdbcEnvironment) handle);
         break;
       case STMT:
-        free(cast(void*) handle);
+        cleanupHandle!OdbcStatement(cast(OdbcStatement) handle);
+        break;
+      case DESC:
+      case SENV:
+        logMessage("SQLFreeHandle not implemented for handle type", handleType);
         break;
       default:
         return SQL_ERROR;
@@ -1256,6 +1261,12 @@ SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
 
     return SQL_SUCCESS;
   }());
+}
+
+void cleanupHandle(T)(T handle) {
+  handle.destroy();
+  memset(cast(void*) handle, 0, getInstanceSize!T);
+  free(cast(void*) handle);
 }
 
 ///// SQLGetConnectAttr /////

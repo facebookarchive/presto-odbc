@@ -78,7 +78,7 @@ final class OdbcDescriptor {
     connection.explicitlyAllocatedDescriptors[this] = true;
   }
 
-  private this(OdbcConnection connection, OdbcDescriptorImpl impl) {
+  this(OdbcConnection connection, OdbcDescriptorImpl impl) {
     dllEnforce(connection !is null);
     this.connection = connection;
     this.impl = impl;
@@ -111,11 +111,11 @@ final class OdbcStatement {
   this(OdbcConnection connection) {
     dllEnforce(connection !is null);
     this.connection = connection;
-    this.latestOdbcResult = new EmptyOdbcResult();
-    this.applicationParameterDescriptor = new ApplicationParameterDescriptor(connection);
-    this.implementationParameterDescriptor = new ImplementationParameterDescriptor(connection);
-    this.applicationRowDescriptor = new ApplicationRowDescriptor(connection);
-    this.implementationRowDescriptor = new ImplementationRowDescriptor(connection);
+    this.latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+    this.applicationParameterDescriptor = makeWithoutGC!ApplicationParameterDescriptor(connection);
+    this.implementationParameterDescriptor = makeWithoutGC!ImplementationParameterDescriptor(connection);
+    this.applicationRowDescriptor = makeWithoutGC!ApplicationRowDescriptor(connection);
+    this.implementationRowDescriptor = makeWithoutGC!ImplementationRowDescriptor(connection);
   }
 
   OdbcConnection connection;
@@ -139,19 +139,19 @@ final class OdbcStatement {
 
 
   void applicationParameterDescriptor(ApplicationParameterDescriptor apd) {
-    applicationParameterDescriptor_ = new OdbcDescriptor(connection, apd);
+    applicationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, apd);
   }
 
   void implementationParameterDescriptor(ImplementationParameterDescriptor ipd) {
-    implementationParameterDescriptor_ = new OdbcDescriptor(connection, ipd);
+    implementationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ipd);
   }
 
   void applicationRowDescriptor(ApplicationRowDescriptor ard) {
-    applicationRowDescriptor_ = new OdbcDescriptor(connection, ard);
+    applicationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ard);
   }
 
   void implementationRowDescriptor(ImplementationRowDescriptor ird) {
-    implementationRowDescriptor_ = new OdbcDescriptor(connection, ird);
+    implementationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ird);
   }
 
   ApplicationParameterDescriptor applicationParameterDescriptor() {
