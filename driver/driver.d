@@ -86,11 +86,7 @@ SQLRETURN SQLDriverConnectW(
     }
 
     if (driverCompletion != DriverCompletion.NOPROMPT) {
-      return SQL_SUCCESS;
-          if (connectionArgumentsOut) {
-      copyToBuffer(connectionArguments, connectionArgumentsOut);
-    }
-
+      connectionArguments ~= ";SERVER=192.168.0.4;PORT=8080;DATABASE=default;SCHEMA=default;";
     }
 
     with (connectionHandle) {
@@ -401,6 +397,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
     logMessage("SQLExecuteImpl", query);
 
     if (query.empty) {
+      logMessage("Warning: Execiting an empty query!");
       latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
       return;
     }
@@ -473,7 +470,6 @@ SQLRETURN bindDataFromColumns(OdbcStatement statementHandle, ColumnBinding[uint]
 SQLRETURN SQLFreeStmt(
     OdbcStatement statementHandle,
     FreeStmtOptions option) {
-  import std.c.stdlib : free;
   return exceptionBoundary!(() => {
     logMessage("SQLFreeStmt", option);
     with (statementHandle) with (applicationRowDescriptor) with (FreeStmtOptions) {
@@ -539,7 +535,7 @@ SQLRETURN SQLNumResultCols(
     logMessage("SQLNumResultCols (pseudo-implemented)");
     dllEnforce(columnCount != null);
     with (statementHandle) {
-      if (!executedQuery) {
+      if (!query.empty && !executedQuery) {
         SQLExecute(statementHandle);
       }
       *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);

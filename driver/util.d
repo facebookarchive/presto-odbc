@@ -345,7 +345,7 @@ unittest {
   assert(toDString(wstr.ptr, wstr.length) == wstr);
 }
 
-C[] toDString(C)(C* cString, size_t lengthChars) if (isSomeChar!C) {
+inout(C)[] toDString(C)(inout(C)* cString, size_t lengthChars) if (isSomeChar!C) {
   if (cString == null) {
     return null;
   }

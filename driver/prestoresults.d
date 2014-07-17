@@ -98,7 +98,7 @@ final class PrestoResultRow : OdbcResultRow {
   }
 
   override Variant dataAt(int column) {
-    assert(column >= 1);
+    dllEnforce(column >= 1);
     return data[column - 1];
   }
 
