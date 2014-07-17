@@ -1076,6 +1076,7 @@ SQLRETURN SQLColAttributeW(
       }
 
       dllEnforce(columnNumber != 0, "Have not yet implemented this case");
+      dllEnforce(columnNumber <= latestOdbcResult.numberOfColumns);
       auto result = cast(PrestoResult) latestOdbcResult;
       auto columnMetadata = result.columnMetadata[columnNumber - 1];
       auto sqlTypeId = prestoTypeToSqlTypeId(columnMetadata.type);
@@ -1113,6 +1114,7 @@ SQLRETURN SQLColAttributeW(
         break;
       case SQL_DESC_LITERAL_PREFIX:
       case SQL_DESC_LITERAL_SUFFIX:
+        //TODO: Maybe change this for dates?
         auto literal = isStringTypeId(sqlTypeId) ? "'"w : ""w;
         copyToBuffer(literal, characterAttribute);
       case SQL_DESC_LOCAL_TYPE_NAME:
@@ -1144,11 +1146,7 @@ SQLRETURN SQLColAttributeW(
         *numericAttribute = toVerboseType(sqlTypeId);
         break;
       case SQL_DESC_PRECISION:
-        if (!isTimeRelated(sqlTypeId)) {
-          *numericAttribute = columnSizeMap[sqlTypeId];
-          break;
-        }
-        logMessage("Unhandled case: SQL_DESC_PRECISION of a time-related type", sqlTypeId);
+        *numericAttribute = columnSizeMap[sqlTypeId];
         break;
       case SQL_DESC_SCALE:
         //TODO: This value is undefined for all but the SQL_NUMERIC and SQL_DECIMAL

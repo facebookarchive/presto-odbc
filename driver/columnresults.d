@@ -65,6 +65,27 @@ OdbcResultRow prestoTypeToColumnsResult(
   case "double":
     return makeWithoutGC!DoubleColumnsResultRow(catalogName, schemaName, tableName,
         columnName, isNullable, ordinalPosition);
+  case "date":
+    return makeWithoutGC!DateColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "time":
+    return makeWithoutGC!TimeColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "time with time zone":
+    return makeWithoutGC!VarcharColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "timestamp":
+    return makeWithoutGC!TimestampColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "timestamp with time zone":
+    return makeWithoutGC!VarcharColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "interval year to month":
+    return makeWithoutGC!YearToMonthColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
+  case "interval day to second":
+     return makeWithoutGC!DayToSecondColumnsResultRow(catalogName, schemaName, tableName,
+        columnName, isNullable, ordinalPosition);
   default:
     logMessage("Unexpected type in prestoTypeToColumnsResult: " ~ prestoType);
     return null;
@@ -80,6 +101,20 @@ SQL_TYPE_ID prestoTypeToSqlTypeId(string prestoType) {
       return SQL_BIGINT;
     case "double":
       return SQL_DOUBLE;
+    case "date":
+      return SQL_DATE;
+    case "time":
+      return SQL_TIME;
+    case "time with time zone":
+      return SQL_VARCHAR;
+    case "timestamp":
+      return SQL_TIMESTAMP;
+    case "timestamp with time zone":
+      return SQL_VARCHAR;
+    case "interval year to month":
+      return SQL_INTERVAL_YEAR_TO_MONTH;
+    case "interval day to second":
+      return SQL_INTERVAL_DAY_TO_SECOND;
     default:
       logMessage("Unexpected type in prestoTypeToSqlTypeId: " ~ prestoType);
       return SQL_UNKNOWN_TYPE;
@@ -192,7 +227,7 @@ final class BigIntBasedColumnsResultRow(SQL_TYPE_ID typeId) : ColumnsResultRow {
       case IS_NULLABLE:
         return Variant(isNullable);
       default:
-        dllEnforce(false, "Non-existant column " ~ text(cast(ColumnsResultColumns) column));
+        dllEnforce(false, "Non-existent column " ~ text(cast(ColumnsResultColumns) column));
         assert(false, "Silence compiler errors about not returning");
       }
     }
@@ -248,7 +283,7 @@ final class DoubleBasedColumnsResultRow(SQL_TYPE_ID typeId) : ColumnsResultRow {
       case IS_NULLABLE:
         return Variant(isNullable);
       default:
-        dllEnforce(false, "Non-existant column " ~ text(cast(ColumnsResultColumns) column));
+        dllEnforce(false, "Non-existent column " ~ text(cast(ColumnsResultColumns) column));
         assert(false, "Silence compiler errors about not returning");
       }
     }
@@ -301,13 +336,124 @@ final class VarcharColumnsResultRow : ColumnsResultRow {
       case IS_NULLABLE:
         return Variant(isNullable);
       default:
-        dllEnforce(false, "Non-existant column " ~ text(cast(ColumnsResultColumns) column));
+        dllEnforce(false, "Non-existent column " ~ text(cast(ColumnsResultColumns) column));
         assert(false, "Silence compiler errors about not returning");
       }
     }
   }
 private:
   enum typeId = SQL_TYPE_ID.SQL_VARCHAR;
+}
+
+alias DateColumnsResultRow = DateTimeBasedColumnsResultRow!(SQL_TYPE_ID.SQL_DATE, "DATE");
+alias TimeColumnsResultRow = DateTimeBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TIME, "TIME");
+alias TimestampColumnsResultRow = DateTimeBasedColumnsResultRow!(SQL_TYPE_ID.SQL_TIMESTAMP, "TIMESTAMP");
+
+final class DateTimeBasedColumnsResultRow(SQL_TYPE_ID typeId, string typeName) : ColumnsResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    super(catalogName, schemaName, tableName, columnName, isNullable, ordinalPosition);
+  }
+
+  override Variant dataAt(int column) {
+    with (ColumnsResultColumns) {
+      switch (column) {
+      case TABLE_CAT:
+        return Variant(catalogName);
+      case TABLE_SCHEM:
+        return Variant(schemaName);
+      case TABLE_NAME:
+        return Variant(tableName);
+      case COLUMN_NAME:
+        return Variant(columnName);
+      case DATA_TYPE:
+      case SQL_DATA_TYPE:
+        return Variant(typeId);
+      case TYPE_NAME:
+        return Variant(typeName);
+      case COLUMN_SIZE:
+      case BUFFER_LENGTH:
+        return Variant(columnSizeMap[typeId]);
+      case DECIMAL_DIGITS:
+        return Variant(null);
+      case NUM_PREC_RADIX:
+        return Variant(null);
+      case NULLABLE:
+        return Variant(isNullable);
+      case REMARKS:
+        return Variant("No remarks");
+      case COLUMN_DEF:
+        return Variant(typeName ~ " ''");
+      case SQL_DATETIME_SUB:
+        return Variant(dateTimeCodeMap[typeId]);
+      case CHAR_OCTET_LENGTH:
+        return Variant(null);
+      case ORDINAL_POSITION:
+        return Variant(ordinalPosition);
+      case IS_NULLABLE:
+        return Variant(isNullable);
+      default:
+        dllEnforce(false, "Non-existent column " ~ text(cast(ColumnsResultColumns) column));
+        assert(false, "Silence compiler errors about not returning");
+      }
+    }
+  }
+private:
+}
+
+alias YearToMonthColumnsResultRow = IntervalBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTERVAL_YEAR_TO_MONTH, "month");
+alias DayToSecondColumnsResultRow = IntervalBasedColumnsResultRow!(SQL_TYPE_ID.SQL_INTERVAL_DAY_TO_SECOND, "second");
+
+final class IntervalBasedColumnsResultRow(SQL_TYPE_ID typeId, string typeName) : ColumnsResultRow {
+  this(string catalogName, string schemaName, string tableName,
+      string columnName, Nullability isNullable, size_t ordinalPosition) {
+    super(catalogName, schemaName, tableName, columnName, isNullable, ordinalPosition);
+  }
+
+  override Variant dataAt(int column) {
+    with (ColumnsResultColumns) {
+      switch (column) {
+      case TABLE_CAT:
+        return Variant(catalogName);
+      case TABLE_SCHEM:
+        return Variant(schemaName);
+      case TABLE_NAME:
+        return Variant(tableName);
+      case COLUMN_NAME:
+        return Variant(columnName);
+      case DATA_TYPE:
+      case SQL_DATA_TYPE:
+        return Variant(typeId);
+      case TYPE_NAME:
+        return Variant(typeName);
+      case COLUMN_SIZE:
+      case BUFFER_LENGTH:
+        return Variant(columnSizeMap[typeId]);
+      case DECIMAL_DIGITS:
+        return Variant(null);
+      case NUM_PREC_RADIX:
+        return Variant(null);
+      case NULLABLE:
+        return Variant(isNullable);
+      case REMARKS:
+        return Variant("No remarks");
+      case COLUMN_DEF:
+        return Variant("interval '' " ~ typeName);
+      case SQL_DATETIME_SUB:
+        return Variant(intervalCodeMap[typeId]);
+      case CHAR_OCTET_LENGTH:
+        return Variant(null);
+      case ORDINAL_POSITION:
+        return Variant(ordinalPosition);
+      case IS_NULLABLE:
+        return Variant(isNullable);
+      default:
+        dllEnforce(false, "Non-existent column " ~ text(cast(ColumnsResultColumns) column));
+        assert(false, "Silence compiler errors about not returning");
+      }
+    }
+  }
+private:
 }
 
 enum ColumnsResultColumns {
