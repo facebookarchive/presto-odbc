@@ -19,7 +19,7 @@ import std.string : toUpper;
 import std.algorithm;
 import std.stdio : writeln;
 import std.conv : to;
-import std.regex : ctRegex, matchFirst, matchAll;
+import std.regex : ctRegex, matchFirst, matchAll, replaceAll;
 
 import std.c.stdio;
 import std.c.stdlib;
@@ -567,7 +567,7 @@ SQLRETURN SQLPrepareW(
     }
 
     with (statementHandle) {
-      query = statementText.idup;
+      query = statementText.idup.translateQuery;
     }
     return SQL_SUCCESS;
   }());
@@ -874,9 +874,29 @@ SQLRETURN SQLNativeSqlW(
   return exceptionBoundary!(() => {
     auto inSql = toDString(_inSql, _inSqlLengthChars);
     auto outSql = outputWChar(_outSql, _outSqlMaxLengthBytes, _outSqlLengthBytes);
-    logMessage("SQLNativeSql (unimplemented)", inSql);
+    logMessage("SQLNativeSql", inSql);
+    copyToBuffer(inSql.idup.translateQuery, outSql);
     return SQL_SUCCESS;
   }());
+}
+
+unittest {
+  auto query = `SELECT * FROM nation;`w;
+  assert(translateQuery(query) == query);
+  query = `SELECT {fn FLOOR(1)} FROM;`;
+  assert(translateQuery(query) == `SELECT FLOOR(1) FROM;`);
+  query = `SELECT {fn FLOOR(1)} FROM {fn BOB(JOE)};`;
+  assert(translateQuery(query) == `SELECT FLOOR(1) FROM BOB(JOE) ;`);
+}
+
+wstring translateQuery(wstring query) {
+  //TODO: Move to the function-based replaceAll variant
+  // 1) Combine the two replacements into one
+  // 2) Translate function names from their ODBC versions to the Presto ones when appropriate
+  // 3) Perform more complicated translations
+  enum engine = ctRegex!r"\{\s*fn\s+([^\(]+)\("w;
+  enum closeEngine = ctRegex!r"\}"w;
+  return query.replaceAll(engine, `$1(`w).replaceAll(closeEngine, " "w);
 }
 
 ///// SQLNumParams /////
