@@ -68,9 +68,9 @@ final class TableInfoResultRow : OdbcResultRow {
   override Variant dataAt(int column) {
     with (TableInfoResultColumns) {
       switch (column) {
-      case TABLE_CAT:
+      case TABLE_CATALOG:
         return Variant(catalogName);
-      case TABLE_SCHEM:
+      case TABLE_SCHEMA:
         return Variant(schemaName);
       case TABLE_NAME:
         return Variant(tableName);
@@ -91,8 +91,8 @@ private:
 }
 
 enum TableInfoResultColumns {
-  TABLE_CAT = 1,
-  TABLE_SCHEM,
+  TABLE_CATALOG = 1,
+  TABLE_SCHEMA,
   TABLE_NAME,
   TABLE_TYPE,
   REMARKS

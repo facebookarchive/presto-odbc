@@ -1240,10 +1240,10 @@ SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
     with(SQL_HANDLE_TYPE) {
       switch (handleType) {
       case DBC:
-        cleanupHandle!OdbcStatement(cast(OdbcConnection) handle);
+        cleanupHandle!OdbcConnection(cast(OdbcConnection) handle);
         break;
       case ENV:
-        cleanupHandle!OdbcStatement(cast(OdbcEnvironment) handle);
+        cleanupHandle!OdbcEnvironment(cast(OdbcEnvironment) handle);
         break;
       case STMT:
         cleanupHandle!OdbcStatement(cast(OdbcStatement) handle);

@@ -19,7 +19,7 @@ import sqlext;
 import odbcinst;
 
 import handles : OdbcConnection;
-import util : exceptionBoundary, dllEnforce, logMessage, outputWChar, wcharsToBytes, copyToBuffer;
+import util;
 
 
 ///// SQLGetInfo /////
@@ -190,7 +190,6 @@ SQLRETURN SQLGetInfoW(
       case SQL_CONVERT_INTERVAL_YEAR_MONTH: //124
       case SQL_CONVERT_WLONGVARCHAR: //125
       case SQL_CONVERT_WVARCHAR: //126
-      case SQL_CONVERT_GUID: //173
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_CORRELATION_NAME: //74
@@ -401,9 +400,6 @@ SQLRETURN SQLGetInfoW(
       case SQL_ASYNC_DBC_FUNCTIONS: //10023
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
         break;
-      case SQL_ASYNC_NOTIFICATION: //10025
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_NOTIFICATION_NOT_CAPABLE;
-        break;
       case SQL_DRIVER_HDBC: //3
       case SQL_DRIVER_HENV: //4
       case SQL_DRIVER_HSTMT: //5
@@ -445,10 +441,10 @@ SQLRETURN SQLGetInfoW(
       case SQL_DM_VER: //171
       case SQL_XOPEN_CLI_YEAR: //10000
       case SQL_CURSOR_SENSITIVITY: //10001
-      case SQL_DRIVER_AWARE_POOLING_SUPPORTED: //10024
-
+        //TODO: Add error handling storage to connectionHandles
+        //throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Unsupported info type"w ~ wtext(infoType));
         logMessage("SQLGetInfo: Unhandled case: ", infoType);
-        break;
+        return SQL_ERROR;
       } //switch
     }
     return SQL_SUCCESS;
