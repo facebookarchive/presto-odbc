@@ -52,8 +52,7 @@ SQLRETURN SQLGetInfoW(
         copyToBuffer("07.03.2014"w, stringResult);
         break;
       case SQL_FETCH_DIRECTION: //8
-        enum bitmask = SQL_FD_FETCH_NEXT | SQL_FD_FETCH_FIRST | SQL_FD_FETCH_LAST
-          | SQL_FD_FETCH_PRIOR | SQL_FD_FETCH_ABSOLUTE | SQL_FD_FETCH_RELATIVE;
+        enum bitmask = 0;
         *cast(SQLINTEGER*)(_infoValue) = bitmask;
         break;
       case SQL_ODBC_API_CONFORMANCE: //9
@@ -132,34 +131,17 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_TC_NONE;
         break;
       case SQL_CONVERT_FUNCTIONS: //48
-        enum bitmask = SQL_FN_CVT_CAST;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
-        break;
       case SQL_NUMERIC_FUNCTIONS: //49
-        enum bitmask = SQL_FN_NUM_ABS | SQL_FN_NUM_ACOS | SQL_FN_NUM_ASIN
-          | SQL_FN_NUM_ATAN | SQL_FN_NUM_ATAN2 | SQL_FN_NUM_CEILING
-          | SQL_FN_NUM_COS | SQL_FN_NUM_EXP | SQL_FN_NUM_FLOOR
-          | SQL_FN_NUM_LOG | SQL_FN_NUM_MOD | SQL_FN_NUM_SQRT
-          | SQL_FN_NUM_TAN | SQL_FN_NUM_PI | SQL_FN_NUM_RAND
-          | SQL_FN_NUM_LOG10 | SQL_FN_NUM_POWER | SQL_FN_NUM_ROUND;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
-        break;
       case SQL_STRING_FUNCTIONS: //50
-        enum bitmask = SQL_FN_STR_CONCAT | SQL_FN_STR_LTRIM | SQL_FN_STR_LENGTH
-          | SQL_FN_STR_LCASE | SQL_FN_STR_REPLACE | SQL_FN_STR_RTRIM
-          | SQL_FN_STR_SUBSTRING | SQL_FN_STR_UCASE | SQL_FN_STR_CHAR
-          | SQL_FN_STR_CHARACTER_LENGTH;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
-        break;
       case SQL_SYSTEM_FUNCTIONS: //51
+        //Supporting these would require a parser to translate ODBC escapes
+        // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_TIMEDATE_FUNCTIONS: //52
-        enum bitmask = SQL_FN_TD_NOW | SQL_FN_TD_CURRENT_DATE | SQL_FN_TD_DAYOFMONTH
-          | SQL_FN_TD_DAYOFWEEK | SQL_FN_TD_DAYOFYEAR | SQL_FN_TD_MONTH
-          | SQL_FN_TD_QUARTER | SQL_FN_TD_SECOND | SQL_FN_TD_CURRENT_TIME
-          | SQL_FN_TD_CURRENT_TIMESTAMP | SQL_FN_TD_EXTRACT;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
+        //Additional support would require a parser to translate ODBC escapes
+        // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
+        *cast(SQLUINTEGER*)(_infoValue) = SQL_FN_TD_EXTRACT;
         break;
       case SQL_CONVERT_BIGINT: //53
       case SQL_CONVERT_BIT: //55
@@ -200,12 +182,10 @@ SQLRETURN SQLGetInfoW(
         break;
       case SQL_DRIVER_ODBC_VER: // 77
         //Latest version of ODBC is 3.8 (as of 6/19/14)
-        copyToBuffer("03.00"w, stringResult);
+        copyToBuffer("03.51"w, stringResult);
         break;
       case SQL_POS_OPERATIONS: //79
-        enum bitmask = SQL_CA1_POS_POSITION | SQL_CA1_POS_UPDATE
-          | SQL_CA1_POS_DELETE | SQL_CA1_POS_REFRESH;
-        *cast(SQLINTEGER*)(_infoValue) = bitmask;
+        *cast(SQLINTEGER*)(_infoValue) = 0;
         break;
       case SQL_POSITIONED_STATEMENTS: //80
         *cast(SQLINTEGER*)(_infoValue) = 0;
@@ -294,7 +274,7 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUSMALLINT*)(_infoValue) = SQL_CL_START;
         break;
       case SQL_OUTER_JOIN_CAPABILITIES: //115
-        enum bitmask = SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_FULL | SQL_OJ_NESTED
+        enum bitmask = SQL_OJ_LEFT | SQL_OJ_RIGHT | SQL_OJ_NESTED
           | SQL_OJ_NOT_ORDERED | SQL_OJ_INNER | SQL_OJ_ALL_COMPARISON_OPS;
         *cast(SQLUINTEGER*)(_infoValue) = bitmask;
         break;
@@ -308,9 +288,9 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_DATETIME_LITERALS: //119
-        enum bitmask = SQL_DL_SQL92_DATE | SQL_DL_SQL92_TIME | SQL_DL_SQL92_TIMESTAMP
-          | SQL_DL_SQL92_INTERVAL_YEAR_TO_MONTH | SQL_DL_SQL92_INTERVAL_DAY_TO_SECOND;
-          *cast(SQLUINTEGER*)(_infoValue) = bitmask;
+        //Supporting these would require a parser to translate ODBC escapes
+        // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
+        *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_BATCH_SUPPORT: //121
         *cast(SQLUINTEGER*)(_infoValue) = 0;
@@ -348,8 +328,9 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = SQL_PARC_NO_BATCH;
         break;
       case SQL_SQL92_DATETIME_FUNCTIONS: //155
-        enum bitmask = SQL_SDF_CURRENT_DATE | SQL_SDF_CURRENT_TIME | SQL_SDF_CURRENT_TIMESTAMP;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
+        //Supporting these would require a parser to translate ODBC escapes
+        // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
+        *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_SQL92_FOREIGN_KEY_DELETE_RULE: //156
       case SQL_SQL92_FOREIGN_KEY_UPDATE_RULE: //157
@@ -361,9 +342,9 @@ SQLRETURN SQLGetInfoW(
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_SQL92_STRING_FUNCTIONS: //164
-        enum bitmask = SQL_SSF_LOWER | SQL_SSF_UPPER | SQL_SSF_SUBSTRING
-          | SQL_SSF_TRIM_BOTH | SQL_SSF_TRIM_LEADING | SQL_SSF_TRIM_TRAILING;
-        *cast(SQLUINTEGER*)(_infoValue) = bitmask;
+        //Supporting these would require a parser to translate ODBC escapes
+        // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
+        *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
       case SQL_STANDARD_CLI_CONFORMANCE: //166
         *cast(SQLUINTEGER*)(_infoValue) = 0;

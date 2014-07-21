@@ -2,7 +2,7 @@
 
 <datasource formatted-name='presto' inline='true' source-platform='win' version='8.3' xmlns:user='http://www.tableausoftware.com/xml/user'>
   <!-- build 8200.14.0616.0146                                -->
-  <connection class='genericodbc' dbname='tpch' odbc-connect-string-extras='' odbc-dbms-name='Presto' odbc-driver='Presto ODBC Driver' odbc-dsn='' odbc-suppress-connection-pooling='' odbc-use-connection-pooling='' port='8080' server='127.0.0.1' username=''>
+  <connection class='genericodbc' dbname='tpch' odbc-connect-string-extras='' odbc-dbms-name='Presto' odbc-driver='Presto ODBC Driver' odbc-dsn='' odbc-suppress-connection-pooling='' odbc-use-connection-pooling='' port='8080' schema='tiny' server='127.0.0.1' username=''>
     <relation name='nation' table='[tiny].[nation]' type='table' />
     <connection-customization class='genericodbc' enabled='true' version='8.3'>
       <vendor name='Presto' />
@@ -71,37 +71,37 @@
         <customization name='SQL_AGGREGATE_FUNCTIONS' value='31' />
         <customization name='SQL_CATALOG_NAME_SEPARATOR' value='.' />
         <customization name='SQL_CATALOG_TERM' value='catalog' />
-        <customization name='SQL_CATALOG_USAGE' value='1' />
+        <customization name='SQL_CATALOG_USAGE' value='31' />
         <customization name='SQL_COLUMN_ALIAS' value='N' />
-        <customization name='SQL_CONVERT_FUNCTIONS' value='2' />
-        <customization name='SQL_DATETIME_LITERALS' value='4615' />
+        <customization name='SQL_CONVERT_FUNCTIONS' value='0' />
+        <customization name='SQL_DATETIME_LITERALS' value='0' />
         <customization name='SQL_DBMS_NAME' value='Presto' />
         <customization name='SQL_DBMS_VER' value='00.73.0000' />
         <customization name='SQL_DRIVER_ODBC_VER' value='03.00' />
         <customization name='SQL_DRIVER_VER' value='07.03.2014' />
         <customization name='SQL_IDENTIFIER_QUOTE_CHAR' value='&quot;' />
         <customization name='SQL_MAX_IDENTIFIER_LEN' value='128' />
-        <customization name='SQL_NUMERIC_FUNCTIONS' value='6016895' />
+        <customization name='SQL_NUMERIC_FUNCTIONS' value='0' />
         <customization name='SQL_ODBC_INTERFACE_CONFORMANCE' value='1' />
-        <customization name='SQL_ODBC_VER' value='03.00.0000' />
-        <customization name='SQL_OJ_CAPABILITIES' value='127' />
+        <customization name='SQL_ODBC_VER' value='03.51.0000' />
+        <customization name='SQL_OJ_CAPABILITIES' value='123' />
         <customization name='SQL_QUOTED_IDENTIFIER_CASE' value='3' />
         <customization name='SQL_SCHEMA_TERM' value='schema' />
-        <customization name='SQL_SCHEMA_USAGE' value='63030352' />
+        <customization name='SQL_SCHEMA_USAGE' value='31' />
         <customization name='SQL_SPECIAL_CHARACTERS' value='' />
-        <customization name='SQL_SQL92_DATETIME_FUNCTIONS' value='7' />
+        <customization name='SQL_SQL92_DATETIME_FUNCTIONS' value='0' />
         <customization name='SQL_SQL92_NUMERIC_VALUE_FUNCTIONS' value='0' />
-        <customization name='SQL_SQL92_PREDICATES' value='63028688' />
-        <customization name='SQL_SQL92_RELATIONAL_JOIN_OPERATORS' value='63031248' />
-        <customization name='SQL_SQL92_STRING_FUNCTIONS' value='238' />
-        <customization name='SQL_SQL92_VALUE_EXPRESSIONS' value='63028624' />
+        <customization name='SQL_SQL92_PREDICATES' value='54118960' />
+        <customization name='SQL_SQL92_RELATIONAL_JOIN_OPERATORS' value='54121840' />
+        <customization name='SQL_SQL92_STRING_FUNCTIONS' value='0' />
+        <customization name='SQL_SQL92_VALUE_EXPRESSIONS' value='54118832' />
         <customization name='SQL_SQL_CONFORMANCE' value='0' />
-        <customization name='SQL_STRING_FUNCTIONS' value='2121049' />
+        <customization name='SQL_STRING_FUNCTIONS' value='0' />
         <customization name='SQL_SYSTEM_FUNCTIONS' value='0' />
         <customization name='SQL_TABLE_TERM' value='table' />
         <customization name='SQL_TIMEDATE_ADD_INTERVALS' value='350' />
         <customization name='SQL_TIMEDATE_DIFF_INTERVALS' value='350' />
-        <customization name='SQL_TIMEDATE_FUNCTIONS' value='1970301' />
+        <customization name='SQL_TIMEDATE_FUNCTIONS' value='1048576' />
         <customization name='__46' value='0' />
       </customizations>
     </connection-customization>
