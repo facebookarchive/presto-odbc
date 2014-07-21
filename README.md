@@ -24,12 +24,13 @@ This driver is written in the [D Programming Language](http://dlang.org)
 
 ## Installation Prerequisites:
 1. Cygwin with the GNUMake package
-1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/downloads)
+1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download)
 1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
 1. Acess to a running [Presto](http://prestodb.io) instance
 
 ## Manual Labor:
 1. Add `C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin` to `PATH`
+1. Add `C:\dmd2\windows\bin` to `PATH`
 1. Copy `C:\D\dmd2\windows\bin64\libcurl.dll` into `C:\temp\` (make this directory if it does not exist)
 1. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo
 1. Press the Windows key and search for `ODBC Data Sources`; open the 64 bit version
