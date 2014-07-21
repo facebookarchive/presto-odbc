@@ -86,7 +86,7 @@ SQLRETURN SQLDriverConnectW(
     }
 
     if (driverCompletion != DriverCompletion.NOPROMPT) {
-      connectionArguments ~= ";SERVER=192.168.0.4;PORT=8080;DATABASE=default;SCHEMA=default;";
+      connectionArguments ~= ";SERVER=;PORT=8080;DATABASE=default;SCHEMA=default;";
     }
 
     with (connectionHandle) {
@@ -133,12 +133,16 @@ unittest {
   assert(arguments["BOB"] == "joe;alice=sally;;;b");
   assert(arguments["TOM"] == "frank");
   assert(arguments.length == 2);
+  auto arguments = parseConnectionString("bob=;tom=frank");
+  assert(arguments["BOB"] == "");
+  assert(arguments["TOM"] == "frank");
+  assert(arguments.length == 2);
 }
 
 string[string] parseConnectionString(string connectionString) {
   string[string] result;
 
-  enum attributePattern = r"(?:^|;)([^;]+)=(?:(?:\{([^\}]+)\})|([^;\{]+))";
+  enum attributePattern = r"(?:^|;)([^;]+)=(?:(?:\{([^\}]*)\})|([^;\{]*))";
   auto regexEngine = ctRegex!attributePattern;
   auto matches = matchAll(connectionString, regexEngine);
 
@@ -396,9 +400,18 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
   with (statementHandle) {
     logMessage("SQLExecuteImpl", query);
 
+    bool noEndpointSpecified = connection.endpoint.empty || connection.endpoint == ":8080";
+    if (noEndpointSpecified) {
+      logMessage("Warning: Not connected to an endpoint!");
+      latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+      executedQuery = true;
+      return;
+    }
+
     if (query.empty) {
       logMessage("Warning: Execiting an empty query!");
       latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+      executedQuery = true;
       return;
     }
 
