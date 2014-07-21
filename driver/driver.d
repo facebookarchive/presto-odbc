@@ -133,7 +133,7 @@ unittest {
   assert(arguments["BOB"] == "joe;alice=sally;;;b");
   assert(arguments["TOM"] == "frank");
   assert(arguments.length == 2);
-  auto arguments = parseConnectionString("bob=;tom=frank");
+  arguments = parseConnectionString("bob=;tom=frank");
   assert(arguments["BOB"] == "");
   assert(arguments["TOM"] == "frank");
   assert(arguments.length == 2);

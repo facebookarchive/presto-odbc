@@ -448,21 +448,19 @@ unittest {
   assert(escapeSqlIdentifier(r"'bob'") == r"'\'bob\''");
 }
 
-//As of 7/21/14 Presto does not support escapes in SQL string literals,
-//accordingly this function can replace all quotes without fear of "double escaping"
 string escapeSqlIdentifier(string identifier) {
   auto result = appender!string;
   result.reserve(identifier.length + 2);
-  result ~= '\'';
+  result ~= '"';
 
   foreach (c; identifier) {
-    if (c != '\'') {
+    if (c != '"') {
       result ~= c;
     } else {
-      result ~= r"\'";
+      result ~= r`""`;
     }
   }
-  result ~= '\'';
+  result ~= '"';
 
   return result.data;
 }
