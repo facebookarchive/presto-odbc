@@ -893,20 +893,55 @@ SQLRETURN SQLNativeSqlW(
 unittest {
   auto query = `SELECT * FROM nation;`w;
   assert(translateQuery(query) == query);
-  query = `SELECT {fn FLOOR(1)} FROM;`;
-  assert(translateQuery(query) == `SELECT FLOOR(1) FROM;`);
-  query = `SELECT {fn FLOOR(1)} FROM {fn BOB(JOE)};`;
-  assert(translateQuery(query) == `SELECT FLOOR(1) FROM BOB(JOE) ;`);
+  query = `SELECT {fn FLOOR(1)} FROM;`w;
+  assert(translateQuery(query) == `SELECT FLOOR(1) FROM;`w);
+  query = `SELECT {fn FLOOR(1)} FROM {fn BOB(JOE)};`w;
+  assert(translateQuery(query) == `SELECT FLOOR(1) FROM BOB(JOE);`w);
+  query = `SELECT '{fn FLOOR(1)}' FROM;`w;
+  assert(translateQuery(query) == `SELECT '{fn FLOOR(1)}' FROM;`w);
 }
 
 wstring translateQuery(wstring query) {
-  //TODO: Move to the function-based replaceAll variant
-  // 1) Combine the two replacements into one
-  // 2) Translate function names from their ODBC versions to the Presto ones when appropriate
-  // 3) Perform more complicated translations
-  enum engine = ctRegex!r"\{\s*fn\s+([^\(]+)\("w;
-  enum closeEngine = ctRegex!r"\}"w;
-  return query.replaceAll(engine, `$1(`w).replaceAll(closeEngine, " "w);
+  return query.removeTopLevelPattern("{fn "w).removeTopLevelPattern("}"w);
+}
+
+unittest {
+  assert("test"w.removeTopLevelPattern("t"w) == "es"w);
+  assert("test"w.removeTopLevelPattern("es"w) == "tt"w);
+  assert("test"w.removeTopLevelPattern("test"w) == ""w);
+  assert("testtesttest"w.removeTopLevelPattern("test"w) == ""w);
+  assert("testtesttes"w.removeTopLevelPattern("test"w) == "tes"w);
+  assert("test"w.removeTopLevelPattern("tes"w) == "t"w);
+  assert("test"w.removeTopLevelPattern("est"w) == "t"w);
+  assert("'t'est"w.removeTopLevelPattern("t"w) == "'t'es"w);
+  assert("tes'tt'est"w.removeTopLevelPattern("t"w) == "es'tt'es"w);
+  assert("testtest'test'"w.removeTopLevelPattern("test"w) == "'test'"w);
+}
+
+wstring removeTopLevelPattern(wstring query, wstring pattern) {
+  wstring result;
+  bool inString = false;
+  import std.stdio;
+  for (;;) {
+    auto findPattern = query.findSplit(pattern);
+    if (findPattern[0].length == query.length) {
+      result ~= findPattern[0];
+      break;
+    }
+    auto findQuote = query.findSplit("'"w);
+    auto patternIsNotInAnSqlString = findPattern[0].length < findQuote[0].length;
+    if (patternIsNotInAnSqlString) {
+      result ~= findPattern[0];
+      query = findPattern[2];
+      continue;
+    }
+    auto findEndQuote = findQuote[2].findSplit("'"w);
+    dllEnforce(findEndQuote[0].length != findQuote[2].length);
+    result ~= query[0 .. findQuote[0].length + findQuote[1].length + findEndQuote[0].length + findEndQuote[1].length];
+    query = findEndQuote[2];
+  }
+
+  return result;
 }
 
 ///// SQLNumParams /////
