@@ -378,9 +378,6 @@ SQLRETURN SQLGetInfoW(
       case SQL_MAX_ASYNC_CONCURRENT_STATEMENTS: // 10022
         *cast(SQLUINTEGER*)(_infoValue) = 0;
         break;
-      case SQL_ASYNC_DBC_FUNCTIONS: //10023
-        *cast(SQLUSMALLINT*)(_infoValue) = SQL_ASYNC_DBC_NOT_CAPABLE;
-        break;
       case SQL_DRIVER_HDBC: //3
       case SQL_DRIVER_HENV: //4
       case SQL_DRIVER_HSTMT: //5

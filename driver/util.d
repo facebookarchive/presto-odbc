@@ -457,7 +457,7 @@ string escapeSqlIdentifier(string identifier) {
     if (c != '"') {
       result ~= c;
     } else {
-      result ~= r`""`;
+      result ~= `""`;
     }
   }
   result ~= '"';
