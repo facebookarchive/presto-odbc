@@ -444,8 +444,8 @@ StatementClient runQuery(OdbcStatement statementHandle, string query) {
 }
 
 unittest {
-  assert(escapeSqlIdentifier(r"bob") == r"'bob'");
-  assert(escapeSqlIdentifier(r"'bob'") == r"'\'bob\''");
+  assert(escapeSqlIdentifier(r"bob") == `"bob"`);
+  assert(escapeSqlIdentifier(`"bob"`) == `"""bob"""`);
 }
 
 string escapeSqlIdentifier(string identifier) {
