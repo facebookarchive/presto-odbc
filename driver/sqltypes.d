@@ -163,7 +163,7 @@ alias SQL_TIMESTAMP_STRUCT = TIMESTAMP_STRUCT;
  */
 
 enum SQLINTERVAL {
-  SQL_IS_YEAR	= 1,
+  SQL_IS_YEAR = 1,
   SQL_IS_MONTH,
   SQL_IS_DAY,
   SQL_IS_HOUR,
@@ -179,26 +179,26 @@ enum SQLINTERVAL {
 }
 
 struct SQL_YEAR_MONTH_STRUCT {
-  SQLUINTEGER	year;
-  SQLUINTEGER	month;
+  SQLUINTEGER year;
+  SQLUINTEGER month;
 }
 
 struct SQL_DAY_SECOND_STRUCT {
-  SQLUINTEGER	day;
-  SQLUINTEGER	our;
-  SQLUINTEGER	minute;
-  SQLUINTEGER	second;
-  SQLUINTEGER	fraction;
+  SQLUINTEGER day;
+  SQLUINTEGER our;
+  SQLUINTEGER minute;
+  SQLUINTEGER second;
+  SQLUINTEGER fraction;
 }
 
 struct SQL_INTERVAL_STRUCT {
-  SQLINTERVAL	interval_type;
-  SQLSMALLINT	interval_sign;
+  SQLINTERVAL interval_type;
+  SQLSMALLINT interval_sign;
   TimeRep intval;
 
   union TimeRep {
-    SQL_YEAR_MONTH_STRUCT	year_month;
-    SQL_DAY_SECOND_STRUCT	day_second;
+    SQL_YEAR_MONTH_STRUCT year_month;
+    SQL_DAY_SECOND_STRUCT day_second;
   }
 }
 
@@ -208,12 +208,12 @@ alias SQLBIGINT = ODBCINT64;
 alias SQLUBIGINT = ulong;
 
 //The internal representation of the numeric data type
-enum SQL_MAX_NUMERIC_LEN	= 16;
+enum SQL_MAX_NUMERIC_LEN    = 16;
 struct SQL_NUMERIC_STRUCT {
-  SQLCHAR		precision;
-  SQLSCHAR	scale;
-  SQLCHAR		sign;	//0 for negative, 1 for positive
-  SQLCHAR		val[SQL_MAX_NUMERIC_LEN];
+  SQLCHAR  precision;
+  SQLSCHAR scale;
+  SQLCHAR  sign;   //0 for negative, 1 for positive
+  SQLCHAR  val[SQL_MAX_NUMERIC_LEN];
 }
 
 struct SQLGUID {

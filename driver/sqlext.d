@@ -1237,7 +1237,7 @@ enum SQL_ODBC_KEYWORDS =
  */
 
 //SQLExtendedFetch - fFetchType
-enum SQL_FETCH_BOOKMARK	= 8;
+enum SQL_FETCH_BOOKMARK = 8;
 
 //SQLExtendedFetch - rgfRowStatus
 enum RowStatus : SQLUSMALLINT {

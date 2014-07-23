@@ -229,7 +229,7 @@ SQLRETURN SQLExecDirectW(
 ///// SQLAllocHandle /////
 
 SQLRETURN SQLAllocHandle(
-    SQL_HANDLE_TYPE	handleType,
+    SQL_HANDLE_TYPE handleType,
     SQLHANDLE _parentHandle,
     SQLHANDLE* newHandlePointer) {
   dllEnforce(newHandlePointer != null);
