@@ -31,21 +31,21 @@
  */
 
 version(Windows) {
-  public import std.c.windows.windows;
+    public import std.c.windows.windows;
 } else {
-  alias VOID = void;
-  enum TRUE = 1;
-  enum FALSE = 0;
+    alias VOID = void;
+    enum TRUE = 1;
+    enum FALSE = 0;
 
-  alias BYTE = ubyte;
-  alias CHAR = char;
-  alias WORD = ushort;
-  alias DWORD = uint;
-  alias LPSTR = char*;
-  alias LPCSTR = const(char)*;
-  alias LPTSTR = TCHAR*;
-  alias LPDWORD = DWORD*;
-  alias BOOL = int;
+    alias BYTE = ubyte;
+    alias CHAR = char;
+    alias WORD = ushort;
+    alias DWORD = uint;
+    alias LPSTR = char*;
+    alias LPCSTR = const(char)*;
+    alias LPTSTR = TCHAR*;
+    alias LPDWORD = DWORD*;
+    alias BOOL = int;
 }
 
 nothrow:
@@ -69,13 +69,13 @@ alias SQLTIMESTAMP = ubyte;
 alias SQLVARCHAR = ubyte;
 
 version(Win64) {
-  alias SQLLEN = long;
-  alias SQLULEN = ulong;
-  alias SQLSETPOSIROW = ulong;
+    alias SQLLEN = long;
+    alias SQLULEN = ulong;
+    alias SQLSETPOSIROW = ulong;
 } else {
-  alias SQLLEN = int;
-  alias SQLULEN = uint;
-  alias SQLSETPOSIROW = ushort;
+    alias SQLLEN = int;
+    alias SQLULEN = uint;
+    alias SQLSETPOSIROW = ushort;
 }
 
 //Backward compatibility with older platform sdks
@@ -100,12 +100,12 @@ alias SQLHDESC = SQLHANDLE;
 
 //Window Handle
 version(Win32) {
-  alias SQLHWND = HWND;
+    alias SQLHWND = HWND;
 } else version(OSX) {
-  alias HWND = WindowPtr;
-  alias SQLHWND = HWND;
+    alias HWND = WindowPtr;
+    alias SQLHWND = HWND;
 } else {
-  alias SQLHWND = SQLPOINTER;
+    alias SQLHWND = SQLPOINTER;
 }
 
 //SQL portable types for C
@@ -132,27 +132,27 @@ alias SQLRETURN = SQLSMALLINT;
 alias BOOKMARK = SQLULEN;
 
 struct DATE_STRUCT {
-  SQLSMALLINT year;
-  SQLUSMALLINT month;
-  SQLUSMALLINT day;
+    SQLSMALLINT year;
+    SQLUSMALLINT month;
+    SQLUSMALLINT day;
 }
 alias SQL_DATE_STRUCT = DATE_STRUCT;
 
 struct TIME_STRUCT {
-  SQLUSMALLINT hour;
-  SQLUSMALLINT minute;
-  SQLUSMALLINT second;
+    SQLUSMALLINT hour;
+    SQLUSMALLINT minute;
+    SQLUSMALLINT second;
 }
 alias SQL_TIME_STRUCT = TIME_STRUCT;
 
 struct TIMESTAMP_STRUCT {
-  SQLSMALLINT year;
-  SQLUSMALLINT month;
-  SQLUSMALLINT day;
-  SQLUSMALLINT hour;
-  SQLUSMALLINT minute;
-  SQLUSMALLINT second;
-  SQLUINTEGER fraction;
+    SQLSMALLINT year;
+    SQLUSMALLINT month;
+    SQLUSMALLINT day;
+    SQLUSMALLINT hour;
+    SQLUSMALLINT minute;
+    SQLUSMALLINT second;
+    SQLUINTEGER fraction;
 }
 alias SQL_TIMESTAMP_STRUCT = TIMESTAMP_STRUCT;
 
@@ -163,43 +163,43 @@ alias SQL_TIMESTAMP_STRUCT = TIMESTAMP_STRUCT;
  */
 
 enum SQLINTERVAL {
-  SQL_IS_YEAR = 1,
-  SQL_IS_MONTH,
-  SQL_IS_DAY,
-  SQL_IS_HOUR,
-  SQL_IS_MINUTE,
-  SQL_IS_SECOND,
-  SQL_IS_YEAR_TO_MONTH,
-  SQL_IS_DAY_TO_HOUR,
-  SQL_IS_DAY_TO_MINUTE,
-  SQL_IS_DAY_TO_SECOND,
-  SQL_IS_HOUR_TO_MINUTE,
-  SQL_IS_HOUR_TO_SECOND,
-  SQL_IS_MINUTE_TO_SECOND
+    SQL_IS_YEAR = 1,
+    SQL_IS_MONTH,
+    SQL_IS_DAY,
+    SQL_IS_HOUR,
+    SQL_IS_MINUTE,
+    SQL_IS_SECOND,
+    SQL_IS_YEAR_TO_MONTH,
+    SQL_IS_DAY_TO_HOUR,
+    SQL_IS_DAY_TO_MINUTE,
+    SQL_IS_DAY_TO_SECOND,
+    SQL_IS_HOUR_TO_MINUTE,
+    SQL_IS_HOUR_TO_SECOND,
+    SQL_IS_MINUTE_TO_SECOND
 }
 
 struct SQL_YEAR_MONTH_STRUCT {
-  SQLUINTEGER year;
-  SQLUINTEGER month;
+    SQLUINTEGER year;
+    SQLUINTEGER month;
 }
 
 struct SQL_DAY_SECOND_STRUCT {
-  SQLUINTEGER day;
-  SQLUINTEGER our;
-  SQLUINTEGER minute;
-  SQLUINTEGER second;
-  SQLUINTEGER fraction;
+    SQLUINTEGER day;
+    SQLUINTEGER our;
+    SQLUINTEGER minute;
+    SQLUINTEGER second;
+    SQLUINTEGER fraction;
 }
 
 struct SQL_INTERVAL_STRUCT {
-  SQLINTERVAL interval_type;
-  SQLSMALLINT interval_sign;
-  TimeRep intval;
+    SQLINTERVAL interval_type;
+    SQLSMALLINT interval_sign;
+    TimeRep intval;
 
-  union TimeRep {
-    SQL_YEAR_MONTH_STRUCT year_month;
-    SQL_DAY_SECOND_STRUCT day_second;
-  }
+    union TimeRep {
+        SQL_YEAR_MONTH_STRUCT year_month;
+        SQL_DAY_SECOND_STRUCT day_second;
+    }
 }
 
 //The ODBC C types for SQL_C_SBIGINT and SQL_C_UBIGINT
@@ -210,26 +210,26 @@ alias SQLUBIGINT = ulong;
 //The internal representation of the numeric data type
 enum SQL_MAX_NUMERIC_LEN    = 16;
 struct SQL_NUMERIC_STRUCT {
-  SQLCHAR  precision;
-  SQLSCHAR scale;
-  SQLCHAR  sign;   //0 for negative, 1 for positive
-  SQLCHAR  val[SQL_MAX_NUMERIC_LEN];
+    SQLCHAR  precision;
+    SQLSCHAR scale;
+    SQLCHAR  sign;   //0 for negative, 1 for positive
+    SQLCHAR  val[SQL_MAX_NUMERIC_LEN];
 }
 
 struct SQLGUID {
-  DWORD Data1;
-  WORD Data2;
-  WORD Data3;
-  BYTE Data4[8]; //BYTE
+    DWORD Data1;
+    WORD Data2;
+    WORD Data3;
+    BYTE Data4[8]; //BYTE
 }
 
 alias SQLWCHAR = wchar;
 version (Windows) {} else {
-  static assert(false, "Investigate what wchar should be");
+    static assert(false, "Investigate what wchar should be");
 }
 
 version(UNICODE) {
-  alias SQLTCHAR = SQLWCHAR;
+    alias SQLTCHAR = SQLWCHAR;
 } else {
-  alias SQLTCHAR = SQLCHAR;
+    alias SQLTCHAR = SQLCHAR;
 }

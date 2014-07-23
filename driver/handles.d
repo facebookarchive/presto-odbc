@@ -23,9 +23,9 @@ import util;
  * such as their addresses, lengths, and C datatypes
  */
 final class ApplicationParameterDescriptor : OdbcDescriptorImpl {
-  this(OdbcConnection connection) {
-    super(connection);
-  }
+    this(OdbcConnection connection) {
+        super(connection);
+    }
 }
 
 /**
@@ -34,9 +34,9 @@ final class ApplicationParameterDescriptor : OdbcDescriptorImpl {
  * such as their datatypes, lengths, and nullability
  */
 final class ImplementationParameterDescriptor : OdbcDescriptorImpl {
-  this(OdbcConnection connection) {
-    super(connection);
-  }
+    this(OdbcConnection connection) {
+        super(connection);
+    }
 }
 
 /**
@@ -45,11 +45,11 @@ final class ImplementationParameterDescriptor : OdbcDescriptorImpl {
  * such as their addresses, lengths, and C datatypes
  */
 final class ApplicationRowDescriptor : OdbcDescriptorImpl {
-  this(OdbcConnection connection) {
-    super(connection);
-  }
+    this(OdbcConnection connection) {
+        super(connection);
+    }
 
-  ColumnBinding[uint] columnBindings;
+    ColumnBinding[uint] columnBindings;
 }
 
 /**
@@ -58,9 +58,9 @@ final class ApplicationRowDescriptor : OdbcDescriptorImpl {
  * such as their datatypes, lengths, and nullability
  */
 final class ImplementationRowDescriptor : OdbcDescriptorImpl {
-  this(OdbcConnection connection) {
-    super(connection);
-  }
+    this(OdbcConnection connection) {
+        super(connection);
+    }
 }
 
 /**
@@ -72,35 +72,35 @@ final class ImplementationRowDescriptor : OdbcDescriptorImpl {
  * It does not know which type it is at construction.
  */
 final class OdbcDescriptor {
-  this(OdbcConnection connection) {
-    dllEnforce(connection !is null);
-    this.connection = connection;
-    connection.explicitlyAllocatedDescriptors[this] = true;
-  }
+    this(OdbcConnection connection) {
+        dllEnforce(connection !is null);
+        this.connection = connection;
+        connection.explicitlyAllocatedDescriptors[this] = true;
+    }
 
-  this(OdbcConnection connection, OdbcDescriptorImpl impl) {
-    dllEnforce(connection !is null);
-    this.connection = connection;
-    this.impl = impl;
-  }
+    this(OdbcConnection connection, OdbcDescriptorImpl impl) {
+        dllEnforce(connection !is null);
+        this.connection = connection;
+        this.impl = impl;
+    }
 
-  void setThisDescriptorAs();
+    void setThisDescriptorAs();
 
-  OdbcConnection connection;
-  OdbcDescriptorImpl impl = null;
+    OdbcConnection connection;
+    OdbcDescriptorImpl impl = null;
 }
 
 private abstract class OdbcDescriptorImpl {
-  this(OdbcConnection connection) {
-    dllEnforce(connection !is null);
-    this.connection = connection;
-  }
+    this(OdbcConnection connection) {
+        dllEnforce(connection !is null);
+        this.connection = connection;
+    }
 
-  OdbcDescriptorImpl newImpl(this T)() {
-    return T(connection);
-  }
+    OdbcDescriptorImpl newImpl(this T)() {
+        return T(connection);
+    }
 
-  OdbcConnection connection;
+    OdbcConnection connection;
 }
 
 
@@ -108,87 +108,86 @@ private abstract class OdbcDescriptorImpl {
  * An OdbcStatement handle object is allocated for each HSTATEMENT requested by the driver/client.
  */
 final class OdbcStatement {
-  this(OdbcConnection connection) {
-    dllEnforce(connection !is null);
-    this.connection = connection;
-    this.latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
-    this.applicationParameterDescriptor = makeWithoutGC!ApplicationParameterDescriptor(connection);
-    this.implementationParameterDescriptor = makeWithoutGC!ImplementationParameterDescriptor(connection);
-    this.applicationRowDescriptor = makeWithoutGC!ApplicationRowDescriptor(connection);
-    this.implementationRowDescriptor = makeWithoutGC!ImplementationRowDescriptor(connection);
-  }
+    this(OdbcConnection connection) {
+        dllEnforce(connection !is null);
+        this.connection = connection;
+        this.latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+        this.applicationParameterDescriptor = makeWithoutGC!ApplicationParameterDescriptor(connection);
+        this.implementationParameterDescriptor = makeWithoutGC!ImplementationParameterDescriptor(connection);
+        this.applicationRowDescriptor = makeWithoutGC!ApplicationRowDescriptor(connection);
+        this.implementationRowDescriptor = makeWithoutGC!ImplementationRowDescriptor(connection);
+    }
 
-  OdbcConnection connection;
+    OdbcConnection connection;
 
-  wstring query() {
-    return query_;
-  }
+    wstring query() {
+        return query_;
+    }
 
-  void query(wstring query) {
-    executedQuery = false;
-    query_ = query;
-  }
+    void query(wstring query) {
+        executedQuery = false;
+        query_ = query;
+    }
 
-  private wstring query_;
-  bool executedQuery;
-  OdbcResult latestOdbcResult;
-  OdbcException[] errors;
-  SQLULEN rowArraySize = 1;
-  SQLULEN* rowsFetched;
-  RowStatus* rowStatusPtr;
+    private wstring query_;
+    bool executedQuery;
+    OdbcResult latestOdbcResult;
+    OdbcException[] errors;
+    SQLULEN rowArraySize = 1;
+    SQLULEN* rowsFetched;
+    RowStatus* rowStatusPtr;
 
+    void applicationParameterDescriptor(ApplicationParameterDescriptor apd) {
+        applicationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, apd);
+    }
 
-  void applicationParameterDescriptor(ApplicationParameterDescriptor apd) {
-    applicationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, apd);
-  }
+    void implementationParameterDescriptor(ImplementationParameterDescriptor ipd) {
+        implementationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ipd);
+    }
 
-  void implementationParameterDescriptor(ImplementationParameterDescriptor ipd) {
-    implementationParameterDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ipd);
-  }
+    void applicationRowDescriptor(ApplicationRowDescriptor ard) {
+        applicationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ard);
+    }
 
-  void applicationRowDescriptor(ApplicationRowDescriptor ard) {
-    applicationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ard);
-  }
+    void implementationRowDescriptor(ImplementationRowDescriptor ird) {
+        implementationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ird);
+    }
 
-  void implementationRowDescriptor(ImplementationRowDescriptor ird) {
-    implementationRowDescriptor_ = makeWithoutGC!OdbcDescriptor(connection, ird);
-  }
+    ApplicationParameterDescriptor applicationParameterDescriptor() {
+        return cast(ApplicationParameterDescriptor) applicationParameterDescriptor_.impl;
+    }
 
-  ApplicationParameterDescriptor applicationParameterDescriptor() {
-    return cast(ApplicationParameterDescriptor) applicationParameterDescriptor_.impl;
-  }
+    ImplementationParameterDescriptor implementationParameterDescriptor() {
+        return cast(ImplementationParameterDescriptor) implementationParameterDescriptor_.impl;
+    }
 
-  ImplementationParameterDescriptor implementationParameterDescriptor() {
-    return cast(ImplementationParameterDescriptor) implementationParameterDescriptor_.impl;
-  }
+    ApplicationRowDescriptor applicationRowDescriptor() {
+        return cast(ApplicationRowDescriptor) applicationRowDescriptor_.impl;
+    }
 
-  ApplicationRowDescriptor applicationRowDescriptor() {
-    return cast(ApplicationRowDescriptor) applicationRowDescriptor_.impl;
-  }
+    ImplementationRowDescriptor implementationRowDescriptor() {
+        return cast(ImplementationRowDescriptor) implementationRowDescriptor_.impl;
+    }
 
-  ImplementationRowDescriptor implementationRowDescriptor() {
-    return cast(ImplementationRowDescriptor) implementationRowDescriptor_.impl;
-  }
-
-  OdbcDescriptor applicationParameterDescriptor_;
-  OdbcDescriptor implementationParameterDescriptor_;
-  OdbcDescriptor applicationRowDescriptor_;
-  OdbcDescriptor implementationRowDescriptor_;
+    OdbcDescriptor applicationParameterDescriptor_;
+    OdbcDescriptor implementationParameterDescriptor_;
+    OdbcDescriptor applicationRowDescriptor_;
+    OdbcDescriptor implementationRowDescriptor_;
 }
 
 final class OdbcConnection {
-  this(OdbcEnvironment environment) {
-    dllEnforce(environment !is null);
-    this.environment = environment;
-  }
+    this(OdbcEnvironment environment) {
+        dllEnforce(environment !is null);
+        this.environment = environment;
+    }
 
-  OdbcEnvironment environment;
-  bool[OdbcDescriptor] explicitlyAllocatedDescriptors;
-  string endpoint; //Host and port
-  string catalog;
-  string schema;
-  string userId;
-  string authentication;
+    OdbcEnvironment environment;
+    bool[OdbcDescriptor] explicitlyAllocatedDescriptors;
+    string endpoint; //Host and port
+    string catalog;
+    string schema;
+    string userId;
+    string authentication;
 }
 
 final class OdbcEnvironment {

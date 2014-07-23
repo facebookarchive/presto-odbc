@@ -85,29 +85,29 @@ enum ODBC_ERROR_OUTPUT_STRING_TRUNCATED = 22;
 enum ODBC_ERROR_NOTRANINFO = 23;
 
 version(UNICODE) {
-  alias SQLInstallODBCW = SQLInstallODBC;
-  alias SQLCreateDataSourceW = SQLCreateDataSource;
-  alias SQLGetTranslatorW = SQLGetTranslator;
-  alias SQLInstallDriverW = SQLInstallDriver;
-  alias SQLInstallDriverManagerW = SQLInstallDriverManager;
-  alias SQLGetInstalledDriversW = SQLGetInstalledDrivers;
-  alias SQLGetAvailableDriversW = SQLGetAvailableDrivers;
-  alias SQLConfigDataSourceW = SQLConfigDataSource;
-  alias SQLWriteDSNToIniW = SQLWriteDSNToIni;
-  alias SQLRemoveDSNFromIniW = SQLRemoveDSNFromIni;
-  alias SQLValidDSNW = SQLValidDSN;
-  alias SQLWritePrivateProfileStringW = SQLWritePrivateProfileString;
-  alias SQLGetPrivateProfileStringW = SQLGetPrivateProfileString;
-  alias SQLInstallTranslatorW = SQLInstallTranslator;
-  alias SQLRemoveTranslatorW = SQLRemoveTranslator;
-  alias SQLRemoveDriverW = SQLRemoveDriver;
-  alias SQLConfigDriverW = SQLConfigDriver;
-  alias SQLInstallerErrorW = SQLInstallerError;
-  alias SQLPostInstallerErrorW = SQLPostInstallerError;
-  alias SQLReadFileDSNW = SQLReadFileDSN;
-  alias SQLWriteFileDSNW = SQLWriteFileDSN;
-  alias SQLInstallDriverExW = SQLInstallDriverEx;
-  alias SQLInstallTranslatorExW = SQLInstallTranslatorEx;
+    alias SQLInstallODBCW = SQLInstallODBC;
+    alias SQLCreateDataSourceW = SQLCreateDataSource;
+    alias SQLGetTranslatorW = SQLGetTranslator;
+    alias SQLInstallDriverW = SQLInstallDriver;
+    alias SQLInstallDriverManagerW = SQLInstallDriverManager;
+    alias SQLGetInstalledDriversW = SQLGetInstalledDrivers;
+    alias SQLGetAvailableDriversW = SQLGetAvailableDrivers;
+    alias SQLConfigDataSourceW = SQLConfigDataSource;
+    alias SQLWriteDSNToIniW = SQLWriteDSNToIni;
+    alias SQLRemoveDSNFromIniW = SQLRemoveDSNFromIni;
+    alias SQLValidDSNW = SQLValidDSN;
+    alias SQLWritePrivateProfileStringW = SQLWritePrivateProfileString;
+    alias SQLGetPrivateProfileStringW = SQLGetPrivateProfileString;
+    alias SQLInstallTranslatorW = SQLInstallTranslator;
+    alias SQLRemoveTranslatorW = SQLRemoveTranslator;
+    alias SQLRemoveDriverW = SQLRemoveDriver;
+    alias SQLConfigDriverW = SQLConfigDriver;
+    alias SQLInstallerErrorW = SQLInstallerError;
+    alias SQLPostInstallerErrorW = SQLPostInstallerError;
+    alias SQLReadFileDSNW = SQLReadFileDSN;
+    alias SQLWriteFileDSNW = SQLWriteFileDSN;
+    alias SQLInstallDriverExW = SQLInstallDriverEx;
+    alias SQLInstallTranslatorExW = SQLInstallTranslatorEx;
 }
 
 extern(System):
@@ -117,103 +117,103 @@ extern(System):
 BOOL SQLGetConfigMode(UWORD* pwConfigMode);
 
 BOOL SQLInstallDriverEx(
-  LPCSTR lpszDriver,
-  LPCSTR lpszPathIn,
-  LPSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCSTR lpszDriver,
+    LPCSTR lpszPathIn,
+    LPSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 
 BOOL SQLInstallDriverExW(
-  LPCWSTR lpszDriver,
-  LPCWSTR lpszPathIn,
-  LPWSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCWSTR lpszDriver,
+    LPCWSTR lpszPathIn,
+    LPWSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 SQLRETURN SQLInstallerError(
-  WORD iError,
-  DWORD* pfErrorCode,
-  LPSTR lpszErrorMsg,
-  WORD cbErrorMsgMax,
-  WORD* pcbErrorMsg);
+    WORD iError,
+    DWORD* pfErrorCode,
+    LPSTR lpszErrorMsg,
+    WORD cbErrorMsgMax,
+    WORD* pcbErrorMsg);
 
 SQLRETURN SQLInstallerErrorW(
-  WORD iError,
-  DWORD* pfErrorCode,
-  LPWSTR lpszErrorMsg,
-  WORD cbErrorMsgMax,
-  WORD* pcbErrorMsg);
+    WORD iError,
+    DWORD* pfErrorCode,
+    LPWSTR lpszErrorMsg,
+    WORD cbErrorMsgMax,
+    WORD* pcbErrorMsg);
 
 SQLRETURN SQLPostInstallerError(DWORD dwErrorCode, LPCSTR lpszErrMsg);
 
 SQLRETURN SQLPostInstallerErrorW(DWORD dwErrorCode, LPCWSTR lpszErrorMsg);
 
 BOOL SQLInstallTranslatorEx(
-  LPCSTR lpszTranslator,
-  LPCSTR lpszPathIn,
-  LPSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCSTR lpszTranslator,
+    LPCSTR lpszPathIn,
+    LPSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 
 BOOL SQLInstallTranslatorExW(
-  LPCWSTR lpszTranslator,
-  LPCWSTR lpszPathIn,
-  LPWSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCWSTR lpszTranslator,
+    LPCWSTR lpszPathIn,
+    LPWSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 
 BOOL SQLReadFileDSN(
-  LPCSTR lpszFileName,
-  LPCSTR lpszAppName,
-  LPCSTR lpszKeyName,
-  LPSTR lpszString,
-  WORD cbString,
-  WORD* pcbString);
+    LPCSTR lpszFileName,
+    LPCSTR lpszAppName,
+    LPCSTR lpszKeyName,
+    LPSTR lpszString,
+    WORD cbString,
+    WORD* pcbString);
 
 BOOL SQLReadFileDSNW(
-  LPCWSTR lpszFileName,
-  LPCWSTR lpszAppName,
-  LPCWSTR lpszKeyName,
-  LPWSTR lpszString,
-  WORD cbString,
-  WORD* pcbString);
+    LPCWSTR lpszFileName,
+    LPCWSTR lpszAppName,
+    LPCWSTR lpszKeyName,
+    LPWSTR lpszString,
+    WORD cbString,
+    WORD* pcbString);
 
 BOOL SQLWriteFileDSN(
-  LPCSTR lpszFileName,
-  LPCSTR lpszAppName,
-  LPCSTR lpszKeyName,
-  LPCSTR lpszString);
+    LPCSTR lpszFileName,
+    LPCSTR lpszAppName,
+    LPCSTR lpszKeyName,
+    LPCSTR lpszString);
 
 BOOL SQLWriteFileDSNW(
-  LPCWSTR lpszFileName,
-  LPCWSTR lpszAppName,
-  LPCWSTR lpszKeyName,
-  LPCWSTR lpszString);
+    LPCWSTR lpszFileName,
+    LPCWSTR lpszAppName,
+    LPCWSTR lpszKeyName,
+    LPCWSTR lpszString);
 
 BOOL SQLSetConfigMode(UWORD wConfigMode);
 
 BOOL SQLInstallODBC(
-  HWND hwndParent,
-  LPCSTR lpszInfFile,
-  LPCSTR lpszSrcPath,
-  LPCSTR lpszDrivers);
+    HWND hwndParent,
+    LPCSTR lpszInfFile,
+    LPCSTR lpszSrcPath,
+    LPCSTR lpszDrivers);
 
 BOOL SQLInstallODBCW(
-  HWND hwndParent,
-  LPCWSTR lpszInfFile,
-  LPCWSTR lpszSrcPath,
-  LPCWSTR lpszDrivers);
+    HWND hwndParent,
+    LPCWSTR lpszInfFile,
+    LPCWSTR lpszSrcPath,
+    LPCWSTR lpszDrivers);
 
 BOOL SQLManageDataSources(HWND hwndParent);
 
@@ -222,86 +222,86 @@ BOOL SQLCreateDataSource(HWND hwndParent, LPCSTR lpszDSN);
 BOOL SQLCreateDataSourceW(HWND hwndParent, LPCWSTR lpszDSN);
 
 BOOL SQLGetTranslator(
-  HWND hwnd,
-  LPSTR lpszName,
-  WORD cbNameMax,
-  WORD* pcbNameOut,
-  LPSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut,
-  DWORD* pvOption);
+    HWND hwnd,
+    LPSTR lpszName,
+    WORD cbNameMax,
+    WORD* pcbNameOut,
+    LPSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut,
+    DWORD* pvOption);
 
 BOOL SQLGetTranslatorW(
-  HWND hwnd,
-  LPWSTR lpszName,
-  WORD cbNameMax,
-  WORD* pcbNameOut,
-  LPWSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut,
-  DWORD* pvOption);
+    HWND hwnd,
+    LPWSTR lpszName,
+    WORD cbNameMax,
+    WORD* pcbNameOut,
+    LPWSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut,
+    DWORD* pvOption);
 
 /*  Low level APIs
  *  NOTE: The high-level APIs should always be used. These APIs
  *        have been left for compatibility.
  */
 BOOL SQLInstallDriver(
-  LPCSTR lpszInfFile,
-  LPCSTR lpszDriver,
-  LPSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut);
+    LPCSTR lpszInfFile,
+    LPCSTR lpszDriver,
+    LPSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut);
 
 BOOL SQLInstallDriverW(
-  LPCWSTR lpszInfFile,
-  LPCWSTR lpszDriver,
-  LPWSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut);
+    LPCWSTR lpszInfFile,
+    LPCWSTR lpszDriver,
+    LPWSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut);
 
 BOOL SQLInstallDriverManager(
-  LPSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut);
+    LPSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut);
 
 BOOL SQLInstallDriverManagerW(
-  LPWSTR lpszPath,
-  WORD cbPathMax,
-  WORD* pcbPathOut);
+    LPWSTR lpszPath,
+    WORD cbPathMax,
+    WORD* pcbPathOut);
 
 BOOL SQLGetInstalledDrivers(
-  LPSTR lpszBuf,
-  WORD cbBufMax,
-  WORD* pcbBufOut);
+    LPSTR lpszBuf,
+    WORD cbBufMax,
+    WORD* pcbBufOut);
 
 BOOL SQLGetInstalledDriversW(
-  LPWSTR lpszBuf,
-  WORD cbBufMax,
-  WORD* pcbBufOut);
+    LPWSTR lpszBuf,
+    WORD cbBufMax,
+    WORD* pcbBufOut);
 
 BOOL SQLGetAvailableDrivers(
-  LPCSTR lpszInfFile,
-  LPSTR lpszBuf,
-  WORD cbBufMax,
-  WORD* pcbBufOut);
+    LPCSTR lpszInfFile,
+    LPSTR lpszBuf,
+    WORD cbBufMax,
+    WORD* pcbBufOut);
 
 BOOL SQLGetAvailableDriversW(
-  LPCWSTR lpszInfFile,
-  LPWSTR lpszBuf,
-  WORD cbBufMax,
-  WORD* pcbBufOut);
+    LPCWSTR lpszInfFile,
+    LPWSTR lpszBuf,
+    WORD cbBufMax,
+    WORD* pcbBufOut);
 
 BOOL SQLConfigDataSource(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCSTR lpszDriver,
-  LPCSTR lpszAttributes);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCSTR lpszDriver,
+    LPCSTR lpszAttributes);
 
 BOOL SQLConfigDataSourceW(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCWSTR lpszDriver,
-  LPCWSTR lpszAttributes);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCWSTR lpszDriver,
+    LPCWSTR lpszAttributes);
 
 BOOL SQLRemoveDefaultDataSource();
 
@@ -318,108 +318,108 @@ BOOL SQLValidDSN(LPCSTR lpszDSN);
 BOOL SQLValidDSNW(LPCWSTR lpszDSN);
 
 BOOL SQLWritePrivateProfileString(
-  LPCSTR lpszSection,
-  LPCSTR lpszEntry,
-  LPCSTR lpszString,
-  LPCSTR lpszFilename);
+    LPCSTR lpszSection,
+    LPCSTR lpszEntry,
+    LPCSTR lpszString,
+    LPCSTR lpszFilename);
 
 BOOL SQLWritePrivateProfileStringW(
-  LPCWSTR lpszSection,
-  LPCWSTR lpszEntry,
-  LPCWSTR lpszString,
-  LPCWSTR lpszFilename);
+    LPCWSTR lpszSection,
+    LPCWSTR lpszEntry,
+    LPCWSTR lpszString,
+    LPCWSTR lpszFilename);
 
 int SQLGetPrivateProfileString(
-  LPCSTR lpszSection,
-  LPCSTR lpszEntry,
-  LPCSTR lpszDefault,
-  LPSTR lpszRetBuffer,
-  int cbRetBuffer,
-  LPCSTR lpszFilename);
+    LPCSTR lpszSection,
+    LPCSTR lpszEntry,
+    LPCSTR lpszDefault,
+    LPSTR lpszRetBuffer,
+    int cbRetBuffer,
+    LPCSTR lpszFilename);
 
 int SQLGetPrivateProfileStringW(
-  LPCWSTR lpszSection,
-  LPCWSTR lpszEntry,
-  LPCWSTR lpszDefault,
-  LPWSTR lpszRetBuffer,
-  int cbRetBuffer,
-  LPCWSTR lpszFilename);
+    LPCWSTR lpszSection,
+    LPCWSTR lpszEntry,
+    LPCWSTR lpszDefault,
+    LPWSTR lpszRetBuffer,
+    int cbRetBuffer,
+    LPCWSTR lpszFilename);
 
 BOOL SQLRemoveDriverManager(LPDWORD lpdwUsageCount);
 
 BOOL SQLInstallTranslator(
-  LPCSTR lpszInfFile,
-  LPCSTR lpszTranslator,
-  LPCSTR lpszPathIn,
-  LPSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCSTR lpszInfFile,
+    LPCSTR lpszTranslator,
+    LPCSTR lpszPathIn,
+    LPSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 BOOL SQLInstallTranslatorW(
-  LPCWSTR lpszInfFile,
-  LPCWSTR lpszTranslator,
-  LPCWSTR lpszPathIn,
-  LPWSTR lpszPathOut,
-  WORD cbPathOutMax,
-  WORD* pcbPathOut,
-  WORD fRequest,
-  LPDWORD lpdwUsageCount);
+    LPCWSTR lpszInfFile,
+    LPCWSTR lpszTranslator,
+    LPCWSTR lpszPathIn,
+    LPWSTR lpszPathOut,
+    WORD cbPathOutMax,
+    WORD* pcbPathOut,
+    WORD fRequest,
+    LPDWORD lpdwUsageCount);
 
 BOOL SQLRemoveTranslator(LPCSTR lpszTranslator, LPDWORD lpdwUsageCount);
 
 BOOL SQLRemoveTranslatorW(LPCWSTR lpszTranslator, LPDWORD lpdwUsageCount);
 
 BOOL SQLRemoveDriver(
-  LPCSTR lpszDriver,
-  BOOL fRemoveDSN,
-  LPDWORD lpdwUsageCount);
+    LPCSTR lpszDriver,
+    BOOL fRemoveDSN,
+    LPDWORD lpdwUsageCount);
 
 BOOL SQLRemoveDriverW(
-  LPCWSTR lpszDriver,
-  BOOL fRemoveDSN,
-  LPDWORD lpdwUsageCount);
+    LPCWSTR lpszDriver,
+    BOOL fRemoveDSN,
+    LPDWORD lpdwUsageCount);
 
 BOOL SQLConfigDriver(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCSTR lpszDriver,
-  LPCSTR lpszArgs,
-  LPSTR lpszMsg,
-  WORD cbMsgMax,
-  WORD* pcbMsgOut);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCSTR lpszDriver,
+    LPCSTR lpszArgs,
+    LPSTR lpszMsg,
+    WORD cbMsgMax,
+    WORD* pcbMsgOut);
 
 BOOL ConfigDSN(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCSTR lpszDriver,
-  LPCSTR lpszAttributes);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCSTR lpszDriver,
+    LPCSTR lpszAttributes);
 
 BOOL ConfigDSNW(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCWSTR lpszDriver,
-  LPCWSTR lpszAttributes);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCWSTR lpszDriver,
+    LPCWSTR lpszAttributes);
 
 BOOL ConfigTranslator(
-  HWND hwndParent,
-  DWORD* pvOption);
+    HWND hwndParent,
+    DWORD* pvOption);
 
 BOOL ConfigDriver(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCSTR lpszDriver,
-  LPCSTR lpszArgs,
-  LPSTR lpszMsg,
-  WORD cbMsgMax,
-  WORD* pcbMsgOut);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCSTR lpszDriver,
+    LPCSTR lpszArgs,
+    LPSTR lpszMsg,
+    WORD cbMsgMax,
+    WORD* pcbMsgOut);
 
 BOOL ConfigDriverW(
-  HWND hwndParent,
-  WORD fRequest,
-  LPCWSTR lpszDriver,
-  LPCWSTR lpszArgs,
-  LPWSTR lpszMsg,
-  WORD cbMsgMax,
-  WORD* pcbMsgOut);
+    HWND hwndParent,
+    WORD fRequest,
+    LPCWSTR lpszDriver,
+    LPCWSTR lpszArgs,
+    LPWSTR lpszMsg,
+    WORD cbMsgMax,
+    WORD* pcbMsgOut);
