@@ -8,6 +8,9 @@
 *.so
 *.dylib
 *.dll
+*.exp
+*.ilk
+*.pdb
 
 # Compiled Static libraries
 *.lai
