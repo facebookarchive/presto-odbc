@@ -46,7 +46,7 @@ extern(System)
                     copyToBuffer(""w, stringResult);
                     break;
                 case SQL_DRIVER_NAME: //6
-                    copyToBuffer("PrestoOdbc.dll"w, stringResult);
+                    copyToBuffer("presto.dll"w, stringResult);
                     break;
                 case SQL_DRIVER_VER: //7
                     copyToBuffer("00.01.0000"w, stringResult);

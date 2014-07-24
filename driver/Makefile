@@ -11,7 +11,7 @@ SQL_MODULES = odbcinst sql sqlext sqltypes sqlucode
 MODULES = driver handles bindings columnresults tableinfo prestoresults typeinfo getinfo util $(SQL_MODULES)
 DAPI_MODULES = statementclient queryresults mockcurl util json
 
-PROGRAM = PrestoOdbc.dll
+PROGRAM = presto.dll
 TEST_PROGRAM = unittests
 
 .PHONY: all
