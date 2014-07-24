@@ -111,11 +111,11 @@ struct StatementClient {
     }
 
     bool empty() const nothrow {
-        return results_.nextURI == "" || queryTerminated_;
+        return (results_.nextURI == "" && results_.succeeded) || queryTerminated_;
     }
 
     void terminateQuery() {
-        if (!empty) {
+        if (results_.nextURI != "") {
             del(results_.nextURI);
             queryTerminated_ = true;
         }

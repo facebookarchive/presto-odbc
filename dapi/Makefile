@@ -12,7 +12,7 @@ endif
 CFLAGS = -c
 FLAGS = -g -m64
 
-MODULES = main statementclient queryresults mockcurl util json
+MODULES = main statementclient queryresults prestoerrors mockcurl util json
 
 PROGRAM = odbc
 TEST_PROGRAM = unittests

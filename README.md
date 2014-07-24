@@ -62,18 +62,6 @@ This driver is written in the [D Programming Language](http://dlang.org)
   1. Search for `tables` (or press enter to see all of them) and drag any table you wish to use to the right
   1. Click `Go to Worksheet`
   1. Click `OK` to go past the warning dialog
-1. In the `Data` menu (next to `File`), go all the way to the selected data source at the bottom, and in that submenu, click `Add to Saved Data Sources`
-1. Save this configuration of the Presto ODBC Driver on your computer (note, this configuration is specific to what catalog/schema/tables you selected earlier
-1. Close Tableau, then open the *.tds XML file you just saved in your favorite text editor
-  1. On the line/tag `connection-customization`, change it so that `enabled=true`
-  1. Set `CAP_QUERY_GROUP_BY_ALIAS` to `no`
-  1. Set `CAP_QUERY_GROUP_BY_DEGREE` to `yes`
-  1. Set `CAP_QUERY_SUBQUERIES_WITH_TOP` to `no`
-  1. Set `CAP_QUERY_TOPSTYLE_LIMIT` to `no`
-  1. Set `CAP_QUERY_TOP_N` to `no`
-  1. Set `CAP_SELECT_TOP_INTO` to `no`
-  1. Save the file
-1. Double click the *.tds file you just edited to load it in Tableau
 1. Analyze!
 
 # Coding Conventions

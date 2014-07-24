@@ -112,10 +112,15 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
 }
 
 SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
+    import dapi.prestoerrors : QueryException;
+
     try {
         return fun(args);
     } catch (OdbcException e) {
         logCriticalMessage("OdbcException:", e.file ~ ":" ~ text(e.line), e.msg);
+        return SQL_ERROR;
+    } catch (QueryException e) {
+        logCriticalMessage("QueryException:", e.message);
         return SQL_ERROR;
     } catch (Exception e) {
         logCriticalMessage(e);

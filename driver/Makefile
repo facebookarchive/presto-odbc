@@ -10,7 +10,7 @@ LIB_FLAGS = -Luser32.lib
 
 SQL_MODULES = odbcinst sql sqlext sqltypes sqlucode
 MODULES = driver handles bindings columnresults tableinfo prestoresults typeinfo getinfo util $(SQL_MODULES)
-DAPI_MODULES = statementclient queryresults mockcurl util json
+DAPI_MODULES = statementclient queryresults prestoerrors mockcurl util json
 
 PROGRAM = presto.dll
 TEST_PROGRAM = unittests

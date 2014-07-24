@@ -27,7 +27,7 @@ else void main() {
 
     auto client = StatementClient(session, "SELECT * FROM orders");
     foreach (resultBatch; client) {
-        writeln ("Starting a new batch");
+        writeln("Starting a new batch");
 
         foreach (row; resultBatch.byRow!(string, "comment")()) {
             writeln(row);

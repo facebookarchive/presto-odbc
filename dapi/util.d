@@ -14,13 +14,23 @@
 
 module dapi.util;
 
-import std.conv : text;
 import facebook.json : JSONValue, JSON_TYPE;
+import std.conv : text;
+import std.typecons : Nullable;
+
+version(unittest) {
+    import facebook.json : parseJSON;
+    import std.exception : assertThrown;
+}
 
 class PrestoClientException : Exception {
-    this(string msg) {
-        super(msg);
+    this(string msg, string file = __FILE__, int line = __LINE__) {
+        super(msg, file, line);
     }
+    this(string msg, string file = __FILE__, int line = __LINE__) immutable {
+        super(msg, file, line);
+    }
+
 }
 
 bool asBool(const(JSONValue) v) {
@@ -31,4 +41,55 @@ bool asBool(const(JSONValue) v) {
         return false;
     }
     throw new PrestoClientException("Expected a JSON bool, got: " ~ text(v.type));
+}
+
+unittest {
+    assert(asBool(parseJSON("true")) == true);
+    assert(asBool(parseJSON("false")) == false);
+    assertThrown!PrestoClientException(asBool(parseJSON(`"blahblah"`)));
+}
+
+
+T jsonValueAs(T)(JSONValue elt) {
+    static if (is(T == bool)) {
+        return asBool(elt);
+    } else static if (is(T == long)) {
+        return elt.integer;
+    } else static if (is(T == double)) {
+        return elt.floating;
+    } else {
+        return elt.str;
+    }
+}
+
+unittest {
+    assert(jsonValueAs!long(parseJSON("5")) == 5);
+    assert(jsonValueAs!long(parseJSON("4")) != 5);
+    assertThrown!Exception(jsonValueAs!long(parseJSON("\"str\"")));
+}
+
+immutable(Nullable!T) getOptionalProperty(T, string propertyName)(JSONValue src) {
+    if (propertyName !in src) {
+        return immutable(Nullable!T)();
+    }
+    return immutable(Nullable!T)(jsonValueAs!T(src[propertyName]));
+}
+
+unittest {
+    auto js = parseJSON(`{"test" : "value"}`);
+    assert(getOptionalProperty!(string, "test")(js).get == "value");
+    assert(getOptionalProperty!(string, "meep")(js).isNull);
+}
+
+T getPropertyOrDefault(T, string propertyName)(JSONValue src, lazy T default_ = T.init) {
+    if (propertyName !in src) {
+        return default_;
+    }
+    return jsonValueAs!T(src[propertyName]);
+}
+
+unittest {
+    auto js = parseJSON(`{"test" : "value"}`);
+    assert(getPropertyOrDefault!(string, "test")(js) == "value");
+    assert(getPropertyOrDefault!(string, "meep")(js) == "");
 }

@@ -19,7 +19,8 @@ import std.conv : text, to;
 import std.array : front, popFront, empty;
 import std.stdio;
 
-import dapi.util : PrestoClientException;
+import dapi.prestoerrors;
+import dapi.util;
 
 version(unittest) {
     import facebook.json : parseJSON;
@@ -35,8 +36,8 @@ final class QueryResults {
     this(JSONValue rawResult) immutable {
         id_ = rawResult["id"].str;
         infoURI_ = rawResult["infoUri"].str;
-        partialCancelURI_ = getStringPropertyOrDefault!"partialCancelUri"(rawResult);
-        nextURI_ = getStringPropertyOrDefault!"nextUri"(rawResult);
+        partialCancelURI_ = getPropertyOrDefault!(string,"partialCancelUri")(rawResult);
+        nextURI_ = getPropertyOrDefault!(string, "nextUri")(rawResult);
         stats_ = QueryStats(rawResult["stats"]);
 
         columnMetadata_ = parseColumnMetadata(rawResult);
@@ -46,6 +47,9 @@ final class QueryResults {
         } else {
             data_ = emptyJSONArray();
         }
+        if ("error" in rawResult) {
+            error_ = new immutable(QueryException)(rawResult["error"]);
+        }
     }
 
     const nothrow {
@@ -54,11 +58,22 @@ final class QueryResults {
         string partialCancelURI() { return partialCancelURI_; }
         string nextURI() { return nextURI_; }
         auto columnMetadata() { return columnMetadata_; }
-        auto data() { return data_; }
-        auto stats() { return stats_; }
+
+        auto stats() { return stats_;}
+        bool succeeded() { return error_ is null; }
+    }
+    auto data() const {
+        enforceSucceeded();
+        return data_;
+    }
+    auto error() const {
+        assert(!succeeded());
+        return error_;
     }
 
+
     auto byRow(RowTList...)() const {
+        enforceSucceeded();
         if (columnMetadata_.empty) {
             return Range!RowTList();
         }
@@ -132,6 +147,12 @@ private:
         }
     }
 
+    void enforceSucceeded() const {
+        if (!succeeded) {
+            throw error;
+        }
+    }
+
     string id_;
     string infoURI_;
     string partialCancelURI_;
@@ -139,7 +160,7 @@ private:
     immutable(ColumnMetadata[]) columnMetadata_;
     immutable(JSONValue) data_;
     immutable(QueryStats) stats_;
-    //TODO: Did not translate the 'error' field from Java yet
+    QueryException error_;
 }
 
 version(unittest) {
@@ -243,24 +264,6 @@ class NoSuchColumn : PrestoClientException {
     }
 }
 
-private T jsonValueAs(T)(JSONValue elt) {
-    static if (is(T == bool)) {
-        return elt.type == JSON_TYPE.TRUE;
-    } else static if (is(T == long)) {
-        return elt.integer;
-    } else static if (is(T == double)) {
-        return elt.floating;
-    } else {
-        return elt.str;
-    }
-}
-
-unittest {
-    assert(jsonValueAs!long(parseJSON("5")) == 5);
-    assert(jsonValueAs!long(parseJSON("4")) != 5);
-    assertThrown!Exception(jsonValueAs!long(parseJSON("\"str\"")));
-}
-
 private void requireMatchingType(T)(size_t fieldIndex, const(QueryResults) qr, const JSONValue jsonRow) {
     if (!typeMatchesColumnTypeName!T(qr.columnMetadata[fieldIndex].type)
         || !typeMatchesJSONType!T(jsonRow[fieldIndex].type)) {
@@ -337,19 +340,6 @@ unittest {
     static assert(isJSONType!string);
     static assert(isJSONType!long);
     static assert(!isJSONType!int);
-}
-
-private string getStringPropertyOrDefault(string propertyName)(JSONValue src, lazy string default_ = "") {
-    if (propertyName !in src) {
-        return default_;
-    }
-    return src[propertyName].str;
-}
-
-unittest {
-    auto js = parseJSON("{\"test\" : \"value\"}");
-    assert(getStringPropertyOrDefault!"test"(js) == "value");
-    assert(getStringPropertyOrDefault!"meep"(js) == "");
 }
 
 private template extractCTFEStrings(RowTList...) {

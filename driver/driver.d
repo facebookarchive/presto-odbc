@@ -383,11 +383,11 @@ SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
 
 SQLRETURN SQLExecute(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
-        logMessage("SQLExecute");
+        logMessage("SQLExecute (no-op)");
 
-        if (!statementHandle.executedQuery) {
-            SQLExecuteImpl(statementHandle);
-        }
+        //This function may become a non-no-op in the future if
+        //Presto supports ODBC escapes/an SQLPrepare compatible
+        //call format.
 
         return SQL_SUCCESS;
     }());
@@ -417,6 +417,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
 
         auto client = statementHandle.runQuery(text(query));
         auto result = makeWithoutGC!PrestoResult();
+        scope(exit) { latestOdbcResult = result;  }
         executedQuery = true;
         uint batchNumber;
         foreach (resultBatch; client) {
@@ -431,7 +432,6 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
                 result.addRow(dataRow);
             }
         }
-        latestOdbcResult = result;
     }
 }
 
@@ -548,9 +548,6 @@ SQLRETURN SQLNumResultCols(
         logMessage("SQLNumResultCols (pseudo-implemented)");
         dllEnforce(columnCount != null);
         with (statementHandle) {
-            if (!query.empty && !executedQuery) {
-                SQLExecute(statementHandle);
-            }
             *columnCount = to!SQLSMALLINT(latestOdbcResult.numberOfColumns);
             logMessage("SQLNumResultCols columnCount", *columnCount, typeid(cast(Object) latestOdbcResult));
         }
@@ -568,17 +565,14 @@ SQLRETURN SQLPrepareW(
         auto statementText = toDString(_statementText, _textLengthChars);
         logMessage("SQLPrepare", statementText);
 
-        enum regexPattern = r"(?:^|\s)(DROP|CREATE|INDEX|TEMPORARY|INSERT|TOP)\s"w;
-        auto regexEngine = ctRegex!regexPattern;
-        auto captures = matchFirst(statementText, regexEngine);
-        if (!captures.empty) {
-            throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE,
-                                    ("Invalid query ("w ~ wtext(captures.front) ~ ") "w ~ statementText).idup);
-        }
-
         with (statementHandle) {
             query = statementText.idup.translateQuery;
         }
+
+        if (!statementHandle.executedQuery) {
+            SQLExecuteImpl(statementHandle);
+        }
+
         return SQL_SUCCESS;
     }());
 }
