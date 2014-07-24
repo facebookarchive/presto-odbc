@@ -8,15 +8,15 @@ This driver is written in the [D Programming Language](http://dlang.org)
 ## Current State of Affairs:
 
 * Only works on Windows
-* Many functions are unimplemented
-* Most functions are not *fully* implemented
+* Many functions are not implemented, the driver does *not* meet the "Core" level of [ODBC conformance](odbc-conformance.md)
 * The only error handling in place is a "catch and log" strategy
-* Only queries with bigints, varchars, and doubles are supported
 * Most queries will work as expected
+* Tableau works correctly for the cases we have tried
+* MS Query is tested and will work as soon as we write a simple GUI
 
 ## Goals:
 
-* Full ODBC 3.0 (possibly 3.8) comformance
+* Full ODBC 3.51 conformance
 * Full support on Windows/Mac/Linux
 * Seamless integration with Tableau
 
@@ -26,7 +26,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
 1. Cygwin with the GNUMake package
 1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download)
 1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
-1. Acess to a running [Presto](http://prestodb.io) instance
+1. Access to a running [Presto](http://prestodb.io) instance
 
 ## Manual Labor:
 1. Add `C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin` to `PATH`
@@ -35,42 +35,44 @@ This driver is written in the [D Programming Language](http://dlang.org)
 1. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo
 1. Press the Windows key and search for `ODBC Data Sources`; open the 64 bit version
   1. Sanity Check: Look at the `Drivers` tab, make sure you see `Presto ODBC Driver` (if not, try rebooting)
-  1. Go to the `File DSN` tab
-  1. Click Add
-  1. Select `Presto ODBC Driver`
-  1. Click Next
-  1. Click Browse
-  1. Enter a name for your driver DSN. `PrestoDriver.dsn` should be fine.
-  1. Click Next/Ok/Yes until it goes back to the main window
-1. Enabling the Driver Manager Logfile (from the ODBC Data Sources window):
-  1. Go to the `Tracing` tab
-  1. Set the `Log File Path` to `C:\temp\SQL.LOG`
-  1. Click `Start Tracing Now`
-  1. Click Ok to close the program
-1. Change the IP in the `runQuery` function in `util.d` to point at your Presto instance
+  1. Enabling the Driver Manager Logfile (from the ODBC Data Sources window):
+    1. Go to the `Tracing` tab
+    1. Set the `Log File Path` to `C:\temp\SQL.LOG`
+    1. Click `Start Tracing Now`
+    1. Click Ok to close the program
 1. Build the Presto ODBC Driver
   1. Navigate to your checkout of this repo
   1. `cd driver`
   1. `make clean; make` - builds the driver
   1. `make copy` - copies the DLL to `C:\temp\` and backs up the log files
 
-###Using the driver with Microsoft Query (requires Microsoft Excel):
-1. Start `C:\Program Files\Microsoft Office\Office15\MSQRY32.EXE`
-1. Go to File->New
-1. Click Browse, and select `PrestoDriver.dsn`
-1. Click Ok
-1. Run a query!
-
 ###Using the driver with Tableau (requires Tableau):
-1. Double click the presto.tds "Tableau Datasource" file included in the top-level directory of this repo
-1. On the left panel, just under `Data`, it should list `presto`. Right click this and select `Edit Data Source`
-1. Change any `connection attributes` as desired
-  1. Specify `SCHEMA=tiny` or some other value in the string extras box.
-  1. Click `OK`
-1. Select what `database` (catalog) you want to use on the left
-1. Search for `tables` (or press enter to see all of them) and drag any table you wish to use to the right. By default, only the `nation` table is included.
-1. Click `Go to Worksheet`
-1. Click `OK` to go past the warning dialog
+1. Open Tableau
+1. Click `Connect to data`
+  1. At the bottom, select `Other Database (ODBC)`
+  1. Click the radio button for `Driver`
+  1. Select `Presto ODBC Driver`
+  1. Click `Connect`
+  1. Fill in the server, port, and database (catalog) information
+  1. In the `String Extras` box, enter a schema using the format `schema=schema_name`
+  1. Tableau will perform a bunch of fake queries to analyze the ODBC driver, this may take a while to complete but only needs to happen once
+1. On the new screen:
+  1. Click `Select Schema`, then press the search icon, then select the schema you entered on the previous screen
+  1. Search for `tables` (or press enter to see all of them) and drag any table you wish to use to the right
+  1. Click `Go to Worksheet`
+  1. Click `OK` to go past the warning dialog
+1. In the `Data` menu (next to `File`), go all the way to the selected data source at the bottom, and in that submenu, click `Add to Saved Data Sources`
+1. Save this configuration of the Presto ODB Driver on your computer (note, this configuration is specific to what catalog/schema/tables you selected earlier
+1. Close Tableau, then open the *.tds XML file you just saved in your favorite text editor
+  1. On the line/tag `connection-customization`, change it so that `enabled=true`
+  1. Set `CAP_QUERY_GROUP_BY_ALIAS` to `no`
+  1. Set `CAP_QUERY_GROUP_BY_DEGREE` to `yes`
+  1. Set `CAP_QUERY_SUBQUERIES_WITH_TOP` to `no`
+  1. Set `CAP_QUERY_TOPSTYLE_LIMIT` to `no`
+  1. Set `CAP_QUERY_TOP_N` to `no`
+  1. Set `CAP_SELECT_TOP_INTO` to `no`
+  1. Save the file
+1. Double click the *.tds file you just edited to load it in Tableau
 1. Analyze!
 
 # Coding Conventions:
@@ -78,16 +80,16 @@ This driver is written in the [D Programming Language](http://dlang.org)
 Not all of the conventions have been applied to the source yet.
 
 * 4 space indentation
-* Limited to 120 columns
+* Try to limit to 120 columns
 * Prefer `myHttpFunction` to `myHTTPFunction`
 * All ODBC functions must have their contents wrapped with a call to `exceptionBoundary`
 * As appropriate, change integer types to enum types (use `StatementAttribute` instead of `SQLSMALLINT`, etc)
 * Always wrap C types with safer D abstractions (see `toDString` and `OutputWChar`); prefix the C-style variables with an underscore
 * Also prefix variables with an underscore to express that the variable should be cast/converted to or encapsulated in another type before use
-* Use dllEnforce instead of assert
+* Use `dllEnforce` instead of `assert`
 * Avoid fully qualifying enum values (`MyEnumType.MyEnumValue`); use a `with` statement instead
 * Always use a `with` statement when accessing ODBC handles
-* Always specify whether lengths are in bytes or characters
+* Always specify whether lengths are in bytes or characters as part of a variable's name
 
 # References:
 
