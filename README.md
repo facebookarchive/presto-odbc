@@ -1,11 +1,10 @@
-
 # [Presto](http://prestodb.io) ODBC Driver
 
 ODBC is a C API that provides a standard way of communicating with anything that accepts SQL-like input; the Presto ODBC Driver lets you communicate with Presto via this standard. The high-level goal is to be able to communicate with Presto from MS Query, MS Excel, and Tableau.
 
 This driver is written in the [D Programming Language](http://dlang.org)
 
-## Current State of Affairs:
+## Current State of Affairs
 
 * Only works on Windows
 * Many functions are not implemented, the driver does *not* meet the "Core" level of [ODBC conformance](odbc-conformance.md)
@@ -14,7 +13,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
 * Tableau works correctly for the cases we have tried
 * MS Query is tested and will work as soon as we write a simple GUI
 
-## Goals:
+## Goals
 
 * Full ODBC 3.51 conformance
 * Full support on Windows/Mac/Linux
@@ -22,31 +21,33 @@ This driver is written in the [D Programming Language](http://dlang.org)
 
 # Setting up the development environment:
 
-## Installation Prerequisites:
-1. Cygwin with the GNUMake package
-1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download)
+## Installation Prerequisites
+
+1. Cygwin with the GNU make package
 1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
+1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download) (note: this must be installed *after*  Visual Studio)
 1. Access to a running [Presto](http://prestodb.io) instance
 
-## Manual Labor:
-1. Add `C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin` to `PATH`
-1. Add `C:\dmd2\windows\bin` to `PATH`
-1. Copy `C:\D\dmd2\windows\bin64\libcurl.dll` into `C:\temp\` (make this directory if it does not exist)
+## Building and Registering the Driver
+
+1. Build the Presto ODBC Driver
+  1. Launch the Cygwin terminal
+  1. Navigate to your checkout of this repo (e.g. `cd /cygdrive/c/presto-odbc`)
+  1. `cd driver`
+  1. `make clean all` - builds the driver
+  1. `make copy` - copies the driver and libcurl to `C:\temp\` and backs up the log files
 1. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo
-1. Press the Windows key and search for `ODBC Data Sources`; open the 64 bit version
-  1. Sanity Check: Look at the `Drivers` tab, make sure you see `Presto ODBC Driver` (if not, try rebooting)
-  1. Enabling the Driver Manager Logfile (from the ODBC Data Sources window):
+1. Setup a data source for the driver
+  1. Open Control Panel and choose `Set up ODBC data sources (64-bit)`
+  1. Sanity Check: Look at the `Drivers` tab, make sure you see `Presto ODBC Driver`
+  1. Enable the Driver Manager Logfile (from the ODBC Data Sources window)
     1. Go to the `Tracing` tab
     1. Set the `Log File Path` to `C:\temp\SQL.LOG`
     1. Click `Start Tracing Now`
     1. Click Ok to close the program
-1. Build the Presto ODBC Driver
-  1. Navigate to your checkout of this repo
-  1. `cd driver`
-  1. `make clean; make` - builds the driver
-  1. `make copy` - copies the DLL to `C:\temp\` and backs up the log files
 
-###Using the driver with Tableau (requires Tableau):
+## Using the driver with Tableau
+
 1. Open Tableau
 1. Click `Connect to data`
   1. At the bottom, select `Other Database (ODBC)`
@@ -62,7 +63,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
   1. Click `Go to Worksheet`
   1. Click `OK` to go past the warning dialog
 1. In the `Data` menu (next to `File`), go all the way to the selected data source at the bottom, and in that submenu, click `Add to Saved Data Sources`
-1. Save this configuration of the Presto ODB Driver on your computer (note, this configuration is specific to what catalog/schema/tables you selected earlier
+1. Save this configuration of the Presto ODBC Driver on your computer (note, this configuration is specific to what catalog/schema/tables you selected earlier
 1. Close Tableau, then open the *.tds XML file you just saved in your favorite text editor
   1. On the line/tag `connection-customization`, change it so that `enabled=true`
   1. Set `CAP_QUERY_GROUP_BY_ALIAS` to `no`
@@ -75,7 +76,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
 1. Double click the *.tds file you just edited to load it in Tableau
 1. Analyze!
 
-# Coding Conventions:
+# Coding Conventions
 
 Not all of the conventions have been applied to the source yet.
 
@@ -91,7 +92,7 @@ Not all of the conventions have been applied to the source yet.
 * Always use a `with` statement when accessing ODBC handles
 * Always specify whether lengths are in bytes or characters as part of a variable's name
 
-# References:
+# References
 
 * [ODBC 3.x Requirements](http://msdn.microsoft.com/en-us/library/ms713848%28v=vs.85%29.aspx)
 * [ODBC Function Summary](http://msdn.microsoft.com/en-us/library/ms712628%28v=vs.85%29.aspx)
