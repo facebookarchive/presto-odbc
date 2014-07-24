@@ -1,5 +1,4 @@
 LIBRARY presto
-DESCRIPTION "Presto ODBC Driver"
 EXPORTS
 	SQLAllocHandle
 	SQLBindCol
