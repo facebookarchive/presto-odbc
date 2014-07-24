@@ -49,7 +49,7 @@ extern(System)
                     copyToBuffer("PrestoOdbc.dll"w, stringResult);
                     break;
                 case SQL_DRIVER_VER: //7
-                    copyToBuffer("07.03.2014"w, stringResult);
+                    copyToBuffer("00.01.0000"w, stringResult);
                     break;
                 case SQL_FETCH_DIRECTION: //8
                     enum bitmask = 0;
