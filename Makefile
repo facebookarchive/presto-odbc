@@ -5,13 +5,21 @@ LOGFILE = $(TEMP)/presto_odbc.log
 
 DC = LINKCMD64="$(VS_HOME)\bin\link.exe" dmd
 CFLAGS = -c
-FLAGS = -g -version=UNICODE -m64 -Luser32.lib
-LIB_FLAGS = -Luser32.lib
+FLAGS = -g -version=UNICODE
+ifeq ($(OS),Windows_NT)
+	FLAGS += -m64 -Luser32.lib
+else
+	FLAGS += -m32 -fPIC -L-lcurl
+endif
 
 SOURCES = client/*.d odbc/*.d driver/*.d
 TEST_SOURCES = $(SOURCES) test/*.d
 
-PROGRAM = presto.dll
+ifeq ($(OS),Windows_NT)
+	PROGRAM = presto.dll
+else
+	PROGRAM = presto.dylib
+endif
 TEST_PROGRAM = unittests
 
 .PHONY: all driver tests copy logdiff clean
@@ -19,10 +27,10 @@ TEST_PROGRAM = unittests
 all: driver tests
 
 driver:
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(SOURCES) -shared -of$(PROGRAM)
+	$(DC) $(FLAGS) $(SOURCES) -shared -of$(PROGRAM)
 
 tests:
-	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(TEST_SOURCES) -of$(TEST_PROGRAM)
+	$(DC) -unittest $(FLAGS) $(TEST_SOURCES) -of$(TEST_PROGRAM)
 
 check: tests
 	cp $(LIBCURL) .
