@@ -32,6 +32,7 @@ extern(System)
         SQLSMALLINT _bufferMaxLengthBytes,
         SQLSMALLINT* _stringLengthBytes) {
     return exceptionBoundary!(() => {
+        connectionHandle.errors = [];
         auto stringResult = outputWChar(_infoValue, _bufferMaxLengthBytes, _stringLengthBytes);
         logMessage("SQLGetInfo", infoType);
         with (OdbcInfo) with(connectionHandle) {
@@ -445,10 +446,8 @@ extern(System)
                 case SQL_DM_VER: //171
                 case SQL_XOPEN_CLI_YEAR: //10000
                 case SQL_CURSOR_SENSITIVITY: //10001
-                    //TODO: Add error handling storage to connectionHandles
-                    //throw new OdbcException(statementHandle, StatusCode.OPTIONAL_FEATURE, "Unsupported info type"w ~ wtext(infoType));
-                    logMessage("SQLGetInfo: Unhandled case: ", infoType);
-                    return SQL_ERROR;
+                    throw new OdbcException(connectionHandle, StatusCode.OPTIONAL_FEATURE,
+                            "Unsupported info type"w ~ wtext(infoType));
             } //switch
         }
         return SQL_SUCCESS;

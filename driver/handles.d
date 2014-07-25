@@ -188,6 +188,7 @@ final class OdbcConnection {
     string schema;
     string userId;
     string authentication;
+    OdbcException[] errors;
 }
 
 final class OdbcEnvironment {

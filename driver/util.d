@@ -139,10 +139,10 @@ unittest {
 }
 
 class OdbcException : Exception {
-    import handles : OdbcStatement;
+    import handles : OdbcStatement, OdbcConnection;
 
-    this(OdbcStatement handle, StatusCode sqlState, wstring message,
-         int code = 1, string file = __FILE__, int line = __LINE__) {
+    this(T)(T handle, StatusCode sqlState, wstring message, int code = 1,
+            string file = __FILE__, int line = __LINE__) if (is(T == OdbcStatement) || is(T == OdbcConnection)){
         this(sqlState, message, code, file, line);
         handle.errors ~= this;
     }

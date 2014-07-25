@@ -79,6 +79,7 @@ SQLRETURN SQLDriverConnectW(
     scope (exit) convertPtrBytesToWChars(_connectionArgumentsOutChars);
 
     return exceptionBoundary!(() => {
+        connectionHandle.errors = [];
         logMessage("SQLDriverConnect", connectionArguments, driverCompletion);
 
         if (connectionArguments == null) {
@@ -179,6 +180,7 @@ SQLRETURN SQLBrowseConnectW(
     SQLSMALLINT _connectionArgumentsOutMaxChars,
     SQLSMALLINT* _connectionArgumentsOutChars) {
     return exceptionBoundary!(() => {
+        connectionHandle.errors = [];
         auto connectionArguments = toDString(_connectionArgumentsIn, _connectionArgumentsInChars);
         auto connectionArgumentsOut = outputWChar(_connectionArgumentsOut,
                                                   _connectionArgumentsOutMaxChars * wchar.sizeof, _connectionArgumentsOutChars);
@@ -199,8 +201,9 @@ SQLRETURN SQLConnectW(
     SQLSMALLINT _userNameLengthChars,
     in SQLWCHAR* _authenticationString,
     SQLSMALLINT _authenticationStringLengthChars) {
-    logMessage("SQLConnect (unimplemented)");
     return exceptionBoundary!(() => {
+        connectionHandle.errors = [];
+        logMessage("SQLConnect (unimplemented)");
         auto serverName = toDString(_serverName, _serverNameLengthChars);
         auto userName = toDString(_userName, _userNameLengthChars);
         auto authenticationName = toDString(_authenticationString, _authenticationStringLengthChars);
@@ -216,6 +219,7 @@ SQLRETURN SQLExecDirectW(
     in SQLWCHAR* _statementText,
     SQLINTEGER _textLengthChars) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto statementText = toDString(_statementText, _textLengthChars);
         logMessage("SQLExecDirectW", statementText);
         auto returnCode = SQLPrepareW(statementHandle, _statementText, _textLengthChars);
@@ -273,6 +277,7 @@ SQLRETURN SQLBindCol(
     SQLLEN bufferLengthMaxBytes,
     SQLLEN* numberOfBytesWritten) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLBindCol", columnNumber, columnType, bufferLengthMaxBytes);
         dllEnforce(statementHandle !is null);
         with (statementHandle) with (applicationRowDescriptor) {
@@ -304,6 +309,7 @@ SQLRETURN SQLBindCol(
 
 SQLRETURN SQLCancel(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLCancel (unimplemented)");
         with (statementHandle) {
             //TODO -- Not relevant until we support concurrency
@@ -325,6 +331,7 @@ SQLRETURN SQLDescribeColW(
     SQLSMALLINT* decimalDigits,
     SQLSMALLINT* nullable) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto columnName = outputWChar(_columnName, _columnNameMaxLengthChars * wchar.sizeof, _columnNameLengthChars);
         scope (exit) convertPtrBytesToWChars(_columnNameLengthChars);
         assert(columnName);
@@ -362,6 +369,7 @@ SQLRETURN SQLDescribeParam(
     SQLSMALLINT* decimalDigits,
     SQLSMALLINT* nullable) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLDescribeParam (unimplemented)", parameterNumber);
         with (statementHandle) {
             //TODO
@@ -383,6 +391,7 @@ SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
 
 SQLRETURN SQLExecute(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLExecute (no-op)");
 
         //This function may become a non-no-op in the future if
@@ -439,6 +448,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
 
 SQLRETURN SQLFetch(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLFetch");
 
         dllEnforce(statementHandle !is null);
@@ -484,6 +494,7 @@ SQLRETURN SQLFreeStmt(
     OdbcStatement statementHandle,
     FreeStmtOptions option) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLFreeStmt", option);
         with (statementHandle) with (applicationRowDescriptor) with (FreeStmtOptions) {
             final switch(option) {
@@ -514,6 +525,7 @@ SQLRETURN SQLGetCursorNameW(
     SQLSMALLINT _cursorNameMaxLengthBytes,
     SQLSMALLINT* _cursorNameLengthBytes) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto cursorName = outputWChar(_cursorName, _cursorNameMaxLengthBytes, _cursorNameLengthBytes);
         logMessage("SQLGetCursorName (unimplemented)");
         with (statementHandle) {
@@ -530,6 +542,7 @@ SQLRETURN SQLSetCursorNameW(
     in SQLWCHAR* _cursorName,
     SQLSMALLINT _cursorNameLengthChars) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto cursorName = toDString(_cursorName, _cursorNameLengthChars);
         logMessage("SQLSetCursorName (unimplemented)");
         with (statementHandle) {
@@ -545,6 +558,7 @@ SQLRETURN SQLNumResultCols(
     OdbcStatement statementHandle,
     SQLSMALLINT* columnCount) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLNumResultCols (pseudo-implemented)");
         dllEnforce(columnCount != null);
         with (statementHandle) {
@@ -562,6 +576,7 @@ SQLRETURN SQLPrepareW(
     in SQLWCHAR* _statementText,
     SQLINTEGER _textLengthChars) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto statementText = toDString(_statementText, _textLengthChars);
         logMessage("SQLPrepare", statementText);
 
@@ -583,6 +598,7 @@ SQLRETURN SQLRowCount(
     OdbcStatement statementHandle,
     SQLLEN* rowCount) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLRowCount");
         *rowCount = 0;
         return SQL_SUCCESS;
@@ -602,6 +618,7 @@ SQLRETURN SQLColumnsW(
     in SQLWCHAR* _columnName,
     SQLSMALLINT _columnNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableName = toDString(_tableName, _tableNameLength);
@@ -628,6 +645,7 @@ SQLRETURN SQLColumnPrivilegesW(
     in SQLWCHAR* _columnName,
     SQLSMALLINT _columnNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableName = toDString(_tableName, _tableNameLength);
@@ -652,6 +670,7 @@ SQLRETURN SQLGetData(
     SQLLEN* stringLengthBytes) {
     //Note: Does not support retrieving parameter data
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         with (statementHandle) with (applicationRowDescriptor) {
             auto targetType = getColumnTargetType(statementHandle, columnNumber, _targetType);
             logMessage("SQLGetData (untested)", columnNumber, targetType);
@@ -680,6 +699,7 @@ SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQL_TYPE_ID dataType) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLGetTypeInfo", dataType);
 
         with (statementHandle) with (Nullability) with (SQL_TYPE_ID) {
@@ -704,6 +724,7 @@ SQLRETURN SQLParamData(
     OdbcStatement statementHandle,
     SQLPOINTER *value) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLParamData (unimplemented)");
         with (statementHandle) {
             //TODO
@@ -719,6 +740,7 @@ SQLRETURN SQLPutData(
     SQLPOINTER data,
     SQLLEN stringLengthBytes) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLPutData (unimplemented)");
         with (statementHandle) {
             //TODO
@@ -742,6 +764,7 @@ SQLRETURN SQLSpecialColumnsW(
     SQLUSMALLINT minScope,
     SQLUSMALLINT nullable) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableName = toDString(_tableName, _tableNameLength);
@@ -772,6 +795,7 @@ SQLRETURN SQLStatisticsW(
     IndexType unique,
     StatisticsUrgency urgency) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLengthChars);
         auto schemaName = toDString(_schemaName, _schemaNameLengthChars);
         auto tableName = toDString(_tableName, _tableNameLengthChars);
@@ -797,6 +821,7 @@ SQLRETURN SQLTablesW(
     SQLSMALLINT _tableTypeLength) {
     return exceptionBoundary!(() => {
         import tableinfo;
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableNamePattern = toDString(_tableNamePattern, _tableNamePatternLength);
@@ -838,6 +863,7 @@ SQLRETURN SQLForeignKeysW(
     in SQLWCHAR* _foreignKeyTableName,
     SQLSMALLINT _foreignKeyTableNameLengthChars) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto primaryKeyCatalogName = toDString(_primaryKeyCatalogName, _primaryKeyCatalogNameLengthChars);
         auto primaryKeySchemaName = toDString(_primaryKeySchemaName, _primaryKeySchemaNameLengthChars);
         auto primaryKeyTableName = toDString(_primaryKeyTableName, _primaryKeyTableNameLengthChars);
@@ -858,6 +884,7 @@ SQLRETURN SQLForeignKeysW(
 ///// SQLMoreResults /////
 SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLMoreResults (unimplemented)");
         with (statementHandle) {
             //TODO
@@ -876,6 +903,7 @@ SQLRETURN SQLNativeSqlW(
     SQLINTEGER _outSqlMaxLengthBytes,
     SQLINTEGER* _outSqlLengthBytes) {
     return exceptionBoundary!(() => {
+        connectionHandle.errors = [];
         auto inSql = toDString(_inSql, _inSqlLengthChars);
         auto outSql = outputWChar(_outSql, _outSqlMaxLengthBytes, _outSqlLengthBytes);
         logMessage("SQLNativeSql", inSql);
@@ -944,6 +972,7 @@ SQLRETURN SQLNumParams(
     OdbcStatement statementHandle,
     SQLSMALLINT* parameterCount) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLNumParams (unimplemented)");
         with (statementHandle) {
             //TODO
@@ -963,6 +992,7 @@ SQLRETURN SQLPrimaryKeysW(
     in SQLWCHAR* _tableName,
     SQLSMALLINT _tableNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableName = toDString(_tableName, _tableNameLength);
@@ -988,6 +1018,7 @@ SQLRETURN SQLProcedureColumnsW(
     in SQLWCHAR* _columnName,
     SQLSMALLINT _columnNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto procedureName = toDString(_procedureName, _procedureNameLength);
@@ -1012,6 +1043,7 @@ SQLRETURN SQLProceduresW(
     in SQLWCHAR* _procedureName,
     SQLSMALLINT _procedureNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto procedureName = toDString(_procedureName, _procedureNameLength);
@@ -1032,6 +1064,7 @@ SQLRETURN SQLSetPos(
     SetPosOperation operation,
     SetPosLockOperation lockType) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLSetPos (unimplemented)", rowNumber, operation, lockType);
         with (statementHandle) {
             //TODO
@@ -1051,6 +1084,7 @@ SQLRETURN SQLTablePrivilegesW(
     in SQLWCHAR* _tableName,
     SQLSMALLINT _tableNameLength) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableName = toDString(_tableName, _tableNameLength);
@@ -1077,6 +1111,7 @@ SQLRETURN SQLBindParameter(
     SQLLEN bufferLength,
     SQLLEN* stringLengthBytes) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLBindParameter (unimplemented)", parameterNumber, inputOutputType,
                    valueType, parameterType, columnSize, decimalDigits);
         with (statementHandle) {
@@ -1090,6 +1125,7 @@ SQLRETURN SQLBindParameter(
 
 SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLCloseCursor (unimplemented)");
         with (statementHandle) {
             //TODO
@@ -1109,6 +1145,7 @@ SQLRETURN SQLColAttributeW(
     SQLSMALLINT* _stringLengthBytes,
     SQLLEN* numericAttribute) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto characterAttribute = outputWChar(_characterAttribute, _bufferMaxLengthBytes, _stringLengthBytes);
         logMessage("SQLColAttribute", columnNumber, fieldIdentifier);
         with (statementHandle) with (connection) with (DescriptorField) {
@@ -1265,6 +1302,7 @@ SQLRETURN SQLFetchScroll(
     FetchType fetchOrientation,
     SQLLEN fetchOffset) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLFetchScroll (unimplemented)", fetchOrientation, fetchOffset);
         with (statementHandle) {
             //TODO
@@ -1514,6 +1552,7 @@ SQLRETURN SQLGetStmtAttrW(
     SQLINTEGER _valueLengthBytes,
     SQLINTEGER* _stringLengthBytes) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         auto valueString = outputWChar(value, _valueLengthBytes, _stringLengthBytes);
         logMessage("SQLGetStmtAttr (unimplemented)", attribute);
         with (statementHandle) with (StatementAttribute) {
@@ -1555,6 +1594,7 @@ SQLRETURN SQLSetStmtAttrW(
     in SQLPOINTER _value,
     SQLINTEGER _valueLengthBytes) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         logMessage("SQLSetStmtAttr (unimplemented)", attribute);
         with (statementHandle) with (StatementAttribute) {
             switch (attribute) {
@@ -1598,6 +1638,7 @@ SQLRETURN SQLBulkOperations(
     OdbcStatement statementHandle,
     BulkOperation operation) {
     return exceptionBoundary!(() => {
+        statementHandle.errors = [];
         with (statementHandle) {
             logMessage("SQLBulkOperations (unimplemented)", operation);
             return SQL_SUCCESS;
