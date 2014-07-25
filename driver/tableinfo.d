@@ -11,17 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.tableinfo;
 
 import std.array : front, empty, popFront;
 import std.conv : text, to;
 import std.variant : Variant;
 
-import sqlext;
-import odbcinst;
+import odbc_interface.sqlext;
+import odbc_interface.odbcinst;
 
-import handles : OdbcStatement;
-import bindings : OdbcResult, OdbcResultRow;
-import util : dllEnforce, logMessage;
+import driver.handles : OdbcStatement;
+import driver.bindings : OdbcResult, OdbcResultRow;
+import driver.util : dllEnforce, logMessage;
 
 final class TableInfoResult : OdbcResult {
   this(OdbcStatement statementHandle) {

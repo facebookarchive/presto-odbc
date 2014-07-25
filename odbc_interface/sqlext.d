@@ -29,11 +29,12 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+module odbc_interface.sqlext;
 
 import std.typetuple : TypeTuple;
 
-public import sql;
-import sqlucode;
+public import odbc_interface.sql;
+import odbc_interface.sqlucode;
 
 //Useful Constants
 enum SQL_SPEC_MAJOR = 3;

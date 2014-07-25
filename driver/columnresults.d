@@ -11,19 +11,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.columnresults;
 
 import std.array : front, empty, popFront;
 import std.conv : text, to;
 import std.variant : Variant;
 
-import sqlext;
-import odbcinst;
+import odbc_interface.sqlext;
+import odbc_interface.odbcinst;
 
-import handles : OdbcStatement;
-import bindings : OdbcResult, OdbcResultRow;
-import typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
-import util;
 import dapi.util : asBool;
+
+import driver.handles : OdbcStatement;
+import driver.bindings : OdbcResult, OdbcResultRow;
+import driver.typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
+import driver.util;
 
 // http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
 

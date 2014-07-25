@@ -11,15 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.getinfo;
 
 import std.array : front, empty, popFront;
 import std.conv : text, wtext, to;
 
-import sqlext;
-import odbcinst;
+import odbc_interface.sqlext;
+import odbc_interface.odbcinst;
 
-import handles : OdbcConnection;
-import util;
+import driver.handles : OdbcConnection;
+import driver.util;
 
 
 ///// SQLGetInfo /////

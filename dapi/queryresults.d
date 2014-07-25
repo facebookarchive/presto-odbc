@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module dapi.queryresults;
 
 import facebook.json : JSON_TYPE, JSONValue;
 import std.typecons : Tuple, tuple;
