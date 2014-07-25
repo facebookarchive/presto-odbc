@@ -4,7 +4,7 @@ ODBC is a C API that provides a standard way of communicating with anything that
 
 This driver is written in the [D Programming Language](http://dlang.org)
 
-## Current State of Affairs
+## Current Status
 
 * Only works on Windows
 * Many functions are not implemented, the driver does *not* meet the "Core" level of [ODBC conformance](odbc-conformance.md)
@@ -19,16 +19,16 @@ This driver is written in the [D Programming Language](http://dlang.org)
 * Full support on Windows/Mac/Linux
 * Seamless integration with Tableau
 
-# Setting up the development environment:
+## Development Environment Setup
 
-## Installation Prerequisites
+### Installation Prerequisites
 
 1. Cygwin with the GNU make package
 1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
 1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download) (note: this must be installed *after*  Visual Studio)
 1. Access to a running [Presto](http://prestodb.io) instance
 
-## Building and Registering the Driver
+### Building and Registering the Driver
 
 1. Build the Presto ODBC Driver
   1. Launch the Cygwin terminal
@@ -46,7 +46,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
     1. Click `Start Tracing Now`
     1. Click Ok to close the program
 
-## Using the driver with Tableau
+### Using the driver with Tableau
 
 1. Open Tableau
 1. Click `Connect to data`
@@ -64,7 +64,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
   1. Click `OK` to go past the warning dialog
 1. Analyze!
 
-# Coding Conventions
+## Coding Conventions
 
 Not all of the conventions have been applied to the source yet.
 
@@ -80,7 +80,7 @@ Not all of the conventions have been applied to the source yet.
 * Always use a `with` statement when accessing ODBC handles
 * Always specify whether lengths are in bytes or characters as part of a variable's name
 
-# References
+## References
 
 * [ODBC 3.x Requirements](http://msdn.microsoft.com/en-us/library/ms713848%28v=vs.85%29.aspx)
 * [ODBC Function Summary](http://msdn.microsoft.com/en-us/library/ms712628%28v=vs.85%29.aspx)
