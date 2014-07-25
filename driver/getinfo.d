@@ -24,7 +24,7 @@ import util;
 
 ///// SQLGetInfo /////
 
-extern(System)
+export extern(System)
     SQLRETURN SQLGetInfoW(
         OdbcConnection connectionHandle,
         OdbcInfo infoType,
