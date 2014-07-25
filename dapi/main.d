@@ -11,13 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module dapi.main;
 
 //This file exists to facilitate "live testing" and trying simple queries
 
 import std.stdio : writeln;
-import queryresults : QueryResults;
-import statementclient : ClientSession, StatementClient;
 import std.net.curl;
+
+import dapi.queryresults : QueryResults;
+import dapi.statementclient : ClientSession, StatementClient;
 
 version(unittest) void main() { writeln("Tests completed."); }
 else void main() {

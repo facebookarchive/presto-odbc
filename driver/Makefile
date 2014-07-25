@@ -8,9 +8,13 @@ CFLAGS = -c
 FLAGS = -g -version=UNICODE -m64 -Luser32.lib
 LIB_FLAGS = -Luser32.lib
 
-SQL_MODULES = odbcinst sql sqlext sqltypes sqlucode
-MODULES = driver handles bindings columnresults tableinfo prestoresults typeinfo getinfo util $(SQL_MODULES)
+ODBC_INTERFACE_MODULES = odbcinst sql sqlext sqltypes sqlucode
+MODULES = driver handles bindings columnresults tableinfo prestoresults typeinfo getinfo util
 DAPI_MODULES = statementclient queryresults prestoerrors mockcurl util json
+
+ALL_MODULES = $(MODULES)
+ALL_MODULES += $(addprefix ../odbc_interface/, $(ODBC_INTERFACE_MODULES))
+ALL_MODULES += $(addprefix ../dapi/, $(DAPI_MODULES))
 
 PROGRAM = presto.dll
 TEST_PROGRAM = unittests
@@ -20,10 +24,10 @@ TEST_PROGRAM = unittests
 all: driver
 
 driver:
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -shared driver.def
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(ALL_MODULES) -shared driver.def
 
 tests:
-	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -of$(TEST_PROGRAM)
+	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(ALL_MODULES) -of$(TEST_PROGRAM)
 
 copy:
 	mkdir -p $(TEMP)

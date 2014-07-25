@@ -28,8 +28,9 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+module odbc_interface.sqlucode;
 
-import sqlext;
+import odbc_interface.sqlext;
 
 //Size of SQLSTATE - Unicode
 enum SQL_SQLSTATE_SIZEW  = 10;

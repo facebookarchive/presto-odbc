@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.bindings;
 
 import std.stdio : writeln;
 import std.array : empty, front, popFront;
@@ -19,10 +20,10 @@ import std.variant : Variant;
 import std.typetuple : TypeTuple;
 import std.traits : isSomeString, Unqual;
 
-import sqlext;
-import odbcinst;
+import odbc_interface.sqlext;
+import odbc_interface.odbcinst;
 
-import util;
+import driver.util;
 
 unittest {
     enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;

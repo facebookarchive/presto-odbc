@@ -11,11 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.handles;
 
-import sqlext;
+import odbc_interface.sqlext;
 
-import bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
-import util;
+import driver.bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
+import driver.util;
 
 /**
  * APD
