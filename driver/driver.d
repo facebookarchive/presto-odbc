@@ -40,9 +40,8 @@ import presto.odbcdriver.typeinfo;
 
 //////  DLL entry point for global initializations/finalizations if any
 
-version(unittest) {} else {
-    extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-    {
+version (Windows) {
+    extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (fdwReason == DLL_PROCESS_ATTACH) { // DLL is being loaded
             Runtime.initialize();
             import core.memory;
@@ -53,6 +52,18 @@ version(unittest) {} else {
         }
 
         return TRUE;
+    }
+} else {
+    shared static this() {
+        Runtime.initialize();
+        import core.memory;
+        GC.disable();
+        assert(false, "Debugging an issue whereby this function is not called");
+        logMessage("Presto ODBC Driver loaded by application or driver manager");
+    }
+
+    shared static ~this() {
+        Runtime.terminate();
     }
 }
 

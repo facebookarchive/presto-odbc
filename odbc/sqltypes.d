@@ -42,8 +42,11 @@ version(Windows) {
     alias CHAR = char;
     alias WORD = ushort;
     alias DWORD = uint;
-    alias LPSTR = char*;
-    alias LPCSTR = const(char)*;
+    alias LPVOID = void*;
+    alias LPSTR = SQLCHAR*;
+    alias LPWSTR = SQLWCHAR*;
+    alias LPCSTR = const(SQLCHAR)*;
+    alias LPCWSTR = const(SQLWCHAR)*;
     alias LPTSTR = TCHAR*;
     alias LPDWORD = DWORD*;
     alias BOOL = int;
@@ -103,7 +106,7 @@ alias SQLHDESC = SQLHANDLE;
 version(Win32) {
     alias SQLHWND = HWND;
 } else version(OSX) {
-    alias HWND = WindowPtr;
+    alias HWND = SQLPOINTER; //WindowPtr;
     alias SQLHWND = HWND;
 } else {
     alias SQLHWND = SQLPOINTER;
@@ -225,12 +228,10 @@ struct SQLGUID {
 }
 
 alias SQLWCHAR = wchar;
-version (Windows) {} else {
-    static assert(false, "Investigate what wchar should be");
-}
 
 version(UNICODE) {
-    alias SQLTCHAR = SQLWCHAR;
+    alias TCHAR = SQLWCHAR;
 } else {
-    alias SQLTCHAR = SQLCHAR;
+    alias TCHAR = SQLCHAR;
 }
+alias SQLTCHAR = TCHAR;

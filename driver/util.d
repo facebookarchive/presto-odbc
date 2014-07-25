@@ -33,7 +33,11 @@ import presto.client.statementclient : StatementClient, ClientSession;
 
 import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 
-enum tempPath = "C:\\temp\\";
+version (Windows) {
+    enum tempPath = "C:\\temp\\";
+} else {
+    enum tempPath = "/tmp/";
+}
 auto logBuffer = appender!wstring;
 
 void logMessage(string file = __FILE__, int line = __LINE__, TList...)(auto ref TList vs) {
@@ -72,9 +76,11 @@ void flushLogBuffer() {
 }
 
 void showPopupMessage(TList...)(auto ref TList vs) {
-    import std.c.windows.windows;
-    auto message = buildDebugMessage(vs) ~ '\0';
-    MessageBoxW(GetForegroundWindow(), message.ptr, "Presto ODBC Driver", MB_OK);
+    version (Windows) {
+        import std.c.windows.windows;
+        auto message = buildDebugMessage(vs) ~ '\0';
+        MessageBoxW(GetForegroundWindow(), message.ptr, "Presto ODBC Driver", MB_OK);
+    }
 }
 
 unittest {
@@ -342,11 +348,11 @@ private auto emplaceWrapper(T, TList...)(void* memory, auto ref TList args) {
     }
 }
 
-ulong getInstanceSize(T)() if(is(T == class)) {
+size_t getInstanceSize(T)() if (is(T == class)) {
     return __traits(classInstanceSize, T);
 }
 
-ulong getInstanceSize(T)() if(!is(T == class)) {
+size_t getInstanceSize(T)() if (!is(T == class)) {
     return T.sizeof;
 }
 
@@ -360,7 +366,7 @@ unittest {
 }
 
 size_t strlen(C)(const(C)* str) {
-    ulong length = 0;
+    size_t length = 0;
     for (; str[length] != 0; ++length) {
         //Intentionally blank
     }
