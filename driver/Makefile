@@ -20,7 +20,7 @@ TEST_PROGRAM = unittests
 all: driver
 
 driver:
-	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -shared driver.def
+	$(DC) $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -shared -of$(PROGRAM)
 
 tests:
 	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(MODULES) $(addprefix ../dapi/, $(DAPI_MODULES)) -of$(TEST_PROGRAM)

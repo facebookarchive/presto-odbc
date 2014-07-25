@@ -64,7 +64,7 @@ extern(System):
 ///// SQLDriverConnect /////
 
 //Note: If making changes here, also look at SQLBrowseConnect
-SQLRETURN SQLDriverConnectW(
+export SQLRETURN SQLDriverConnectW(
     OdbcConnection connectionHandle,
     SQLHWND hwnd,
     in SQLWCHAR* _connectionArgumentsIn,
@@ -172,7 +172,7 @@ string[string] parseConnectionString(string connectionString) {
 ///// SQLBrowseConnect /////
 
 //Note: If making changes here, also look at SQLDriverConnect
-SQLRETURN SQLBrowseConnectW(
+export SQLRETURN SQLBrowseConnectW(
     OdbcConnection connectionHandle,
     in SQLWCHAR* _connectionArgumentsIn,
     SQLSMALLINT _connectionArgumentsInChars,
@@ -193,7 +193,7 @@ SQLRETURN SQLBrowseConnectW(
 
 ///// SQLConnect /////
 
-SQLRETURN SQLConnectW(
+export SQLRETURN SQLConnectW(
     OdbcConnection connectionHandle,
     in SQLWCHAR* _serverName,
     SQLSMALLINT _serverNameLengthChars,
@@ -214,7 +214,7 @@ SQLRETURN SQLConnectW(
 
 ///// SQLExecDirect /////
 
-SQLRETURN SQLExecDirectW(
+export SQLRETURN SQLExecDirectW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _statementText,
     SQLINTEGER _textLengthChars) {
@@ -232,7 +232,7 @@ SQLRETURN SQLExecDirectW(
 
 ///// SQLAllocHandle /////
 
-SQLRETURN SQLAllocHandle(
+export SQLRETURN SQLAllocHandle(
     SQL_HANDLE_TYPE handleType,
     SQLHANDLE _parentHandle,
     SQLHANDLE* newHandlePointer) {
@@ -269,7 +269,7 @@ SQLRETURN SQLAllocHandle(
 
 ///// SQLBindCol /////
 
-SQLRETURN SQLBindCol(
+export SQLRETURN SQLBindCol(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
     SQL_C_TYPE_ID columnType,
@@ -307,7 +307,7 @@ SQLRETURN SQLBindCol(
 
 ///// SQLCancel /////
 
-SQLRETURN SQLCancel(OdbcStatement statementHandle) {
+export SQLRETURN SQLCancel(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
         statementHandle.errors = [];
         logMessage("SQLCancel (unimplemented)");
@@ -320,7 +320,7 @@ SQLRETURN SQLCancel(OdbcStatement statementHandle) {
 
 ///// SQLDescribeCol /////
 
-SQLRETURN SQLDescribeColW(
+export SQLRETURN SQLDescribeColW(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
     SQLWCHAR* _columnName,
@@ -361,7 +361,7 @@ SQLRETURN SQLDescribeColW(
 
 ///// SQLDescribeParam /////
 
-SQLRETURN SQLDescribeParam(
+export SQLRETURN SQLDescribeParam(
     OdbcStatement statementHandle,
     SQLUSMALLINT parameterNumber,
     SQLSMALLINT* dataType,
@@ -380,7 +380,7 @@ SQLRETURN SQLDescribeParam(
 
 ///// SQLDisconnect /////
 
-SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
+export SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
     return exceptionBoundary!(() => {
         logMessage("SQLDisconnect (unimplemented)");
         return SQL_SUCCESS;
@@ -389,7 +389,7 @@ SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
 
 ///// SQLExecute /////
 
-SQLRETURN SQLExecute(OdbcStatement statementHandle) {
+export SQLRETURN SQLExecute(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
         statementHandle.errors = [];
         logMessage("SQLExecute (no-op)");
@@ -446,7 +446,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
 
 ///// SQLFetch /////
 
-SQLRETURN SQLFetch(OdbcStatement statementHandle) {
+export SQLRETURN SQLFetch(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
         statementHandle.errors = [];
         logMessage("SQLFetch");
@@ -490,7 +490,7 @@ SQLRETURN bindDataFromColumns(OdbcStatement statementHandle, ColumnBinding[uint]
 
 ///// SQLFreeStmt /////
 
-SQLRETURN SQLFreeStmt(
+export SQLRETURN SQLFreeStmt(
     OdbcStatement statementHandle,
     FreeStmtOptions option) {
     return exceptionBoundary!(() => {
@@ -519,7 +519,7 @@ SQLRETURN SQLFreeStmt(
 
 ///// SQLGetCursorName /////
 
-SQLRETURN SQLGetCursorNameW(
+export SQLRETURN SQLGetCursorNameW(
     OdbcStatement statementHandle,
     SQLWCHAR* _cursorName,
     SQLSMALLINT _cursorNameMaxLengthBytes,
@@ -537,7 +537,7 @@ SQLRETURN SQLGetCursorNameW(
 
 ///// SQLSetCursorName /////
 
-SQLRETURN SQLSetCursorNameW(
+export SQLRETURN SQLSetCursorNameW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _cursorName,
     SQLSMALLINT _cursorNameLengthChars) {
@@ -554,7 +554,7 @@ SQLRETURN SQLSetCursorNameW(
 
 ///// SQLNumResultCols /////
 
-SQLRETURN SQLNumResultCols(
+export SQLRETURN SQLNumResultCols(
     OdbcStatement statementHandle,
     SQLSMALLINT* columnCount) {
     return exceptionBoundary!(() => {
@@ -571,7 +571,7 @@ SQLRETURN SQLNumResultCols(
 
 ///// SQLPrepare /////
 
-SQLRETURN SQLPrepareW(
+export SQLRETURN SQLPrepareW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _statementText,
     SQLINTEGER _textLengthChars) {
@@ -594,7 +594,7 @@ SQLRETURN SQLPrepareW(
 
 ///// SQLRowCount /////
 
-SQLRETURN SQLRowCount(
+export SQLRETURN SQLRowCount(
     OdbcStatement statementHandle,
     SQLLEN* rowCount) {
     return exceptionBoundary!(() => {
@@ -607,7 +607,7 @@ SQLRETURN SQLRowCount(
 
 ///// SQLColumns /////
 
-SQLRETURN SQLColumnsW(
+export SQLRETURN SQLColumnsW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -634,7 +634,7 @@ SQLRETURN SQLColumnsW(
 
 ///// SQLColumnPrivileges /////
 
-SQLRETURN SQLColumnPrivilegesW(
+export SQLRETURN SQLColumnPrivilegesW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -661,7 +661,7 @@ SQLRETURN SQLColumnPrivilegesW(
 
 ///// SQLGetData /////
 
-SQLRETURN SQLGetData(
+export SQLRETURN SQLGetData(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
     SQLSMALLINT _targetType,
@@ -695,7 +695,7 @@ SQL_C_TYPE_ID getColumnTargetType(
 }
 
 ///// SQLGetTypeInfo /////
-SQLRETURN SQLGetTypeInfoW(
+export SQLRETURN SQLGetTypeInfoW(
     OdbcStatement statementHandle,
     SQL_TYPE_ID dataType) {
     return exceptionBoundary!(() => {
@@ -720,7 +720,7 @@ SQLRETURN SQLGetTypeInfoW(
 
 ///// SQLParamData /////
 
-SQLRETURN SQLParamData(
+export SQLRETURN SQLParamData(
     OdbcStatement statementHandle,
     SQLPOINTER *value) {
     return exceptionBoundary!(() => {
@@ -735,7 +735,7 @@ SQLRETURN SQLParamData(
 
 ///// SQLPutData /////
 
-SQLRETURN SQLPutData(
+export SQLRETURN SQLPutData(
     OdbcStatement statementHandle,
     SQLPOINTER data,
     SQLLEN stringLengthBytes) {
@@ -752,7 +752,7 @@ SQLRETURN SQLPutData(
 ///// SQLSpecialColumns /////
 
 
-SQLRETURN SQLSpecialColumnsW(
+export SQLRETURN SQLSpecialColumnsW(
     OdbcStatement statementHandle,
     SpecialColumnRequestType identifierType,
     in SQLWCHAR* _catalogName,
@@ -784,7 +784,7 @@ SQLRETURN SQLSpecialColumnsW(
 
 ///// SQLStatistics /////
 
-SQLRETURN SQLStatisticsW(
+export SQLRETURN SQLStatisticsW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLengthChars,
@@ -809,7 +809,7 @@ SQLRETURN SQLStatisticsW(
 
 ///// SQLTables /////
 
-SQLRETURN SQLTablesW(
+export SQLRETURN SQLTablesW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -848,7 +848,7 @@ SQLRETURN SQLTablesW(
 
 ///// SQLForeignKeys /////
 
-SQLRETURN SQLForeignKeysW(
+export SQLRETURN SQLForeignKeysW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _primaryKeyCatalogName,
     SQLSMALLINT _primaryKeyCatalogNameLengthChars,
@@ -882,7 +882,7 @@ SQLRETURN SQLForeignKeysW(
 }
 
 ///// SQLMoreResults /////
-SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
+export SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
         statementHandle.errors = [];
         logMessage("SQLMoreResults (unimplemented)");
@@ -895,7 +895,7 @@ SQLRETURN SQLMoreResults(OdbcStatement statementHandle) {
 
 ///// SQLNativeSql /////
 
-SQLRETURN SQLNativeSqlW(
+export SQLRETURN SQLNativeSqlW(
     OdbcConnection connectionHandle,
     in SQLWCHAR* _inSql,
     SQLINTEGER _inSqlLengthChars,
@@ -968,7 +968,7 @@ wstring removeTopLevelPattern(wstring query, wstring pattern) {
 
 ///// SQLNumParams /////
 
-SQLRETURN SQLNumParams(
+export SQLRETURN SQLNumParams(
     OdbcStatement statementHandle,
     SQLSMALLINT* parameterCount) {
     return exceptionBoundary!(() => {
@@ -983,7 +983,7 @@ SQLRETURN SQLNumParams(
 
 ///// SQLPrimaryKeys /////
 
-SQLRETURN SQLPrimaryKeysW(
+export SQLRETURN SQLPrimaryKeysW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -1007,7 +1007,7 @@ SQLRETURN SQLPrimaryKeysW(
 
 ///// SQLProcedureColumns /////
 
-SQLRETURN SQLProcedureColumnsW(
+export SQLRETURN SQLProcedureColumnsW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -1034,7 +1034,7 @@ SQLRETURN SQLProcedureColumnsW(
 
 ///// SQLProcedures /////
 
-SQLRETURN SQLProceduresW(
+export SQLRETURN SQLProceduresW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -1058,7 +1058,7 @@ SQLRETURN SQLProceduresW(
 
 ///// SQLSetPos /////
 
-SQLRETURN SQLSetPos(
+export SQLRETURN SQLSetPos(
     OdbcStatement statementHandle,
     SQLSETPOSIROW rowNumber,
     SetPosOperation operation,
@@ -1075,7 +1075,7 @@ SQLRETURN SQLSetPos(
 
 ///// SQLTablePrivileges /////
 
-SQLRETURN SQLTablePrivilegesW(
+export SQLRETURN SQLTablePrivilegesW(
     OdbcStatement statementHandle,
     in SQLWCHAR* _catalogName,
     SQLSMALLINT _catalogNameLength,
@@ -1099,7 +1099,7 @@ SQLRETURN SQLTablePrivilegesW(
 
 ///// SQLBindParameter /////
 
-SQLRETURN SQLBindParameter(
+export SQLRETURN SQLBindParameter(
     OdbcStatement statementHandle,
     SQLUSMALLINT parameterNumber,
     InputOutputType inputOutputType,
@@ -1123,7 +1123,7 @@ SQLRETURN SQLBindParameter(
 
 ///// SQLCloseCursor /////
 
-SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
+export SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
     return exceptionBoundary!(() => {
         statementHandle.errors = [];
         logMessage("SQLCloseCursor (unimplemented)");
@@ -1136,7 +1136,7 @@ SQLRETURN SQLCloseCursor(OdbcStatement statementHandle) {
 
 ///// SQLColAttribute /////
 
-SQLRETURN SQLColAttributeW(
+export SQLRETURN SQLColAttributeW(
     OdbcStatement statementHandle,
     SQLUSMALLINT columnNumber,
     DescriptorField fieldIdentifier,
@@ -1277,7 +1277,7 @@ N toColAttributeSizeUnknownFormat(N)(N size) if (isNumeric!N) {
 
 ///// SQLCopyDesc /////
 
-SQLRETURN SQLCopyDesc(SQLHDESC sourceDescHandle, SQLHDESC targetDescHandle) {
+export SQLRETURN SQLCopyDesc(SQLHDESC sourceDescHandle, SQLHDESC targetDescHandle) {
     return exceptionBoundary!(() => {
         logMessage("SQLCopyDesc (unimplemented)");
         return SQL_SUCCESS;
@@ -1285,7 +1285,7 @@ SQLRETURN SQLCopyDesc(SQLHDESC sourceDescHandle, SQLHDESC targetDescHandle) {
 }
 
 ///// SQLEndTran /////
-SQLRETURN SQLEndTran(
+export SQLRETURN SQLEndTran(
     SQL_HANDLE_TYPE handleType,
     SQLHANDLE handle,
     TransactionOption completionType) {
@@ -1297,7 +1297,7 @@ SQLRETURN SQLEndTran(
 
 ///// SQLFetchScroll /////
 
-SQLRETURN SQLFetchScroll(
+export SQLRETURN SQLFetchScroll(
     OdbcStatement statementHandle,
     FetchType fetchOrientation,
     SQLLEN fetchOffset) {
@@ -1313,7 +1313,7 @@ SQLRETURN SQLFetchScroll(
 
 ///// SQLFreeHandle /////
 
-SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
+export SQLRETURN SQLFreeHandle(SQL_HANDLE_TYPE handleType, SQLHANDLE handle) {
     return exceptionBoundary!(() => {
         logMessage("SQLFreeHandle", handleType, cast(void*) handle);
 
@@ -1349,7 +1349,7 @@ void cleanupHandle(T)(T handle) {
 
 ///// SQLGetConnectAttr /////
 
-SQLRETURN SQLGetConnectAttrW(
+export SQLRETURN SQLGetConnectAttrW(
     SQLHDBC connectionHandle,
     ConnectionAttribute attribute,
     SQLPOINTER value,
@@ -1363,7 +1363,7 @@ SQLRETURN SQLGetConnectAttrW(
 
 ///// SQLSetConnectAttr /////
 
-SQLRETURN SQLSetConnectAttrW(
+export SQLRETURN SQLSetConnectAttrW(
     SQLHDBC connectionHandle,
     ConnectionAttribute attribute,
     SQLPOINTER value,
@@ -1377,7 +1377,7 @@ SQLRETURN SQLSetConnectAttrW(
 
 ///// SQLGetDescField /////
 
-SQLRETURN SQLGetDescFieldW(
+export SQLRETURN SQLGetDescFieldW(
     SQLHDESC descriptorHandle,
     SQLSMALLINT recordNumber,
     DescriptorField fieldIdentifier,
@@ -1392,7 +1392,7 @@ SQLRETURN SQLGetDescFieldW(
 
 ///// SQLSetDescField /////
 
-SQLRETURN SQLSetDescFieldW(
+export SQLRETURN SQLSetDescFieldW(
     SQLHDESC descriptorHandle,
     SQLSMALLINT recordNumber,
     DescriptorField fieldIdentifier,
@@ -1407,7 +1407,7 @@ SQLRETURN SQLSetDescFieldW(
 
 ///// SQLGetDescRec /////
 
-SQLRETURN SQLGetDescRecW(
+export SQLRETURN SQLGetDescRecW(
     SQLHDESC descriptorHandle,
     SQLSMALLINT recordNumber,
     SQLWCHAR* _name,
@@ -1427,7 +1427,7 @@ SQLRETURN SQLGetDescRecW(
 
 ///// SQLSetDescRec /////
 
-SQLRETURN SQLSetDescRec(
+export SQLRETURN SQLSetDescRec(
     SQLHDESC descriptorHandle,
     SQLSMALLINT recordNumber,
     SQLSMALLINT type,
@@ -1446,7 +1446,7 @@ SQLRETURN SQLSetDescRec(
 
 ///// SQLGetDiagField /////
 
-SQLRETURN SQLGetDiagFieldW(
+export SQLRETURN SQLGetDiagFieldW(
     SQL_HANDLE_TYPE handleType,
     SQLHANDLE handle,
     SQLSMALLINT recordNumber,
@@ -1467,7 +1467,7 @@ SQLRETURN SQLGetDiagFieldW(
 
 ///// SQLGetDiagRec /////
 
-SQLRETURN SQLGetDiagRecW(
+export SQLRETURN SQLGetDiagRecW(
     SQL_HANDLE_TYPE handleType,
     SQLHANDLE handle,
     SQLSMALLINT recordNumber,
@@ -1510,7 +1510,7 @@ SQLRETURN SQLGetDiagRecW(
 
 ///// SQLGetEnvAttr /////
 
-SQLRETURN SQLGetEnvAttr(
+export SQLRETURN SQLGetEnvAttr(
     SQLHENV environmentHandle,
     EnvironmentAttribute attribute,
     SQLPOINTER value,
@@ -1524,7 +1524,7 @@ SQLRETURN SQLGetEnvAttr(
 
 ///// SQLSetEnvAttr /////
 
-SQLRETURN SQLSetEnvAttr(
+export SQLRETURN SQLSetEnvAttr(
     SQLHENV environmentHandle,
     EnvironmentAttribute attribute,
     SQLPOINTER value,
@@ -1545,7 +1545,7 @@ SQLRETURN SQLSetEnvAttr(
 
 ///// SQLGetStmtAttr /////
 
-SQLRETURN SQLGetStmtAttrW(
+export SQLRETURN SQLGetStmtAttrW(
     OdbcStatement statementHandle,
     StatementAttribute attribute,
     SQLPOINTER value,
@@ -1588,7 +1588,7 @@ SQLRETURN SQLGetStmtAttrW(
 
 ///// SQLSetStmtAttr /////
 
-SQLRETURN SQLSetStmtAttrW(
+export SQLRETURN SQLSetStmtAttrW(
     OdbcStatement statementHandle,
     StatementAttribute attribute,
     in SQLPOINTER _value,
@@ -1634,7 +1634,7 @@ SQLRETURN SQLSetStmtAttrW(
 
 ///// SQLBulkOperations /////
 
-SQLRETURN SQLBulkOperations(
+export SQLRETURN SQLBulkOperations(
     OdbcStatement statementHandle,
     BulkOperation operation) {
     return exceptionBoundary!(() => {
