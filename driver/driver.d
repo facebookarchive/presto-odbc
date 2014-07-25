@@ -940,10 +940,11 @@ unittest {
     assert("testtest'test'"w.removeTopLevelPattern("test"w) == "'test'"w);
 }
 
+//This removes a pattern from a SQL query that is aware of the presence of string literals.
+//This will eventually be removed in favor of server-side modifications to the SQL.
 wstring removeTopLevelPattern(wstring query, wstring pattern) {
     wstring result;
     bool inString = false;
-    import std.stdio;
     for (;;) {
         auto findPattern = query.findSplit(pattern);
         if (findPattern[0].length == query.length) {

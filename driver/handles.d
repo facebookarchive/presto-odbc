@@ -18,6 +18,44 @@ import bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
 import util;
 
 /**
+ * About Descriptor Handles:
+ * 1) There are 4 "sub-handle-types" that fall into this category.
+ *    They seem to have very little in common other than they must all produce
+ *    answers to the same set of queries from SQLGetDescField and SQLGetDescRec
+ *    (and must also work with the setter variants of those functions).
+ * 2) Because these sub-handles are queried using the same enum values, but expected
+ *    to give distinct answers, I believe that virtual functions are an appropriate
+ *    representation.
+ *
+ * Design complications:
+ * 1) An instance of each of the descriptor types is automatically "implicitly" (in ODBC language)
+ *     allocated for each OdbcStatement.
+ * 2) The application can "explicitly" allocate new ARD or APD sub-handle-types
+ *     with AllocHandle and then change the members of an OdbcStatement handle to
+ *     those "explicitly" allocated handles instead.
+ * 3) Explicitly allocated handles have a lifetime that matches the OdbcConnection
+ *     handle it is constructed with, not the OdbcStatement it is assigned to.
+ *     Explicitly allocated handles must therefore also tell any OdbcStatement that
+ *     is using it that it is being destroyed so they can go back to "implicit" handles.
+ * 4) Explicitly allocated handles can be assigned to multiple OdbcStatements.
+ * 5) When a handle is "explicitly" allocated, you do not know whether it will become
+ *     an ARD or APD until it is assigned to a statement. Because the user may set it
+ *     to more than one statement, this means a level of indirection is needed so that
+ *     the user can continue using the same pointer that they got from AllocHandle in
+ *     the first place. This is why I have an OdbcDescriptorImpl class.
+ *
+ * Alternative design considered:
+ * Could have had all of the required data for each descriptor sub-type in the same class.
+ * Could have used a discriminated union. This would mean more switches, but removes the
+ * need for the Impl class/indirection/allocation. Could have ignored the need to have a
+ * descriptor type at all and jammed everything into OdbcStatement, which is how this
+ * project originally grew. I'm still not certain that I fully understand what all descriptor
+ * sub-types store and where they would store it. At a minimum, the IPD and IRD types may be
+ * much more transparent to the user because they cannot ever be set. One reason to separate
+ * these things out is so that implementing the function SQLCopyDesc is easy/maintainable.
+ */
+
+/**
  * APD
  * Information about application buffers bound to the parameters in an SQL statement
  * such as their addresses, lengths, and C datatypes
