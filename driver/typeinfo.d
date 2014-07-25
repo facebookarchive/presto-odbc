@@ -11,13 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.typeinfo;
 
 import std.variant : Variant;
 
-import sqlext;
-import odbcinst;
+import odbc.sqlext;
+import odbc.odbcinst;
 
-import bindings : OdbcResult, OdbcResultRow;
+import driver.bindings : OdbcResult, OdbcResultRow;
 
 
 // http://msdn.microsoft.com/en-us/library/ms711786(v=vs.85).aspx

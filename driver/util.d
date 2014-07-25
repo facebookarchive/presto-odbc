@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.util;
 
 import std.array : front, popFront, empty, appender;
 import std.algorithm : min;
@@ -20,11 +21,12 @@ import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 import core.exception : Exception;
 
-import sqlext;
-import odbcinst;
-import statementclient : StatementClient, ClientSession;
+import odbc.sqlext;
+import odbc.odbcinst;
 
-import handles : OdbcStatement;
+import dapi.statementclient : StatementClient, ClientSession;
+
+import driver.handles : OdbcStatement;
 
 auto logBuffer = appender!wstring;
 
@@ -139,7 +141,7 @@ unittest {
 }
 
 class OdbcException : Exception {
-    import handles : OdbcStatement, OdbcConnection;
+    import driver.handles : OdbcStatement, OdbcConnection;
 
     this(T)(T handle, StatusCode sqlState, wstring message, int code = 1,
             string file = __FILE__, int line = __LINE__) if (is(T == OdbcStatement) || is(T == OdbcConnection)){

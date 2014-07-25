@@ -28,8 +28,9 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+module odbc.odbcinst;
 
-import sql;
+import odbc.sql;
 
 enum USERDSN_ONLY = 0;
 enum SYSTEMDSN_ONLY = 1;

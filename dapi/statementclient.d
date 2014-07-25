@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module dapi.statementclient;
 
 import std.net.curl : HTTP;
 import std.datetime : SysTime, Clock;
@@ -18,15 +19,15 @@ import std.conv : text;
 import std.string : toLower;
 import std.traits : EnumMembers;
 import std.typecons : Rebindable, rebindable;
-import facebook.json : parseJSON;
 import std.stdio;
+import facebook.json : parseJSON;
 
-import mockcurl : get, post, del;
-import queryresults : QueryResults, queryResults;
+import dapi.mockcurl : get, post, del;
+import dapi.queryresults : QueryResults, queryResults;
 
 version(unittest) {
-    import mockcurl : enqueueCurlResult;
-    import queryresults : JSBuilder;
+    import dapi.mockcurl : enqueueCurlResult;
+    import dapi.queryresults : JSBuilder;
 }
 
 struct ClientSession {

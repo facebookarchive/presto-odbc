@@ -11,6 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module driver.driver;
 
 import core.runtime;
 
@@ -26,15 +27,15 @@ import std.c.stdlib;
 import std.c.string;
 import std.c.windows.windows;
 
-import sqlext;
-import odbcinst;
+import odbc.sqlext;
+import odbc.odbcinst;
 
-import util;
-import handles;
-import bindings;
-import prestoresults;
-import columnresults;
-import typeinfo;
+import driver.util;
+import driver.handles;
+import driver.bindings;
+import driver.prestoresults;
+import driver.columnresults;
+import driver.typeinfo;
 
 //////  DLL entry point for global initializations/finalizations if any
 
@@ -820,7 +821,7 @@ export SQLRETURN SQLTablesW(
     in SQLWCHAR* _tableType,
     SQLSMALLINT _tableTypeLength) {
     return exceptionBoundary!(() => {
-        import tableinfo;
+        import driver.tableinfo;
         statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);
