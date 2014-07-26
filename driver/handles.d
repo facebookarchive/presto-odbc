@@ -11,12 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.handles;
+module presto.odbcdriver.handles;
 
 import odbc.sqlext;
 
-import driver.bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
-import driver.util;
+import presto.odbcdriver.bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
+import presto.odbcdriver.util;
 
 /**
  * About Descriptor Handles:

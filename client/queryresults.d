@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module dapi.queryresults;
+module presto.client.queryresults;
 
 import facebook.json : JSON_TYPE, JSONValue;
 import std.typecons : Tuple, tuple;
@@ -20,8 +20,8 @@ import std.conv : text, to;
 import std.array : front, popFront, empty;
 import std.stdio;
 
-import dapi.prestoerrors;
-import dapi.util;
+import presto.client.prestoerrors;
+import presto.client.util;
 
 version(unittest) {
     import facebook.json : parseJSON;

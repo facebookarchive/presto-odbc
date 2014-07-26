@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module dapi.statementclient;
+module presto.client.statementclient;
 
 import std.net.curl : HTTP;
 import std.datetime : SysTime, Clock;
@@ -22,12 +22,12 @@ import std.typecons : Rebindable, rebindable;
 import std.stdio;
 import facebook.json : parseJSON;
 
-import dapi.mockcurl : get, post, del;
-import dapi.queryresults : QueryResults, queryResults;
+import presto.client.mockcurl : get, post, del;
+import presto.client.queryresults : QueryResults, queryResults;
 
 version(unittest) {
-    import dapi.mockcurl : enqueueCurlResult;
-    import dapi.queryresults : JSBuilder;
+    import presto.client.mockcurl : enqueueCurlResult;
+    import presto.client.queryresults : JSBuilder;
 }
 
 struct ClientSession {

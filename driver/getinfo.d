@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.getinfo;
+module presto.odbcdriver.getinfo;
 
 import std.array : front, empty, popFront;
 import std.conv : text, wtext, to;
@@ -19,8 +19,8 @@ import std.conv : text, wtext, to;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import driver.handles : OdbcConnection;
-import driver.util;
+import presto.odbcdriver.handles : OdbcConnection;
+import presto.odbcdriver.util;
 
 
 ///// SQLGetInfo /////

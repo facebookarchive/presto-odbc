@@ -11,14 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.typeinfo;
+module presto.odbcdriver.typeinfo;
 
 import std.variant : Variant;
 
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import driver.bindings : OdbcResult, OdbcResultRow;
+import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
 
 
 // http://msdn.microsoft.com/en-us/library/ms711786(v=vs.85).aspx

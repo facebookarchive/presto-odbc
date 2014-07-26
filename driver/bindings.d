@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.bindings;
+module presto.odbcdriver.bindings;
 
 import std.stdio : writeln;
 import std.array : empty, front, popFront;
@@ -23,7 +23,7 @@ import std.traits : isSomeString, Unqual;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import driver.util;
+import presto.odbcdriver.util;
 
 unittest {
     enum testSqlTypeId = SQL_C_TYPE_ID.SQL_C_LONG;

@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.columnresults;
+module presto.odbcdriver.columnresults;
 
 import std.array : front, empty, popFront;
 import std.conv : text, to;
@@ -20,12 +20,12 @@ import std.variant : Variant;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import dapi.util : asBool;
+import presto.client.util : asBool;
 
-import driver.handles : OdbcStatement;
-import driver.bindings : OdbcResult, OdbcResultRow;
-import driver.typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
-import driver.util;
+import presto.odbcdriver.handles : OdbcStatement;
+import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
+import presto.odbcdriver.typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
+import presto.odbcdriver.util;
 
 // http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
 

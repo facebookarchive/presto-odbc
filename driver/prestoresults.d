@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.prestoresults;
+module presto.odbcdriver.prestoresults;
 
 import std.array : front, empty, popFront;
 import std.conv : text, to;
@@ -21,10 +21,10 @@ import facebook.json : JSONValue, JSON_TYPE;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import dapi.queryresults : ColumnMetadata;
+import presto.client.queryresults : ColumnMetadata;
 
-import driver.bindings : OdbcResult, OdbcResultRow;
-import driver.util : dllEnforce, logMessage;
+import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
+import presto.odbcdriver.util : dllEnforce, logMessage;
 
 void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
     final switch (columnData.type) {

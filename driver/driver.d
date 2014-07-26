@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.driver;
+module presto.odbcdriver.driver;
 
 import core.runtime;
 
@@ -30,20 +30,16 @@ import std.c.windows.windows;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import driver.util;
-import driver.handles;
-import driver.bindings;
-import driver.prestoresults;
-import driver.columnresults;
-import driver.typeinfo;
+import presto.odbcdriver.util;
+import presto.odbcdriver.handles;
+import presto.odbcdriver.bindings;
+import presto.odbcdriver.prestoresults;
+import presto.odbcdriver.columnresults;
+import presto.odbcdriver.typeinfo;
 
 //////  DLL entry point for global initializations/finalizations if any
 
-version(unittest) {
-    void main() {
-        writeln("Tests completed.");
-    }
-} else {
+version(unittest) {} else {
     extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         if (fdwReason == DLL_PROCESS_ATTACH) { // DLL is being loaded
@@ -821,7 +817,7 @@ export SQLRETURN SQLTablesW(
     in SQLWCHAR* _tableType,
     SQLSMALLINT _tableTypeLength) {
     return exceptionBoundary!(() => {
-        import driver.tableinfo;
+        import presto.odbcdriver.tableinfo;
         statementHandle.errors = [];
         auto catalogName = toDString(_catalogName, _catalogNameLength);
         auto schemaName = toDString(_schemaName, _schemaNameLength);

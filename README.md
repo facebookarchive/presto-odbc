@@ -33,7 +33,6 @@ This driver is written in the [D Programming Language](http://dlang.org)
 1. Build the Presto ODBC Driver
   1. Launch the Cygwin terminal
   1. Navigate to your checkout of this repo (e.g. `cd /cygdrive/c/presto-odbc`)
-  1. `cd driver`
   1. `make clean all` - builds the driver
   1. `make copy` - copies the driver and libcurl to `C:\temp\` and backs up the log files
 1. Register the Presto ODBC Driver by double clicking the `register_driver.reg` file in the main directory of this repo

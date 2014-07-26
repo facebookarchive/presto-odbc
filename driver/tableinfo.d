@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.tableinfo;
+module presto.odbcdriver.tableinfo;
 
 import std.array : front, empty, popFront;
 import std.conv : text, to;
@@ -20,9 +20,9 @@ import std.variant : Variant;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import driver.handles : OdbcStatement;
-import driver.bindings : OdbcResult, OdbcResultRow;
-import driver.util : dllEnforce, logMessage;
+import presto.odbcdriver.handles : OdbcStatement;
+import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
+import presto.odbcdriver.util : dllEnforce, logMessage;
 
 final class TableInfoResult : OdbcResult {
   this(OdbcStatement statementHandle) {

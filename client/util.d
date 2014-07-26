@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-module dapi.util;
+module presto.client.util;
 
 import facebook.json : JSONValue, JSON_TYPE;
 import std.conv : text;

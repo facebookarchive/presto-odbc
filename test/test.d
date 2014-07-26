@@ -11,15 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module dapi.main;
+module presto.client.test;
 
 //This file exists to facilitate "live testing" and trying simple queries
 
 import std.stdio : writeln;
 import std.net.curl;
 
-import dapi.queryresults : QueryResults;
-import dapi.statementclient : ClientSession, StatementClient;
+import presto.client.queryresults : QueryResults;
+import presto.client.statementclient : ClientSession, StatementClient;
 
 version(unittest) void main() { writeln("Tests completed."); }
 else void main() {

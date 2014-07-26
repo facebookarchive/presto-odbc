@@ -12,12 +12,12 @@
  * limitations under the License.
  */
 
-module dapi.prestoerrors;
+module presto.client.prestoerrors;
 
 import facebook.json : JSON_TYPE, JSONValue;
 import std.typecons : Nullable;
 
-import dapi.util;
+import presto.client.util;
 
 class QueryException : PrestoClientException {
     this (JSONValue rawResult) immutable {

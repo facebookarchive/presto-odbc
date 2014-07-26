@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module driver.util;
+module presto.odbcdriver.util;
 
 import std.array : front, popFront, empty, appender;
 import std.algorithm : min;
@@ -24,9 +24,9 @@ import core.exception : Exception;
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import dapi.statementclient : StatementClient, ClientSession;
+import presto.client.statementclient : StatementClient, ClientSession;
 
-import driver.handles : OdbcStatement;
+import presto.odbcdriver.handles : OdbcStatement;
 
 auto logBuffer = appender!wstring;
 
@@ -114,7 +114,7 @@ void dllEnforce(bool condition, lazy string message = "dllEnforce failed", strin
 }
 
 SQLRETURN exceptionBoundary(alias fun, TList...)(auto ref TList args) {
-    import dapi.prestoerrors : QueryException;
+    import presto.client.prestoerrors : QueryException;
 
     try {
         return fun(args);
@@ -141,7 +141,7 @@ unittest {
 }
 
 class OdbcException : Exception {
-    import driver.handles : OdbcStatement, OdbcConnection;
+    import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 
     this(T)(T handle, StatusCode sqlState, wstring message, int code = 1,
             string file = __FILE__, int line = __LINE__) if (is(T == OdbcStatement) || is(T == OdbcConnection)){
