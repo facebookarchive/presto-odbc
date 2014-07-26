@@ -88,7 +88,7 @@ export SQLRETURN SQLDriverConnectW(
         }
 
         if (driverCompletion != DriverCompletion.NOPROMPT) {
-            connectionArguments ~= ";SERVER=;PORT=8080;DATABASE=default;SCHEMA=default;";
+            connectionArguments ~= ";SERVER=;DATABASE=default;SCHEMA=default;";
         }
 
         with (connectionHandle) {
@@ -410,7 +410,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
     with (statementHandle) {
         logMessage("SQLExecuteImpl", query);
 
-        bool noEndpointSpecified = connection.endpoint.empty || connection.endpoint == ":8080";
+        bool noEndpointSpecified = connection.endpoint.empty;
         if (noEndpointSpecified) {
             logMessage("Warning: Not connected to an endpoint!");
             latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
