@@ -25,7 +25,7 @@ This driver is written in the [D Programming Language](http://dlang.org)
 
 1. Cygwin with the GNU make package
 1. [MSVC 64-bit linker](http://www.visualstudio.com) (download and install the free Express 2013 edition for Windows Desktop)
-1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download) (note: this must be installed *after*  Visual Studio)
+1. dmd (D Language Compiler), tested with [dmd 2.065](http://dlang.org/download) (note: this must be the installer version and it must be installed *after*  Visual Studio)
 1. Access to a running [Presto](http://prestodb.io) instance
 
 ### Building and Registering the Driver
