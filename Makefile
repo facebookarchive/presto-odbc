@@ -16,7 +16,7 @@ TEST_PROGRAM = unittests
 
 .PHONY: all driver tests copy logdiff clean
 
-all: driver
+all: driver tests
 
 driver:
 	$(DC) $(LIB_FLAGS) $(FLAGS) $(SOURCES) -shared -of$(PROGRAM)
@@ -24,12 +24,17 @@ driver:
 tests:
 	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(TEST_SOURCES) -of$(TEST_PROGRAM)
 
-copy:
+check: tests
+	cp $(LIBCURL) .
+	./$(TEST_PROGRAM)
+
+install: driver check
 	mkdir -p $(TEMP)
 	cp $(PROGRAM) $(TEMP)/$(PROGRAM)
 	cp $(LIBCURL) $(TEMP)/
 	rm -f $(TEMP)/SQL.LOG
 	if [ -f $(LOGFILE) ]; then mv $(LOGFILE) $(LOGFILE).old; fi
+	@echo "Install complete"
 
 logdiff:
 	sdiff --text $(LOGFILE) $(LOGFILE).old
