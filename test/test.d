@@ -13,26 +13,6 @@
  */
 module presto.client.test;
 
-//This file exists to facilitate "live testing" and trying simple queries
-
 import std.stdio : writeln;
-import std.net.curl;
-
-import presto.client.queryresults : QueryResults;
-import presto.client.statementclient : ClientSession, StatementClient;
 
 version(unittest) void main() { writeln("Tests completed."); }
-else void main() {
-    auto session = ClientSession("localhost:8080", "test");
-    session.catalog = "tpch";
-    session.schema = "tiny";
-
-    auto client = StatementClient(session, "SELECT * FROM orders");
-    foreach (resultBatch; client) {
-        writeln("Starting a new batch");
-
-        foreach (row; resultBatch.byRow!(string, "comment")()) {
-            writeln(row);
-        }
-    }
-}
