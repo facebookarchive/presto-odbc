@@ -84,19 +84,20 @@ export SQLRETURN SQLDriverConnectW(
         }
 
         if (driverCompletion != DriverCompletion.NOPROMPT) {
-            connectionArguments ~= ";SERVER=;DATABASE=default;SCHEMA=default;";
+            connectionArguments ~= ";server=;port=;prestoCatalog=;prestoSchema=;";
+            connectionArguments = wtext(getTextInput(text(connectionArguments)));
         }
 
         with (connectionHandle) {
             auto connectionArguments = parseConnectionString(text(connectionArguments));
-            dllEnforce(("SERVER" in connectionArguments) != null);
-            endpoint = connectionArguments.getOrDefault("SERVER");
-            if ("PORT" in connectionArguments) {
-                endpoint ~= ':';
-                endpoint ~= connectionArguments["PORT"];
-            }
+            logMessage("SQLDriverConnect completed arguments", connectionArguments);
+            dllEnforce(("ENDPOINT" in connectionArguments) != null);
+            endpoint = connectionArguments.getOrDefault("ENDPOINT");
             catalog = connectionArguments.getOrDefault("DATABASE");
-            schema = connectionArguments.getOrDefault("SCHEMA");
+            if (auto valuePtr = "PRESTOCATALOG" in connectionArguments) {
+                catalog = *valuePtr;
+            }
+            schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
             userId = connectionArguments.getOrDefault("UID");
             authentication = connectionArguments.getOrDefault("PWD");
         }

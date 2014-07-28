@@ -17,6 +17,7 @@ import std.array : front, popFront, empty, appender;
 import std.algorithm : min;
 import std.stdio : writeln;
 import std.conv : to, text, wtext;
+import std.file : append, write, readText, remove, exists, FileException;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 import core.exception : Exception;
@@ -28,6 +29,7 @@ import presto.client.statementclient : StatementClient, ClientSession;
 
 import presto.odbcdriver.handles : OdbcStatement;
 
+enum tempPath = "C:\\temp\\";
 auto logBuffer = appender!wstring;
 
 void logMessage(TList...)(auto ref TList vs) {
@@ -45,13 +47,12 @@ void logCriticalMessage(TList...)(auto ref TList vs) {
 }
 
 void flushLogBuffer() {
-    import std.file : append, FileException;
-    enum logFile = "C:\\temp\\presto_odbc.log";
+    enum logFile = tempPath ~ "presto_odbc.log";
 
     FileException fileException;
     for (;;) {
         try {
-            append(logFile, logBuffer.data);
+            logFile.append(logBuffer.data);
             logBuffer.clear();
             if (fileException) {
                 append(logFile, "Had at least one file exception, latest:\n"w ~ wtext(fileException));
@@ -100,6 +101,46 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
         }
     }
     return wtext(joiner(rngOfVs, " "));
+}
+
+/**
+ * TODO: Create a "real" GUI
+ * This is a temporary/hacky solution that allows us to offer a
+ * "GUI" for entering connection properties without having to actually
+ * include/link with a cross-platform graphics library. This will be
+ * removed in the future.
+ */
+string getTextInput(string fileTemplate = "") {
+    import std.process : execute;
+
+    auto tempFile = makeTempFile(fileTemplate);
+    scope (exit) { tempFile.remove; }
+    if (auto rc = execute(["notepad.exe", tempFile]).status != 0) {
+        throw new OdbcException(StatusCode.GENERAL_ERROR, "Notepad returned bad return code "w ~ wtext(rc));
+    }
+    return tempFile.readText!string();
+}
+
+string makeTempFile(string content = "")
+out(tempFile) {
+    dllEnforce(tempFile.exists, "File must exist");
+} body {
+    import std.random : uniform;
+
+    Exception eSaved;
+    for (auto i = 0; i < 10; ++i) {
+        try {
+            //As long as this driver is single-threaded I don't believe we're likely
+            //to find this problematic.
+            auto tempFile = tempPath ~ "temp" ~ text(uniform(0, 1_000_000));
+            if (tempFile.exists) {
+                continue;
+            }
+            tempFile.write(content);
+            return tempFile;
+        } catch (Exception e) { eSaved = e; }
+    }
+    throw new OdbcException(StatusCode.GENERAL_ERROR, "Failed to make temp file"w ~ wtext(eSaved));
 }
 
 void dllEnforce(bool condition, lazy string message = "dllEnforce failed", string file = __FILE__, int line = __LINE__) {

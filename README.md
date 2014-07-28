@@ -52,8 +52,10 @@ This driver is written in the [D Programming Language](http://dlang.org)
   1. Click the radio button for `Driver`
   1. Select `Presto ODBC Driver`
   1. Click `Connect`
-  1. Fill in the server, port, and database (catalog) information
-  1. In the `String Extras` box, enter a schema using the format `schema=schema_name`
+  1. Enter a connection parameters string of the form `key=value;key=value` to describe your connection. A description of the supported keys and values can be found in the [Connection Parameters](connection-parameters.md) file
+  1. Tableau will then partially load the driver and redundantly ask for the same information in Tableau's UI:
+    1. Replace the contents of the `String Extras` box with the string you entered in notepad. Ignore the rest.
+    1. Click `OK`
   1. Tableau will perform a bunch of fake queries to analyze the ODBC driver, this may take a while to complete but only needs to happen once
 1. On the new screen:
   1. Click `Select Schema`, then press the search icon, then select the schema you entered on the previous screen
