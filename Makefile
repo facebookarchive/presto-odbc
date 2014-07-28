@@ -25,6 +25,7 @@ tests:
 	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(TEST_SOURCES) -of$(TEST_PROGRAM)
 
 check: tests
+	chmod 555 $(LIBCURL)
 	cp $(LIBCURL) .
 	./$(TEST_PROGRAM)
 
