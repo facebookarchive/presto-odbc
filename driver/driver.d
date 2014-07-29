@@ -14,6 +14,7 @@
 module presto.odbcdriver.driver;
 
 import core.runtime;
+import core.time : dur;
 
 import std.array : front, popFront, empty;
 import std.string : toUpper;
@@ -88,20 +89,19 @@ export SQLRETURN SQLDriverConnectW(
             connectionArguments = wtext(getTextInput(text(connectionArguments)));
         }
 
-        with (connectionHandle) {
+        with (connectionHandle) with (session) {
+            import presto.client.statementclient : ClientSession;
+
             auto connectionArguments = parseConnectionString(text(connectionArguments));
             logMessage("SQLDriverConnect completed arguments", connectionArguments);
-            endpoint = connectionArguments.getOrDefault("ENDPOINT");
+            session = ClientSession(connectionArguments.getOrDefault("ENDPOINT"), "presto-odbc");
             if (endpoint.empty) {
                 throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify an endpoint!");
             }
-            catalog = connectionArguments.getOrDefault("DATABASE");
-            if (auto valuePtr = "PRESTOCATALOG" in connectionArguments) {
-                catalog = *valuePtr;
-            }
+            catalog = connectionArguments.getOrDefault("PRESTOCATALOG");
             schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
-            userId = connectionArguments.getOrDefault("UID");
-            authentication = connectionArguments.getOrDefault("PWD");
+            user = connectionArguments.getOrDefault("USERNAME", "ODBC Driver");
+            proxyEndpoint = connectionArguments.getOrDefault!string("PROXYENDPOINT", null);
 
             if (!connectionHandle.canConnect()) {
                 throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR,
@@ -162,13 +162,6 @@ string[string] parseConnectionString(string connectionString) {
             value = match[3];
         }
         result[toUpper(key)] = value;
-    }
-
-    if (auto pwdPtr = "PWD" in result) {
-        auto password = *pwdPtr;
-        result["PWD"] = (password.empty ? "" : "*******");
-        logMessage(result);
-        result["PWD"] = password;
     }
 
     return result;
@@ -417,7 +410,7 @@ export SQLRETURN SQLExecute(OdbcStatement statementHandle) {
 // http://msdn.microsoft.com/en-us/library/ms716365%28v=vs.85%29.aspx
 
 void SQLExecuteImpl(OdbcStatement statementHandle) {
-    with (statementHandle) {
+    with (statementHandle) with (connection) {
         logMessage("SQLExecuteImpl", query);
 
         if (query.empty) {
@@ -427,7 +420,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
             return;
         }
 
-        auto client = statementHandle.runQuery(text(query));
+        auto client = runQuery(text(query));
         auto result = makeWithoutGC!PrestoResult();
         scope(exit) { latestOdbcResult = result;  }
         executedQuery = true;
@@ -629,7 +622,7 @@ export SQLRETURN SQLColumnsW(
 
         logMessage("SQLColumns", catalogName, schemaName, tableName, columnName);
         with (statementHandle) {
-            latestOdbcResult = statementHandle.listColumnsInTable(text(tableName));
+            latestOdbcResult = connection.listColumnsInTable(text(tableName));
         }
         return SQL_SUCCESS;
     }());
@@ -829,10 +822,10 @@ export SQLRETURN SQLTablesW(
         auto schemaName = toDString(_schemaName, _schemaNameLength);
         auto tableNamePattern = toDString(_tableNamePattern, _tableNamePatternLength);
         auto tableType = toDString(_tableType, _tableTypeLength);
-        with (statementHandle) {
+        with (statementHandle) with (connection) {
             logMessage("SQLTablesW", catalogName, schemaName, tableNamePattern, tableType);
 
-            auto client = statementHandle.runQuery("SHOW TABLES");
+            auto client = runQuery("SHOW TABLES");
             auto result = makeWithoutGC!TableInfoResult(statementHandle);
             foreach (resultBatch; client) {
                 foreach (row; resultBatch.data.array) {
@@ -1153,7 +1146,7 @@ export SQLRETURN SQLColAttributeW(
         statementHandle.errors = [];
         auto characterAttribute = outputWChar(_characterAttribute, _bufferMaxLengthBytes, _stringLengthBytes);
         logMessage("SQLColAttribute", columnNumber, fieldIdentifier);
-        with (statementHandle) with (connection) with (DescriptorField) {
+        with (statementHandle) with (connection) with (session) with (DescriptorField) {
             if (fieldIdentifier == SQL_DESC_COUNT) {
                 *numericAttribute = latestOdbcResult.numberOfColumns;
                 return SQL_SUCCESS;
@@ -1380,21 +1373,18 @@ export SQLRETURN SQLSetConnectAttrW(
     SQLPOINTER value,
     SQLINTEGER stringLength) {
     return exceptionBoundary!(() => {
-        with (connectionHandle) with (ConnectionAttribute) {
+        logMessage("SQLSetConnectAttr (partially-implemented)", attribute);
+        with (connectionHandle) with (session) with (ConnectionAttribute) {
             switch (attribute) {
                 case SQL_LOGIN_TIMEOUT:
-                    loginTimeoutSeconds = cast(SQLLEN) value;
-                    logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", loginTimeoutSeconds);
+                    timeout = dur!"seconds"(cast(SQLLEN) value);
+                    logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", timeout);
                     break;
                 default:
                     logMessage("SQLSetConnectAttr attribute not handled", attribute);
                     break;
 			}
     	}
-        logMessage("SQLSetConnectAttr (unimplemented)", attribute);
-        with (connectionHandle) with (ConnectionAttribute) {
-            //TODO:
-        }
         return SQL_SUCCESS;
     }());
 

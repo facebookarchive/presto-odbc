@@ -215,38 +215,41 @@ final class OdbcStatement {
 }
 
 final class OdbcConnection {
+    import presto.client.statementclient : StatementClient, ClientSession;
 
     this(OdbcEnvironment environment) {
         dllEnforce(environment !is null);
         this.environment = environment;
+        this.session.source = "presto-odbc";
     }
 
 
     bool canConnect() {
-        import core.time : dur, Duration;
-        import std.net.curl : HTTP, CurlException;
+        import std.net.curl : CurlException;
         import presto.client.mockcurl : get;
 
-        auto http = HTTP();
-        logMessage("Checking connection to", endpoint, loginTimeoutSeconds);
-        http.connectTimeout(dur!"seconds"(loginTimeoutSeconds));
+        logMessage("Checking connection to", session.endpoint, session.timeout);
         try {
-            get(endpoint, http);
+            //We found a compiler bug whereby if you remove the variable that
+            //follows, even though we do not use the result of runQuery here,
+            //the destructor of StatementClient is not called and execution of
+            //the program seems to mysteriously halt.
+            auto dontRemoveThisVariable = runQuery("SELECT 1");
         } catch (CurlException e) {
+            logCriticalMessage(e);
             return false;
         }
         return true;
     }
 
+    StatementClient runQuery(string query) {
+        return StatementClient(session, query);
+    }
+
     OdbcEnvironment environment;
     bool[OdbcDescriptor] explicitlyAllocatedDescriptors;
-    string endpoint; //Host and port
-    string catalog;
-    string schema;
-    string userId;
-    string authentication;
+    ClientSession session;
     OdbcException[] errors;
-    size_t loginTimeoutSeconds = 5;
 }
 
 final class OdbcEnvironment {

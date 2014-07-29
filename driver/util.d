@@ -474,21 +474,11 @@ unittest {
     assert(associativeArray.getOrDefault("frank") == 0);
 }
 
-V getOrDefault(K, V)(V[K] associativeArray, K key, V default_ = V.init) {
+V getOrDefault(V, K)(V[K] associativeArray, K key, V default_ = V.init) {
     if (auto valuePointer = key in associativeArray) {
         return *valuePointer;
     }
     return default_;
-}
-
-StatementClient runQuery(OdbcStatement statementHandle, string query) {
-    with (statementHandle.connection) {
-        auto session = ClientSession(endpoint, "ODBC Driver");
-        session.catalog = catalog;
-        session.schema = schema.empty ? "tiny" : schema;
-
-        return StatementClient(session, query);
-    }
 }
 
 unittest {

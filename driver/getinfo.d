@@ -36,7 +36,7 @@ export extern(System)
         connectionHandle.errors = [];
         auto stringResult = outputWChar(_infoValue, _bufferMaxLengthBytes, _stringLengthBytes);
         logMessage("SQLGetInfo", infoType);
-        with (OdbcInfo) with(connectionHandle) {
+        with (OdbcInfo) with(connectionHandle) with (session) {
             switch (infoType) {
                 case SQL_MAX_DRIVER_CONNECTIONS: //0
                     *cast(SQLUSMALLINT*)(_infoValue) = 1;

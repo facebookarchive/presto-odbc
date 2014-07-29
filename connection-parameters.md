@@ -8,11 +8,11 @@ Connection parameter names are *not* case sensitive, the values you put into the
 
 Connection Parameter  | Description
 ------------- | -------------
-Endpoint | host:port of the server you would like to connect to
-PrestoCatalog | Presto Catalog
+Endpoint (required) | host:port of the server you would like to connect to
+PrestoCatalog (required) | Presto Catalog
 PrestoSchema | Presto Schema
-Username | No effect
-Password | No effect
+Username | Sets the Presto user
+ProxyEndpoint | host:port of your socks5 proxy machine
 
 A connection parameter string is a string of the form `key=value;key=value` up to any number of
 key/value pairs. Leading/trailing semicolons are optional.

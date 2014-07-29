@@ -37,7 +37,7 @@ version(unittest) {
         return get(url);
     }
 
-    void del(const(char)[] url) {
+    void del(const(char)[] url, HTTP conn = HTTP()) {
         //No-op
     }
 

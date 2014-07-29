@@ -13,17 +13,21 @@
  */
 module presto.client.statementclient;
 
-import std.net.curl : HTTP;
+import core.time : dur, Duration;
+
+import std.algorithm : findSplit;
+import std.conv : text, to;
 import std.datetime : SysTime, Clock;
-import std.conv : text;
 import std.string : toLower;
 import std.traits : EnumMembers;
 import std.typecons : Rebindable, rebindable;
-import std.stdio;
+import std.net.curl : HTTP;
+
 import facebook.json : parseJSON;
 
 import presto.client.mockcurl : get, post, del;
 import presto.client.queryresults : QueryResults, queryResults;
+import presto.client.util;
 
 version(unittest) {
     import presto.client.mockcurl : enqueueCurlResult;
@@ -31,10 +35,14 @@ version(unittest) {
 }
 
 struct ClientSession {
-    this(string endpoint, string user) {
-        this.endpoint = endpoint ~ "/v1/statement";
-        this.user = user;
+    this(string endpoint) {
+        this.endpoint = endpoint;
         this.time_zone = getThisTimeZoneId();
+    }
+
+    this(string endpoint, string source) {
+        this(endpoint);
+        this.source = source;
     }
 
     string endpoint = null;
@@ -42,6 +50,8 @@ struct ClientSession {
     string source = null;
     string schema = null;
     string catalog = null;
+    Duration timeout = dur!"seconds"(5);
+    string proxyEndpoint = null;
 
     //Obeys format from http://docs.oracle.com/javase/7/docs/api/java/util/TimeZone.html
     string time_zone;
@@ -50,12 +60,30 @@ struct ClientSession {
     //Obeys format from Java Locale
     string language = null;
 
-    //TODO: Could conceivably cache this if the variables became properties...
-    HTTP constructHeaders() const {
+    //NOTE: Do *NOT* attempt to cache this work - even though HTTP is a struct
+    //      it has surprising class-like copying semantics.
+    HTTP connection() const {
+        import etc.c.curl;
+
         auto http = HTTP();
+        http.connectTimeout(timeout);
+        if (proxyEndpoint && !proxyEndpoint.empty) {
+            auto hostPort = proxyEndpoint.findLastSplit(':');
+            if (hostPort[2].empty) {
+                throw new PrestoClientException("Must specify a proxy port");
+            }
+            http.proxy = hostPort[0];
+            http.proxyPort = to!ushort(hostPort[2]);
+            http.proxyType = CurlProxy.socks5;
+        }
+
+        return addHeaders(http);
+    }
+
+    private HTTP addHeaders(HTTP http) const {
         foreach (header; EnumMembers!PRESTO_HEADER) {
             enum memberName = mapHeaderToMemberName!header;
-            addHeaderIfNotNull!(header)(http, mixin(memberName));
+            http.addHeaderIfNotNull!(header)(mixin(memberName));
         }
 
         return http;
@@ -63,10 +91,10 @@ struct ClientSession {
 }
 
 unittest {
-    auto cs = ClientSession("localhost", "user1");
+    auto cs = ClientSession("localhost");
     cs.schema = "tiny";
     cs.catalog = "tpch";
-    cs.constructHeaders();
+    cs.connection;
 }
 
 string getThisTimeZoneId() {
@@ -83,7 +111,9 @@ struct StatementClient {
         this.session_ = session;
         this.query_ = query;
 
-        auto response = post(session.endpoint, query, session.constructHeaders());
+        auto fullEndpoint = session.endpoint ~ "/v1/statement";
+        auto response = fullEndpoint.post(query, session.connection);
+
         parseAndSetResults(response);
     }
 
@@ -91,7 +121,7 @@ struct StatementClient {
         terminateQuery();
     }
 
-    ClientSession session() const {
+    inout(ClientSession) session() inout {
         return session_;
     }
     string query() const {
@@ -107,7 +137,7 @@ struct StatementClient {
 
     void popFront() {
         assert(!empty);
-        auto response = get(results_.nextURI);
+        auto response = get(results_.nextURI, session.connection);
         parseAndSetResults(response);
     }
 
@@ -117,7 +147,12 @@ struct StatementClient {
 
     void terminateQuery() {
         if (results_.nextURI != "") {
-            del(results_.nextURI);
+            version (unittest) {} else {
+                import presto.odbcdriver.util;
+                logCriticalMessage("Pre del");
+            }
+
+            del(results_.nextURI, session.connection);
             queryTerminated_ = true;
         }
     }
@@ -148,7 +183,7 @@ unittest {
     enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
     enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
-    auto session = ClientSession("localhost", "user1");
+    auto session = ClientSession("localhost");
     auto query = "SELECT lemons FROM life";
     auto client = StatementClient(session, query);
     assert(client.query == query);
@@ -174,7 +209,7 @@ unittest {
     enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
     enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
-    auto session = ClientSession("localhost", "user1");
+    auto session = ClientSession("localhost");
     auto query = "SELECT lemons FROM life";
     auto client = StatementClient(session, query);
     assert(client.query == query);
@@ -203,7 +238,7 @@ unittest {
     enqueueCurlResult(new JSBuilder().withNext().withColumns().withData().toString().dup);
     enqueueCurlResult(new JSBuilder().withColumns().withData().toString().dup);
 
-    auto session = ClientSession("localhost", "user1");
+    auto session = ClientSession("localhost");
     auto client = StatementClient(session, "");
 
     Tid[] workers;
@@ -233,7 +268,7 @@ version(unittest) {
 unittest {
     enqueueCurlResult(new JSBuilder().withNext().toString().dup);
 
-    auto session = ClientSession("localhost", "user1");
+    auto session = ClientSession("localhost");
     auto client = StatementClient(session, "query");
     assert(!client.empty);
     client.terminateQuery();

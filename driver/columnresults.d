@@ -22,16 +22,16 @@ import odbc.odbcinst;
 
 import presto.client.util : asBool;
 
-import presto.odbcdriver.handles : OdbcStatement;
+import presto.odbcdriver.handles : OdbcConnection;
 import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
 import presto.odbcdriver.typeinfo : columnSizeMap, decimalDigitsMap, typeToNumPrecRadix;
 import presto.odbcdriver.util;
 
 // http://msdn.microsoft.com/en-us/library/ms711683%28v=vs.85%29.aspx
 
-ColumnsResult listColumnsInTable(OdbcStatement statementHandle, string tableName) {
-    with (statementHandle) with (connection) {
-        auto client = statementHandle.runQuery("SHOW COLUMNS FROM " ~ tableName.escapeSqlIdentifier);
+ColumnsResult listColumnsInTable(OdbcConnection connectionHandle, string tableName) {
+    with (connectionHandle) with (session) {
+        auto client = connectionHandle.runQuery("SHOW COLUMNS FROM " ~ tableName.escapeSqlIdentifier);
         auto result = makeWithoutGC!ColumnsResult();
         foreach (resultBatch; client) {
             foreach (i, row; resultBatch.data.array) {

@@ -14,9 +14,13 @@
 
 module presto.client.util;
 
-import facebook.json : JSONValue, JSON_TYPE;
+import std.algorithm : find, max;
+import std.array : array, front, empty, popFront;
 import std.conv : text;
-import std.typecons : Nullable;
+import std.range : ElementType, isBidirectionalRange, retro;
+import std.typecons : Nullable, tuple, Unqual;
+
+import facebook.json : JSONValue, JSON_TYPE;
 
 version(unittest) {
     import facebook.json : parseJSON;
@@ -48,7 +52,6 @@ unittest {
     assert(asBool(parseJSON("false")) == false);
     assertThrown!PrestoClientException(asBool(parseJSON(`"blahblah"`)));
 }
-
 
 T jsonValueAs(T)(JSONValue elt) {
     static if (is(T == bool)) {
@@ -92,4 +95,64 @@ unittest {
     auto js = parseJSON(`{"test" : "value"}`);
     assert(getPropertyOrDefault!(string, "test")(js) == "value");
     assert(getPropertyOrDefault!(string, "meep")(js) == "");
+}
+
+auto findLastSplit(alias pred = "a==b")(string haystack, char needle) {
+    auto result = haystack.retro.array.find!(pred)(needle);
+    if (result.empty && haystack != text(needle)) {
+        return tuple(haystack, haystack[0 .. 0], haystack[0 .. 0]);
+    }
+
+    auto lengthBeforeNeedle = !result.empty ? result.length - 1 : 0;
+    auto beforeNeedle = haystack[0 .. lengthBeforeNeedle];
+
+    haystack = haystack[lengthBeforeNeedle .. $];
+    auto outNeedle = haystack[0 .. 1];
+
+    haystack = haystack[1 .. $];
+    return tuple(beforeNeedle, outNeedle, haystack);
+}
+
+unittest {
+    auto test = "meep:blop";
+    auto result = test.findLastSplit(':');
+    assert(result[0] == "meep");
+    assert(result[1] == ":");
+    assert(result[2] == "blop");
+
+    test = ":";
+    result = test.findLastSplit(':');
+    assert(result[0] == "");
+    assert(result[1] == ":");
+    assert(result[2] == "");
+
+    test = "";
+    result = test.findLastSplit(':');
+    assert(result[0] == "");
+    assert(result[1] == "");
+    assert(result[2] == "");
+
+    test = "meep";
+    result = test.findLastSplit(':');
+    assert(result[0] == "meep");
+    assert(result[1] == "");
+    assert(result[2] == "");
+
+    test = "a:";
+    result = test.findLastSplit(':');
+    assert(result[0] == "a");
+    assert(result[1] == ":");
+    assert(result[2] == "");
+
+    test = ":b";
+    result = test.findLastSplit(':');
+    assert(result[0] == "");
+    assert(result[1] == ":");
+    assert(result[2] == "b");
+
+    test = "a:b:c";
+    result = test.findLastSplit(':');
+    assert(result[0] == "a:b");
+    assert(result[1] == ":");
+    assert(result[2] == "c");
 }

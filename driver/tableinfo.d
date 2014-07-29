@@ -25,76 +25,76 @@ import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
 import presto.odbcdriver.util : dllEnforce, logMessage;
 
 final class TableInfoResult : OdbcResult {
-  this(OdbcStatement statementHandle) {
-    this.statementHandle = statementHandle;
-  }
-
-  void addTable(string name) {
-    with (statementHandle) with (connection) {
-      results ~= new TableInfoResultRow(catalog, schema, name);
+    this(OdbcStatement statementHandle) {
+        this.statementHandle = statementHandle;
     }
-  }
 
-  override bool empty() const {
-    return results.empty;
-  }
+    void addTable(string name) {
+        with (statementHandle) with (connection) with (session) {
+            results ~= new TableInfoResultRow(catalog, schema, name);
+        }
+    }
 
-  override inout(TableInfoResultRow) front() inout {
-    assert(!empty);
-    return results.front;
-  }
+    override bool empty() const {
+      return results.empty;
+    }
 
-  override void popFront() {
-    results.popFront;
-  }
+    override inout(TableInfoResultRow) front() inout {
+        assert(!empty);
+        return results.front;
+    }
 
-  override size_t numberOfColumns() {
-    return TableInfoResultColumns.max;
-  }
+    override void popFront() {
+        results.popFront;
+    }
+
+    override size_t numberOfColumns() {
+        return TableInfoResultColumns.max;
+    }
 
 private:
-  OdbcStatement statementHandle;
-  TableInfoResultRow[] results;
+    OdbcStatement statementHandle;
+    TableInfoResultRow[] results;
 }
 
 
 // http://msdn.microsoft.com/en-us/library/ms711831%28v=vs.85%29.aspx
 final class TableInfoResultRow : OdbcResultRow {
-  this(string catalogName, string schemaName, string tableName) {
-    this.catalogName = catalogName;
-    this.schemaName = schemaName;
-    this.tableName = tableName;
-  }
-
-  override Variant dataAt(int column) {
-    with (TableInfoResultColumns) {
-      switch (column) {
-      case TABLE_CATALOG:
-        return Variant(catalogName);
-      case TABLE_SCHEMA:
-        return Variant(schemaName);
-      case TABLE_NAME:
-        return Variant(tableName);
-      case TABLE_TYPE:
-        return Variant("TABLE");
-      case REMARKS:
-        return Variant("A faux table for testing");
-      default:
-        dllEnforce(false, "Non-existant column " ~ text(cast(TableInfoResultColumns) column));
-        assert(false, "Silence compiler errors about not returning");
-      }
+    this(string catalogName, string schemaName, string tableName) {
+        this.catalogName = catalogName;
+        this.schemaName = schemaName;
+        this.tableName = tableName;
     }
-  }
+
+    override Variant dataAt(int column) {
+        with (TableInfoResultColumns) {
+            switch (column) {
+            case TABLE_CATALOG:
+                return Variant(catalogName);
+            case TABLE_SCHEMA:
+                return Variant(schemaName);
+            case TABLE_NAME:
+                return Variant(tableName);
+            case TABLE_TYPE:
+                return Variant("TABLE");
+            case REMARKS:
+                return Variant("A faux table for testing");
+            default:
+                dllEnforce(false, "Non-existant column " ~ text(cast(TableInfoResultColumns) column));
+                assert(false, "Silence compiler errors about not returning");
+            }
+        }
+    }
 private:
-  string catalogName;
-  string schemaName;
-  string tableName;
+    string catalogName;
+    string schemaName;
+    string tableName;
 }
 
 enum TableInfoResultColumns {
-  TABLE_CATALOG = 1,
-  TABLE_SCHEMA,
-  TABLE_NAME,
-  TABLE_TYPE,
-  REMARKS
+    TABLE_CATALOG = 1,
+    TABLE_SCHEMA,
+    TABLE_NAME,
+    TABLE_TYPE,
+    REMARKS
 }
