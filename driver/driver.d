@@ -845,7 +845,6 @@ export SQLRETURN SQLTablesW(
 
             latestOdbcResult = result;
             return SQL_SUCCESS;
-            return SQL_SUCCESS;
         }
     }());
 }

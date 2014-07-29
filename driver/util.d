@@ -21,6 +21,10 @@ import std.file : append, write, readText, remove, exists, FileException;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 import core.exception : Exception;
+import core.time : dur, Duration;
+import std.net.curl : HTTP, CurlException;
+import std.string: format;
+import std.datetime: Clock;
 
 import odbc.sqlext;
 import odbc.odbcinst;
@@ -84,7 +88,7 @@ unittest {
     assert(buildDebugMessage("Hi", ptr, 5) == "Hi 3039 5"w);
 }
 
-wstring buildDebugMessage(TList...)(auto ref TList vs) {
+wstring buildDebugMessage(string fileName = __FILE__, int lineNumber = __LINE__, TList...)(auto ref TList vs) {
     import std.conv : wtext;
     import std.algorithm : joiner;
 
@@ -100,7 +104,11 @@ wstring buildDebugMessage(TList...)(auto ref TList vs) {
             rngOfVs ~= wtext(v);
         }
     }
-    return wtext(joiner(rngOfVs, " "));
+    version(unittest) {
+    	return wtext(joiner(rngOfVs, " "));
+    }
+    
+    return wtext(format("%s %s:%d %s", Clock.currTime().toSimpleString(), fileName, lineNumber, joiner(rngOfVs, " ")));
 }
 
 /**
