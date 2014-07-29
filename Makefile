@@ -25,14 +25,15 @@ tests:
 	$(DC) -unittest $(LIB_FLAGS) $(FLAGS) $(TEST_SOURCES) -of$(TEST_PROGRAM)
 
 check: tests
-	chmod 555 $(LIBCURL)
 	cp $(LIBCURL) .
+	chmod 555 $(notdir $(LIBCURL))
 	./$(TEST_PROGRAM)
 
 install: driver check
 	mkdir -p $(TEMP)
 	cp $(PROGRAM) $(TEMP)/$(PROGRAM)
 	cp $(LIBCURL) $(TEMP)/
+	chmod 555 $(TEMP)/$(notdir $(LIBCURL))
 	rm -f $(TEMP)/SQL.LOG
 	if [ -f $(LOGFILE) ]; then mv $(LOGFILE) $(LOGFILE).old; fi
 	@echo "Install complete"
