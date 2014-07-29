@@ -79,7 +79,7 @@ Not all of the conventions have been applied to the source yet.
 * Avoid fully qualifying enum values (`MyEnumType.MyEnumValue`); use a `with` statement instead
 * Always use a `with` statement when accessing ODBC handles
 * Always specify whether lengths are in bytes or characters as part of a variable's name
-* Always separate `import`s from different packages with a blank line. In particular, there should be a blank line between imports from `std` and `presto.client` as well as between `presto.client` and `presto.driver`
+* At the top of the file, separate `import`s from different packages with a blank line. In particular, there should be a blank line between imports from `std` and `presto.client` as well as between `presto.client` and `presto.driver`
 * Always group imports from the same packages together
 
 ## References

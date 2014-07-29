@@ -91,8 +91,10 @@ export SQLRETURN SQLDriverConnectW(
         with (connectionHandle) {
             auto connectionArguments = parseConnectionString(text(connectionArguments));
             logMessage("SQLDriverConnect completed arguments", connectionArguments);
-            dllEnforce(("ENDPOINT" in connectionArguments) != null);
             endpoint = connectionArguments.getOrDefault("ENDPOINT");
+            if (endpoint.empty) {
+                throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify an endpoint!");
+            }
             catalog = connectionArguments.getOrDefault("DATABASE");
             if (auto valuePtr = "PRESTOCATALOG" in connectionArguments) {
                 catalog = *valuePtr;
@@ -100,6 +102,11 @@ export SQLRETURN SQLDriverConnectW(
             schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
             userId = connectionArguments.getOrDefault("UID");
             authentication = connectionArguments.getOrDefault("PWD");
+
+            if (!connectionHandle.canConnect()) {
+                throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR,
+                        "Cannot establish connection with endpoint");
+            }
         }
 
         //Copy input string to output string
@@ -412,14 +419,6 @@ export SQLRETURN SQLExecute(OdbcStatement statementHandle) {
 void SQLExecuteImpl(OdbcStatement statementHandle) {
     with (statementHandle) {
         logMessage("SQLExecuteImpl", query);
-
-        bool noEndpointSpecified = connection.endpoint.empty;
-        if (noEndpointSpecified) {
-            logMessage("Warning: Not connected to an endpoint!");
-            latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
-            executedQuery = true;
-            return;
-        }
 
         if (query.empty) {
             logMessage("Warning: Execiting an empty query!");
@@ -1382,6 +1381,17 @@ export SQLRETURN SQLSetConnectAttrW(
     SQLPOINTER value,
     SQLINTEGER stringLength) {
     return exceptionBoundary!(() => {
+        with (connectionHandle) with (ConnectionAttribute) {
+            switch (attribute) {
+                case SQL_LOGIN_TIMEOUT:
+                    loginTimeoutSeconds = cast(SQLLEN) value;
+                    logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", loginTimeoutSeconds);
+                    break;
+                default:
+                    logMessage("SQLSetConnectAttr attribute not handled", attribute);
+                    break;
+			}
+    	}
         logMessage("SQLSetConnectAttr (unimplemented)", attribute);
         with (connectionHandle) with (ConnectionAttribute) {
             //TODO:

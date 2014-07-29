@@ -27,7 +27,7 @@ import odbc.odbcinst;
 
 import presto.client.statementclient : StatementClient, ClientSession;
 
-import presto.odbcdriver.handles : OdbcStatement;
+import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 
 enum tempPath = "C:\\temp\\";
 auto logBuffer = appender!wstring;
@@ -182,7 +182,6 @@ unittest {
 }
 
 class OdbcException : Exception {
-    import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 
     this(T)(T handle, StatusCode sqlState, wstring message, int code = 1,
             string file = __FILE__, int line = __LINE__) if (is(T == OdbcStatement) || is(T == OdbcConnection)){

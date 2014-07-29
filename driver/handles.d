@@ -215,9 +215,27 @@ final class OdbcStatement {
 }
 
 final class OdbcConnection {
+
     this(OdbcEnvironment environment) {
         dllEnforce(environment !is null);
         this.environment = environment;
+    }
+
+
+    bool canConnect() {
+        import core.time : dur, Duration;
+        import std.net.curl : HTTP, CurlException;
+        import presto.client.mockcurl : get;
+
+        auto http = HTTP();
+        logMessage("Checking connection to", endpoint, loginTimeoutSeconds);
+        http.connectTimeout(dur!"seconds"(loginTimeoutSeconds));
+        try {
+            get(endpoint, http);
+        } catch (CurlException e) {
+            return false;
+        }
+        return true;
     }
 
     OdbcEnvironment environment;
@@ -228,6 +246,7 @@ final class OdbcConnection {
     string userId;
     string authentication;
     OdbcException[] errors;
+    size_t loginTimeoutSeconds = 5;
 }
 
 final class OdbcEnvironment {
