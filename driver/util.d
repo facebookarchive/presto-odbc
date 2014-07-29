@@ -21,6 +21,10 @@ import std.file : append, write, readText, remove, exists, FileException;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 import core.exception : Exception;
+import core.time : dur, Duration;
+import std.net.curl : HTTP, CurlException;
+import std.string: format;
+import std.datetime: Clock;
 
 import odbc.sqlext;
 import odbc.odbcinst;
@@ -32,16 +36,16 @@ import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 enum tempPath = "C:\\temp\\";
 auto logBuffer = appender!wstring;
 
-void logMessage(TList...)(auto ref TList vs) {
-    logBuffer ~= buildDebugMessage(vs);
+void logMessage(string file = __FILE__, int line = __LINE__, TList...)(auto ref TList vs) {
+    logBuffer ~= buildDebugMessage!(file, line)(vs);
     logBuffer ~= '\n';
     if (logBuffer.data.length > 100000) {
         flushLogBuffer();
     }
 }
 
-void logCriticalMessage(TList...)(auto ref TList vs) {
-    logBuffer ~= buildDebugMessage(vs);
+void logCriticalMessage(string file = __FILE__, int line = __LINE__, TList...)(auto ref TList vs) {
+    logBuffer ~= buildDebugMessage!(file, line)(vs);
     logBuffer ~= '\n';
     flushLogBuffer();
 }
@@ -75,7 +79,6 @@ void showPopupMessage(TList...)(auto ref TList vs) {
 
 unittest {
     assert(buildDebugMessage("Hi", "there", 5) == "Hi there 5"w);
-    assert(buildDebugMessage("Hi".ptr, "there"w.ptr, 5) == "Hi there 5"w);
     assert(buildDebugMessage(2, "there", 5) == "2 there 5"w);
     assert(buildDebugMessage(2, 3, 4) == "2 3 4"w);
     assert(buildDebugMessage("Hi", null, 5) == "Hi null 5"w);
@@ -84,23 +87,21 @@ unittest {
     assert(buildDebugMessage("Hi", ptr, 5) == "Hi 3039 5"w);
 }
 
-wstring buildDebugMessage(TList...)(auto ref TList vs) {
+wstring buildDebugMessage(string file = __FILE__, int line = __LINE__, TList...)(auto ref TList vs) {
     import std.conv : wtext;
     import std.algorithm : joiner;
 
     wstring[] rngOfVs;
     foreach (v; vs) {
-        static if (isSomeCString!(typeof(v))) {
-            if (v == null) {
-                rngOfVs ~= "null_string";
-                continue;
-            }
-            rngOfVs ~= wtext(v[0 .. strlen(v)]);
-        } else {
-            rngOfVs ~= wtext(v);
-        }
+        static assert(!isSomeCString!(typeof(v)), "Should not be using C-strings. See the coding conventions");
+        rngOfVs ~= wtext(v);
     }
-    return wtext(joiner(rngOfVs, " "));
+
+    version (unittest) {
+        //Cannot predict time/date/file/line in the test strings
+    	return wtext(joiner(rngOfVs, " "));
+    }
+    return wtext(format("%-28s %25s:%-5s %s", Clock.currTime().toSimpleString(), file, line, joiner(rngOfVs, " ")));
 }
 
 /**
