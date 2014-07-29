@@ -26,7 +26,7 @@ version(unittest) {
         mockCurlResults ~= result;
     }
 
-    char[] get(const(char)[] url) {
+    char[] get(const(char)[] url, HTTP conn = HTTP()) {
         assert(!mockCurlResults.empty);
         auto result = mockCurlResults.front;
         mockCurlResults.popFront;

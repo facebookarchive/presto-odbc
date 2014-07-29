@@ -17,6 +17,7 @@ import odbc.sqlext;
 
 import presto.odbcdriver.bindings : ColumnBinding, OdbcResult, EmptyOdbcResult;
 import presto.odbcdriver.util;
+import presto.odbcdriver.connection_attributes;
 
 /**
  * About Descriptor Handles:
@@ -218,6 +219,7 @@ final class OdbcConnection {
     this(OdbcEnvironment environment) {
         dllEnforce(environment !is null);
         this.environment = environment;
+        this.connection_attributes = makeWithoutGC!ConnectionAttributes();
     }
 
     OdbcEnvironment environment;
@@ -228,6 +230,7 @@ final class OdbcConnection {
     string userId;
     string authentication;
     OdbcException[] errors;
+    ConnectionAttributes* connection_attributes;
 }
 
 final class OdbcEnvironment {
