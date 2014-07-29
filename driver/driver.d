@@ -100,14 +100,10 @@ export SQLRETURN SQLDriverConnectW(
             userId = connectionArguments.getOrDefault("UID");
             authentication = connectionArguments.getOrDefault("PWD");
             
-            if (endpoint != ":8080") {
+            if (endpoint != ":8080" && !connectionHandle.canConnect()) {
             	//there is some endpoint specified, test it
-                logMessage("testing endpoint with timeout", endpoint, connectionHandle.connection_attributes.login_timeout);
-		        bool alive = testConnection(connectionHandle.connection_attributes.login_timeout, endpoint);   
-		        if (!alive) {
-		        	logMessage("endpoint is not UP");
-		        	return SQL_ERROR;
-		        } 
+            	logMessage("Cannot establish connection with endpoint", endpoint);
+            	return SQL_ERROR;
             }
         }
 
@@ -1378,16 +1374,18 @@ export SQLRETURN SQLSetConnectAttrW(
     SQLINTEGER stringLength) {
     return exceptionBoundary!(() => {
     	auto connection = cast(OdbcConnection) connectionHandle;
-		switch (attribute) {
-			case ConnectionAttribute.SQL_LOGIN_TIMEOUT:
-				auto login_timeout = cast(SQLLEN) value;
-				logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", login_timeout);
-				connection.connection_attributes.login_timeout = login_timeout;
-				break;
-			default:
-				logMessage("SQLSetConnectAttr attribute not handled", attribute);
-				break;
-		}    		
+    	with (connection) {
+			switch (attribute) {
+				case ConnectionAttribute.SQL_LOGIN_TIMEOUT:
+					auto timeout = cast(SQLLEN) value;
+					logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", timeout);
+					loginTimeoutSeconds = timeout;
+					break;
+				default:
+					logMessage("SQLSetConnectAttr attribute not handled", attribute);
+					break;
+			}      		
+    	}
         logMessage("SQLSetConnectAttr (unimplemented)", attribute);
         return SQL_SUCCESS;
     }());
