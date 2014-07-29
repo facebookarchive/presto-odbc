@@ -184,6 +184,9 @@ export SQLRETURN SQLBrowseConnectW(
         scope (exit) convertPtrBytesToWChars(_connectionArgumentsOutChars);
 
         logMessage("SQLBrowseConnect (unimplemented)", connectionArguments);
+        with (connectionHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -205,6 +208,9 @@ export SQLRETURN SQLConnectW(
         auto userName = toDString(_userName, _userNameLengthChars);
         auto authenticationName = toDString(_authenticationString, _authenticationStringLengthChars);
         logMessage("SQLConnect (unimplemented)", serverName, userName, authenticationName);
+        with (connectionHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -377,7 +383,7 @@ export SQLRETURN SQLDescribeParam(
 
 ///// SQLDisconnect /////
 
-export SQLRETURN SQLDisconnect(SQLHDBC connectionHandle) {
+export SQLRETURN SQLDisconnect(OdbcConnection connectionHandle) {
     return exceptionBoundary!(() => {
         logMessage("SQLDisconnect (unimplemented)");
         return SQL_SUCCESS;
@@ -904,7 +910,9 @@ export SQLRETURN SQLNativeSqlW(
         auto inSql = toDString(_inSql, _inSqlLengthChars);
         auto outSql = outputWChar(_outSql, _outSqlMaxLengthBytes, _outSqlLengthBytes);
         logMessage("SQLNativeSql", inSql);
-        copyToBuffer(inSql.idup.translateQuery, outSql);
+        with (connectionHandle) {
+            copyToBuffer(inSql.idup.translateQuery, outSql);
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1275,9 +1283,12 @@ N toColAttributeSizeUnknownFormat(N)(N size) if (isNumeric!N) {
 
 ///// SQLCopyDesc /////
 
-export SQLRETURN SQLCopyDesc(SQLHDESC sourceDescHandle, SQLHDESC targetDescHandle) {
+export SQLRETURN SQLCopyDesc(OdbcDescriptor sourceDescHandle, OdbcDescriptor targetDescHandle) {
     return exceptionBoundary!(() => {
         logMessage("SQLCopyDesc (unimplemented)");
+        with (sourceDescHandle) with (targetDescHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1348,13 +1359,16 @@ void cleanupHandle(T)(T handle) {
 ///// SQLGetConnectAttr /////
 
 export SQLRETURN SQLGetConnectAttrW(
-    SQLHDBC connectionHandle,
+    OdbcConnection connectionHandle,
     ConnectionAttribute attribute,
     SQLPOINTER value,
     SQLINTEGER bufferLengthBytes,
     SQLINTEGER* stringLengthBytes) {
     return exceptionBoundary!(() => {
         logMessage("SQLGetConnectAttr (unimplemented)", attribute);
+        with (connectionHandle) with (ConnectionAttribute) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1362,12 +1376,15 @@ export SQLRETURN SQLGetConnectAttrW(
 ///// SQLSetConnectAttr /////
 
 export SQLRETURN SQLSetConnectAttrW(
-    SQLHDBC connectionHandle,
+    OdbcConnection connectionHandle,
     ConnectionAttribute attribute,
     SQLPOINTER value,
     SQLINTEGER stringLength) {
     return exceptionBoundary!(() => {
         logMessage("SQLSetConnectAttr (unimplemented)", attribute);
+        with (connectionHandle) with (ConnectionAttribute) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 
@@ -1376,7 +1393,7 @@ export SQLRETURN SQLSetConnectAttrW(
 ///// SQLGetDescField /////
 
 export SQLRETURN SQLGetDescFieldW(
-    SQLHDESC descriptorHandle,
+    OdbcDescriptor descriptorHandle,
     SQLSMALLINT recordNumber,
     DescriptorField fieldIdentifier,
     SQLPOINTER value,
@@ -1384,6 +1401,9 @@ export SQLRETURN SQLGetDescFieldW(
     SQLINTEGER* stringLengthBytes) {
     return exceptionBoundary!(() => {
         logMessage("SQLGetDescField (unimplemented)", recordNumber, fieldIdentifier);
+        with (descriptorHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1391,13 +1411,16 @@ export SQLRETURN SQLGetDescFieldW(
 ///// SQLSetDescField /////
 
 export SQLRETURN SQLSetDescFieldW(
-    SQLHDESC descriptorHandle,
+    OdbcDescriptor descriptorHandle,
     SQLSMALLINT recordNumber,
     DescriptorField fieldIdentifier,
     SQLPOINTER value,
     SQLINTEGER bufferLength) {
     return exceptionBoundary!(() => {
         logMessage("SQLSetDescField (unimplemented)");
+        with (descriptorHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1406,7 +1429,7 @@ export SQLRETURN SQLSetDescFieldW(
 ///// SQLGetDescRec /////
 
 export SQLRETURN SQLGetDescRecW(
-    SQLHDESC descriptorHandle,
+    OdbcDescriptor descriptorHandle,
     SQLSMALLINT recordNumber,
     SQLWCHAR* _name,
     SQLSMALLINT _nameMaxLengthChars,
@@ -1419,6 +1442,9 @@ export SQLRETURN SQLGetDescRecW(
     SQLSMALLINT* nullable) {
     return exceptionBoundary!(() => {
         logMessage("SQLGetDescRec (unimplemented)", recordNumber);
+        with (descriptorHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1426,7 +1452,7 @@ export SQLRETURN SQLGetDescRecW(
 ///// SQLSetDescRec /////
 
 export SQLRETURN SQLSetDescRec(
-    SQLHDESC descriptorHandle,
+    OdbcDescriptor descriptorHandle,
     SQLSMALLINT recordNumber,
     SQLSMALLINT type,
     SQLSMALLINT subType,
@@ -1438,6 +1464,9 @@ export SQLRETURN SQLSetDescRec(
     SQLLEN* indicator) {
     return exceptionBoundary!(() => {
         logMessage("SQLSetDescRec (unimplemented)", recordNumber, type, subType, length, precision, scale);
+        with (descriptorHandle) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1509,13 +1538,16 @@ export SQLRETURN SQLGetDiagRecW(
 ///// SQLGetEnvAttr /////
 
 export SQLRETURN SQLGetEnvAttr(
-    SQLHENV environmentHandle,
+    OdbcEnvironment environmentHandle,
     EnvironmentAttribute attribute,
     SQLPOINTER value,
     SQLINTEGER bufferLength,
     SQLINTEGER* stringLengthBytes) {
     return exceptionBoundary!(() => {
         logMessage("SQLGetEnvAttr (unimplemented)", attribute);
+        with (environmentHandle) with (EnvironmentAttribute) {
+            //TODO:
+        }
         return SQL_SUCCESS;
     }());
 }
@@ -1523,13 +1555,13 @@ export SQLRETURN SQLGetEnvAttr(
 ///// SQLSetEnvAttr /////
 
 export SQLRETURN SQLSetEnvAttr(
-    SQLHENV environmentHandle,
+    OdbcEnvironment environmentHandle,
     EnvironmentAttribute attribute,
     SQLPOINTER value,
     SQLINTEGER stringLengthBytes) {
     return exceptionBoundary!(() => {
         logMessage("SQLSetEnvAttr (unimplemented)", attribute);
-        with (EnvironmentAttribute) {
+        with (environmentHandle) with (EnvironmentAttribute) {
             switch (attribute) {
                 case SQL_ATTR_ODBC_VERSION:
                     break;
