@@ -84,7 +84,7 @@ export SQLRETURN SQLDriverConnectW(
         }
 
         if (driverCompletion != DriverCompletion.NOPROMPT) {
-            connectionArguments ~= ";server=;port=;prestoCatalog=;prestoSchema=;";
+            connectionArguments ~= ";endpoint=;prestoCatalog=;prestoSchema=;";
             connectionArguments = wtext(getTextInput(text(connectionArguments)));
         }
 
