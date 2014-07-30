@@ -215,9 +215,12 @@ final class OdbcStatement {
 }
 
 final class OdbcConnection {
+	static immutable DEFAULT_LOGIN_TIMEOUT = 5;
+	
     this(OdbcEnvironment environment) {
         dllEnforce(environment !is null);
         this.environment = environment;
+        this.loginTimeoutSeconds = DEFAULT_LOGIN_TIMEOUT;
     }
 
     OdbcEnvironment environment;
@@ -228,6 +231,7 @@ final class OdbcConnection {
     string userId;
     string authentication;
     OdbcException[] errors;
+    size_t loginTimeoutSeconds;
 }
 
 final class OdbcEnvironment {

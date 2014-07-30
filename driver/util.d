@@ -21,13 +21,30 @@ import std.file : append, write, readText, remove, exists, FileException;
 import std.traits : isNumeric, isIntegral, isSomeString, isSomeChar, Unqual;
 import core.stdc.stdlib : abort;
 import core.exception : Exception;
+import std.net.curl : HTTP, CurlException;
+import core.time : dur, Duration;
 
 import odbc.sqlext;
 import odbc.odbcinst;
 
-import presto.client.statementclient : StatementClient, ClientSession;
+import presto.odbcdriver.handles : OdbcStatement, OdbcConnection;
 
-import presto.odbcdriver.handles : OdbcStatement;
+import presto.client.statementclient : StatementClient, ClientSession;
+import presto.client.mockcurl : get;
+
+bool canConnect(OdbcConnection connection) {
+    auto http = HTTP();
+    with (connection) {
+        logMessage("Checking connection to", endpoint, loginTimeoutSeconds);
+        http.connectTimeout(dur!"seconds"(loginTimeoutSeconds));
+        try {
+            get(endpoint, http);
+        } catch (CurlException e) {
+            return false;
+        }
+        return true;
+    }
+}
 
 enum tempPath = "C:\\temp\\";
 auto logBuffer = appender!wstring;

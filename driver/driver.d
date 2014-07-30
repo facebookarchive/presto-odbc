@@ -100,6 +100,12 @@ export SQLRETURN SQLDriverConnectW(
             schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
             userId = connectionArguments.getOrDefault("UID");
             authentication = connectionArguments.getOrDefault("PWD");
+            
+            if (endpoint != ":8080" && !connectionHandle.canConnect()) {
+            	//there is some endpoint specified, test it
+            	logMessage("Cannot establish connection with endpoint", endpoint);
+            	return SQL_ERROR;
+            }
         }
 
         //Copy input string to output string
@@ -1382,6 +1388,19 @@ export SQLRETURN SQLSetConnectAttrW(
     SQLPOINTER value,
     SQLINTEGER stringLength) {
     return exceptionBoundary!(() => {
+    	auto connection = cast(OdbcConnection) connectionHandle;
+    	with (connection) {
+			switch (attribute) {
+				case ConnectionAttribute.SQL_LOGIN_TIMEOUT:
+					auto timeout = cast(SQLLEN) value;
+					logMessage("SQLSetConnectAttr setting SQL_LOGIN_TIMEOUT to", timeout);
+					loginTimeoutSeconds = timeout;
+					break;
+				default:
+					logMessage("SQLSetConnectAttr attribute not handled", attribute);
+					break;
+			}      		
+    	}
         logMessage("SQLSetConnectAttr (unimplemented)", attribute);
         with (connectionHandle) with (ConnectionAttribute) {
             //TODO:
