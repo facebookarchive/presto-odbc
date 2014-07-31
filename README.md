@@ -11,7 +11,9 @@ This driver is written in the [D Programming Language](http://dlang.org)
 * The only error handling in place is a "catch and log" strategy
 * Most queries will work as expected
 * Tableau works correctly for the cases we have tried
-* MS Query is tested and will work as soon as we write a simple GUI
+* MS Query is partially tested and may work if you create a Presto File DSN
+* The driver is single-threaded
+* You cannot run multiple instances of the driver on the same machine due to limitations in D's support for DLLs
 
 ## Goals
 
