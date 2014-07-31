@@ -691,7 +691,6 @@ export SQLRETURN SQLGetData(
             auto binding = ColumnBinding(targetType, outputBuffer[0 .. bufferLengthMaxBytes], stringLengthBytes);
             return bindDataFromColumns(statementHandle, [ columnNumber : binding ]);
         }
-        return SQL_SUCCESS;
     }());
 }
 
@@ -1211,6 +1210,7 @@ export SQLRETURN SQLColAttributeW(
                     //TODO: Maybe change this for dates?
                     auto literal = isStringTypeId(sqlTypeId) ? "'"w : ""w;
                     copyToBuffer(literal, characterAttribute);
+                    break;
                 case SQL_DESC_LOCAL_TYPE_NAME:
                     copyToBuffer(""w, characterAttribute);
                     break;
@@ -1246,6 +1246,7 @@ export SQLRETURN SQLColAttributeW(
                     //TODO: This value is undefined for all but the SQL_NUMERIC and SQL_DECIMAL
                     //      types, which are presently unsupported.
                     *numericAttribute = 0;
+                    break;
                 case SQL_DESC_NULLABLE:
                     *numericAttribute = Nullability.SQL_NULLABLE_UNKNOWN;
                     break;
@@ -1661,6 +1662,7 @@ export SQLRETURN SQLSetStmtAttrW(
                     break;
                 case SQL_ATTR_ROW_BIND_TYPE:
                     dllEnforce(false, "Involves a lot of work in SQLBindCol and others");
+                    break;
                 case SQL_ATTR_APP_ROW_DESC:
                     applicationParameterDescriptor_ = cast(OdbcDescriptor) _value;
                     break;

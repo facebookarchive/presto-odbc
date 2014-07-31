@@ -5,7 +5,7 @@ LOGFILE = $(TEMP)/presto_odbc.log
 
 DC = LINKCMD64="$(VS_HOME)\bin\link.exe" dmd
 CFLAGS = -c
-FLAGS = -g -version=UNICODE
+FLAGS = -g -w -version=UNICODE
 ifeq ($(OS),Windows_NT)
 	FLAGS += -m64 -Luser32.lib
 else

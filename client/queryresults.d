@@ -333,8 +333,9 @@ unittest {
 private pure nothrow bool isJSONType(T)() {
     static if (is(T == string) || is(T == long) || is(T == bool) || is(T == double)) {
         return true;
+    } else {
+        return false;
     }
-    return false;
 }
 
 unittest {

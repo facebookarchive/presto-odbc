@@ -230,6 +230,7 @@ export extern(System)
                         SQL_SU_INDEX_DEFINITION |
                         SQL_SU_PRIVILEGE_DEFINITION;
                     *cast(SQLUINTEGER*)(_infoValue) = bitmask;
+                    break;
                 case SQL_CATALOG_USAGE: //92
                     auto bitmask =
                         SQL_CU_DML_STATEMENTS |

@@ -106,8 +106,9 @@ wstring buildDebugMessage(string file = __FILE__, int line = __LINE__, TList...)
     version (unittest) {
         //Cannot predict time/date/file/line in the test strings
     	return wtext(joiner(rngOfVs, " "));
+    } else {
+        return wtext(format("%-28s %25s:%-5s %s", Clock.currTime().toSimpleString(), file, line, joiner(rngOfVs, " ")));
     }
-    return wtext(format("%-28s %25s:%-5s %s", Clock.currTime().toSimpleString(), file, line, joiner(rngOfVs, " ")));
 }
 
 /**

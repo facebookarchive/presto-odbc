@@ -81,9 +81,9 @@ void copyToOutput(SQL_C_TYPE)(Variant value, ref ColumnBinding binding) {
                     return;
                 }
                 copyToBuffer(srcString, outputWCharBuffer);
+            } else static if (isSomeString!VARIANT_TYPE) {
+                assert(false, ResultType.stringof ~ " " ~ VARIANT_TYPE.stringof);
             } else {
-                assert(!isSomeString!VARIANT_TYPE, "" ~ ResultType.stringof ~ " " ~ VARIANT_TYPE.stringof);
-
                 auto resultPtr = cast(ResultType*) outputBuffer.ptr;
                 *resultPtr = to!ResultType(value.get!VARIANT_TYPE);
                 numberOfBytesWritten = ResultType.sizeof;
