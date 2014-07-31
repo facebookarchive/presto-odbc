@@ -485,7 +485,7 @@ StatementClient runQuery(OdbcStatement statementHandle, string query) {
     with (statementHandle.connection) {
         auto session = ClientSession(endpoint, "ODBC Driver");
         session.catalog = catalog;
-        session.schema = schema.empty ? "tiny" : schema;
+        session.schema = schema;
 
         return StatementClient(session, query);
     }
