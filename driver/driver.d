@@ -91,18 +91,24 @@ export SQLRETURN SQLDriverConnectW(
         with (connectionHandle) {
             auto connectionArguments = parseConnectionString(text(connectionArguments));
             logMessage("SQLDriverConnect completed arguments", connectionArguments);
+            
             endpoint = connectionArguments.getOrDefault("ENDPOINT");
             if (endpoint.empty) {
                 throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify an endpoint!");
             }
+            
             catalog = connectionArguments.getOrDefault("DATABASE");
             if (auto valuePtr = "PRESTOCATALOG" in connectionArguments) {
                 catalog = *valuePtr;
             }
+            if (catalog.empty) {
+                throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify a catalog!");
+            }
+            
             schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
             userId = connectionArguments.getOrDefault("UID");
             authentication = connectionArguments.getOrDefault("PWD");
-
+            
             if (!connectionHandle.canConnect()) {
                 throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR,
                         "Cannot establish connection with endpoint");
@@ -167,10 +173,15 @@ string[string] parseConnectionString(string connectionString) {
     if (auto pwdPtr = "PWD" in result) {
         auto password = *pwdPtr;
         result["PWD"] = (password.empty ? "" : "*******");
-        logMessage(result);
-        result["PWD"] = password;
     }
-
+    
+    if (auto schemaPtr = "PRESTOSCHEMA" in result) {
+        auto schema = *schemaPtr;
+        result["PRESTOSCHEMA"] = (schema.empty ? "tiny" : schema);
+    }       
+    
+    logMessage(result); 
+     
     return result;
 }
 
