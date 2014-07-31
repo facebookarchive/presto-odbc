@@ -29,7 +29,12 @@ import presto.odbcdriver.util : dllEnforce, logMessage;
 void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
     final switch (columnData.type) {
         case JSON_TYPE.STRING:
-            result.addNextValue(Variant(columnData.str));
+            if(columnData.str == "NaN") {
+                //for some scalar functions that return double, we may get a "NaN" back
+                result.addNextValue(Variant(double.nan));
+            } else {
+                result.addNextValue(Variant(columnData.str));
+            }
             break;
         case JSON_TYPE.INTEGER:
             result.addNextValue(Variant(columnData.integer));
@@ -52,6 +57,16 @@ void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
             dllEnforce(false, "Unexpected JSON type: " ~ text(columnData.type));
             break;
     }
+}
+
+unittest {
+    JSONValue v = "NaN";
+    auto r = new PrestoResultRow();
+    addToPrestoResultRow(v, r);
+    assert(r.data[0].type == typeid(double));
+    v = "{\"x\":\"y\"}";
+    addToPrestoResultRow(v, r);
+    assert(r.data[1].type == typeid(string));
 }
 
 final class PrestoResult : OdbcResult {
