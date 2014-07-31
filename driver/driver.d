@@ -94,11 +94,17 @@ export SQLRETURN SQLDriverConnectW(
 
             auto connectionArguments = parseConnectionString(text(connectionArguments));
             logMessage("SQLDriverConnect completed arguments", connectionArguments);
+
             session = ClientSession(connectionArguments.getOrDefault("ENDPOINT"), "presto-odbc");
             if (endpoint.empty) {
                 throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify an endpoint!");
             }
+
             catalog = connectionArguments.getOrDefault("PRESTOCATALOG");
+            if (catalog.empty) {
+                throw new OdbcException(connectionHandle, StatusCode.GENERAL_ERROR, "Must specify a catalog!");
+            }
+
             schema = connectionArguments.getOrDefault("PRESTOSCHEMA");
             user = connectionArguments.getOrDefault("USERNAME", "ODBC Driver");
             proxyEndpoint = connectionArguments.getOrDefault!string("PROXYENDPOINT", null);
