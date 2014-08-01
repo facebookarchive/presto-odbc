@@ -26,10 +26,19 @@ import presto.client.queryresults : ColumnMetadata;
 import presto.odbcdriver.bindings : OdbcResult, OdbcResultRow;
 import presto.odbcdriver.util : dllEnforce, logMessage;
 
-void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
+void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result, string resultDataType) {
     final switch (columnData.type) {
         case JSON_TYPE.STRING:
-            result.addNextValue(Variant(columnData.str));
+            if (resultDataType == "string") {
+                result.addNextValue(Variant(columnData.str));
+            } else {
+                //for some scalar functions that return double, we may get a "NaN" back
+                if (columnData.str == "NaN") { 
+                    result.addNextValue(Variant(double.nan));
+                } else {
+                    dllEnforce(false, "A non-Nan double is not expected in the result");
+                }
+            }
             break;
         case JSON_TYPE.INTEGER:
             result.addNextValue(Variant(columnData.integer));
@@ -52,6 +61,18 @@ void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result) {
             dllEnforce(false, "Unexpected JSON type: " ~ text(columnData.type));
             break;
     }
+}
+
+unittest {
+    JSONValue v = "NaN";
+    auto r = new PrestoResultRow();
+    addToPrestoResultRow(v, r, "double");
+    assert(r.data[0].type == typeid(double));//double NaN
+    addToPrestoResultRow(v, r, "string");//string "NaN"
+    assert(r.data[1].type == typeid(string));
+    v = "{\"x\":\"y\"}";
+    addToPrestoResultRow(v, r, "string");
+    assert(r.data[2].type == typeid(string));
 }
 
 final class PrestoResult : OdbcResult {
