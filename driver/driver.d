@@ -451,8 +451,8 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
             result.columnMetadata = resultBatch.columnMetadata;
             foreach (row; resultBatch.data.array) {
                 auto dataRow = makeWithoutGC!PrestoResultRow();
-                foreach (columnData; row.array) {
-                    addToPrestoResultRow(columnData, dataRow);
+                foreach (i, columnData; row.array) {
+                    addToPrestoResultRow(columnData, dataRow, result.columnMetadata[i].type);
                 }
                 dllEnforce(dataRow.numberOfColumns() != 0, "Row has at least 1 column");
                 result.addRow(dataRow);
