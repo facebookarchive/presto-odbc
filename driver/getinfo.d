@@ -133,12 +133,31 @@ export extern(System)
                     *cast(SQLUSMALLINT*)(_infoValue) = SQL_TC_NONE;
                     break;
                 case SQL_CONVERT_FUNCTIONS: //48
-                case SQL_NUMERIC_FUNCTIONS: //49
                 case SQL_STRING_FUNCTIONS: //50
                 case SQL_SYSTEM_FUNCTIONS: //51
                     //Supporting these would require a parser to translate ODBC escapes
                     // http://msdn.microsoft.com/en-us/library/ms711838%28v=VS.85%29.aspx
                     *cast(SQLUINTEGER*)(_infoValue) = 0;
+                    break;
+                case SQL_NUMERIC_FUNCTIONS: //49
+                    enum bitmask = 
+                        SQL_FN_NUM_ABS      |
+                        SQL_FN_NUM_ACOS     |
+                        SQL_FN_NUM_ASIN     |
+                        SQL_FN_NUM_ATAN     |
+                        SQL_FN_NUM_ATAN2    |
+                        SQL_FN_NUM_CEILING  |
+                        SQL_FN_NUM_COS      |
+                        SQL_FN_NUM_EXP      |
+                        SQL_FN_NUM_LOG      |
+                        SQL_FN_NUM_LOG10    |
+                        SQL_FN_NUM_POWER    |
+                        SQL_FN_NUM_RAND     |
+                        SQL_FN_NUM_ROUND    |
+                        SQL_FN_NUM_SIN      |
+                        SQL_FN_NUM_SQRT     |
+                        SQL_FN_NUM_TAN;
+                    *cast(SQLUINTEGER*)(_infoValue) = bitmask;
                     break;
                 case SQL_TIMEDATE_FUNCTIONS: //52
                     //Additional support would require a parser to translate ODBC escapes
@@ -380,6 +399,7 @@ export extern(System)
                         SQL_AF_COUNT |
                         SQL_AF_MAX |
                         SQL_AF_MIN |
+                        SQL_AF_DISTINCT |
                         SQL_AF_SUM;
                     *cast(SQLUINTEGER*)(_infoValue) = bitmask;
                     break;
