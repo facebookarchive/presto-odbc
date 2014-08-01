@@ -41,7 +41,10 @@ import presto.odbcdriver.typeinfo;
 //////  DLL entry point for global initializations/finalizations if any
 
 version (Windows) {
-    extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+    version (unittest) {
+        //unittest already have main methods, so compilation fails if we also have another DllMain for unittests
+    } else {
+        extern(Windows) BOOL DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (fdwReason == DLL_PROCESS_ATTACH) { // DLL is being loaded
             Runtime.initialize();
             import core.memory;
@@ -52,6 +55,7 @@ version (Windows) {
         }
 
         return TRUE;
+        }
     }
 } else {
     shared static this() {
