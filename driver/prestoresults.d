@@ -32,12 +32,10 @@ void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result, string r
             if (resultDataType == "string") {
                 result.addNextValue(Variant(columnData.str));
             } else {
-                //for some scalar functions that return double, we may get a "NaN" back
-                if (columnData.str == "NaN") { 
-                    result.addNextValue(Variant(double.nan));
-                } else {
+                if (columnData.str != "NaN") { 
                     dllEnforce(false, "A non-Nan double is not expected in the result");
-                }
+                } 
+                result.addNextValue(Variant(double.nan));
             }
             break;
         case JSON_TYPE.INTEGER:
