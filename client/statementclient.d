@@ -139,10 +139,14 @@ struct StatementClient {
         assert(!empty);
         auto response = get(results_.nextURI, session.connection);
         parseAndSetResults(response);
+        
+        if (results_.nextURI == "" && results_.succeeded) {
+            processedAll_ = true;
+        }          
     }
 
     bool empty() const nothrow {
-        return (results_.nextURI == "" && results_.succeeded) || queryTerminated_;
+        return processedAll_ || queryTerminated_;
     }
 
     void terminateQuery() {
@@ -163,6 +167,7 @@ private:
     }
 
     bool queryTerminated_ = false;
+    bool processedAll_ = false;
     ClientSession session_;
     string query_;
     Rebindable!(immutable(QueryResults)) results_;
