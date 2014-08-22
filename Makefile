@@ -3,23 +3,39 @@ LIBCURL = /cygdrive/c/D/dmd2/windows/bin64/libcurl.dll
 TEMP = /cygdrive/c/temp
 LOGFILE = $(TEMP)/presto_odbc.log
 
+MAKE_NSISW_CMD = "/cygdrive/c/Program Files (x86)/NSIS/makensis.exe"
+MAKE_NSIS_FLAGS = /V4
+
 DC = LINKCMD64="$(VS_HOME)\bin\link.exe" dmd
 CFLAGS = -c
 FLAGS = -g -w -version=UNICODE
+
 ifeq ($(OS),Windows_NT)
+	#Installer
+	INSTALLER_DIR = installer/win
+	INSTALLER_SCRIPT = $(INSTALLER_DIR)/installer.nsi
+	INSTALLER_OUTPUT = $(INSTALLER_DIR)/*.exe
+	
+	#Flags
 	FLAGS += -m64 -Luser32.lib
+	
+	#Output lib
+	PROGRAM = presto.dll
 else
+	#Installer
+	INSTALLER_DIR = 
+	INSTALLER_SCRIPT = 
+	INSTALLER_OUTPUT = 
+	
+	#Flags
 	FLAGS += -m32 -fPIC -L-lcurl
+	
+	#Output lib	
+	PROGRAM = presto.dylib
 endif
 
 SOURCES = client/*.d odbc/*.d driver/*.d
 TEST_SOURCES = $(SOURCES) test/*.d
-
-ifeq ($(OS),Windows_NT)
-	PROGRAM = presto.dll
-else
-	PROGRAM = presto.dylib
-endif
 TEST_PROGRAM = unittests
 
 .PHONY: all driver tests copy logdiff clean
@@ -51,3 +67,7 @@ logdiff:
 
 clean:
 	rm -f *.obj *.exp *.lib *.ilk *.pdb $(PROGRAM) $(TEST_PROGRAM)
+	rm -f $(INSTALLER_OUTPUT)
+
+installer: driver check
+	$(MAKE_NSISW_CMD) $(MAKE_NSIS_FLAGS) $(INSTALLER_SCRIPT)
