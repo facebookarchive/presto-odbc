@@ -62,7 +62,6 @@ version (Windows) {
         Runtime.initialize();
         import core.memory;
         GC.disable();
-        assert(false, "Debugging an issue whereby this function is not called");
         logMessage("Presto ODBC Driver loaded by application or driver manager");
     }
 
