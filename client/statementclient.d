@@ -74,7 +74,7 @@ struct ClientSession {
             }
             http.proxy = hostPort[0];
             http.proxyPort = to!ushort(hostPort[2]);
-            http.proxyType = CurlProxy.socks5;
+            http.proxyType = CurlProxy.socks5_hostname;
         }
 
         return addHeaders(http);
