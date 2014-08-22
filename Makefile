@@ -22,11 +22,6 @@ ifeq ($(OS),Windows_NT)
 	#Output lib
 	PROGRAM = presto.dll
 else
-	#Installer
-	INSTALLER_DIR = 
-	INSTALLER_SCRIPT = 
-	INSTALLER_OUTPUT = 
-	
 	#Flags
 	FLAGS += -m32 -fPIC -L-lcurl
 	
@@ -71,3 +66,4 @@ clean:
 
 installer: driver check
 	$(MAKE_NSISW_CMD) $(MAKE_NSIS_FLAGS) $(INSTALLER_SCRIPT)
+
