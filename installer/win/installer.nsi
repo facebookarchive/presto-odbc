@@ -1,5 +1,5 @@
-!define APPNAME "Presto ODBC Driver"
-!define DESCRIPTION "64-bit ODBC Driver for Presto"
+!define APPNAME "Presto ODBC Driver (64-bit)"
+!define DESCRIPTION "Presto ODBC Driver (64-bit)"
 
 #installer files
 !define LICENSE_FILE "..\..\LICENSE"
