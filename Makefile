@@ -11,21 +11,16 @@ CFLAGS = -c
 FLAGS = -g -w -version=UNICODE
 
 ifeq ($(OS),Windows_NT)
-	#Installer
 	INSTALLER_DIR = installer/win
 	INSTALLER_SCRIPT = $(INSTALLER_DIR)/installer.nsi
 	INSTALLER_OUTPUT = $(INSTALLER_DIR)/*.exe
 	
-	#Flags
 	FLAGS += -m64 -Luser32.lib
 	
-	#Output lib
 	PROGRAM = presto.dll
 else
-	#Flags
 	FLAGS += -m32 -fPIC -L-lcurl
 	
-	#Output lib	
 	PROGRAM = presto.dylib
 endif
 
