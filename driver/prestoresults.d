@@ -29,7 +29,7 @@ import presto.odbcdriver.util : dllEnforce, logMessage;
 void addToPrestoResultRow(JSONValue columnData, PrestoResultRow result, string resultDataType) {
     final switch (columnData.type) {
         case JSON_TYPE.STRING:
-            if (resultDataType == "string") {
+            if (resultDataType == "varchar") {
                 result.addNextValue(Variant(columnData.str));
             } else {
                 if (columnData.str != "NaN") { 
@@ -66,10 +66,10 @@ unittest {
     auto r = new PrestoResultRow();
     addToPrestoResultRow(v, r, "double");
     assert(r.data[0].type == typeid(double));//double NaN
-    addToPrestoResultRow(v, r, "string");//string "NaN"
+    addToPrestoResultRow(v, r, "varchar");//string "NaN"
     assert(r.data[1].type == typeid(string));
     v = "{\"x\":\"y\"}";
-    addToPrestoResultRow(v, r, "string");
+    addToPrestoResultRow(v, r, "varchar");
     assert(r.data[2].type == typeid(string));
 }
 
