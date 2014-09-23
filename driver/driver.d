@@ -434,7 +434,7 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
         logMessage("SQLExecuteImpl", query);
 
         if (query.empty) {
-            logMessage("Warning: Execiting an empty query!");
+            logMessage("Warning: Executing an empty query!");
             latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
             executedQuery = true;
             return;
@@ -445,18 +445,24 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
         scope(exit) { latestOdbcResult = result;  }
         executedQuery = true;
         uint batchNumber;
-        foreach (resultBatch; client) {
-            logMessage("SQLExecute working on result batch", ++batchNumber);
-            result.columnMetadata = resultBatch.columnMetadata;
-            foreach (row; resultBatch.data.array) {
-                auto dataRow = makeWithoutGC!PrestoResultRow();
-                foreach (i, columnData; row.array) {
-                    addToPrestoResultRow(columnData, dataRow, result.columnMetadata[i].type);
+        try {
+            foreach (resultBatch; client) {
+                result.columnMetadata = resultBatch.columnMetadata;
+                foreach (row; resultBatch.data.array) {
+                    auto dataRow = makeWithoutGC!PrestoResultRow();
+                    foreach (i, columnData; row.array) {
+                        addToPrestoResultRow(columnData, dataRow, result.columnMetadata[i].type);
+                    }
+                    dllEnforce(dataRow.numberOfColumns() != 0, "Row has at least 1 column");
+                    result.addRow(dataRow);
                 }
-                dllEnforce(dataRow.numberOfColumns() != 0, "Row has at least 1 column");
-                result.addRow(dataRow);
             }
-        }
+        } catch (Exception e) {
+            // the try block throws an exception when the user runs a query against a table that doesn't exist
+            logCriticalMessage("Caught exception ", e.msg);
+            latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
+            executedQuery = true;
+        } 
     }
 }
 
