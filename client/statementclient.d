@@ -140,7 +140,7 @@ struct StatementClient {
         auto response = get(results_.nextURI, session.connection);
         parseAndSetResults(response);
         
-        if ((results_.nextURI == "" && results_.succeeded) || (!results_.succeeded)) {
+        if (!results_.succeeded || results_.nextURI == "") {
             processedAll_ = true;
         }          
     }
