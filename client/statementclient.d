@@ -139,10 +139,10 @@ struct StatementClient {
         assert(!empty);
         auto response = get(results_.nextURI, session.connection);
         parseAndSetResults(response);
-        
+
         if (!results_.succeeded || results_.nextURI == "") {
             processedAll_ = true;
-        }          
+        }
     }
 
     bool empty() const nothrow {
@@ -151,11 +151,6 @@ struct StatementClient {
 
     void terminateQuery() {
         if (results_.nextURI != "") {
-            version (unittest) {} else {
-                import presto.odbcdriver.util;
-                logCriticalMessage("Pre del");
-            }
-
             del(results_.nextURI, session.connection);
             queryTerminated_ = true;
         }
