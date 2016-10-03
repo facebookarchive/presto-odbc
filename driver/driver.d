@@ -434,13 +434,20 @@ void SQLExecuteImpl(OdbcStatement statementHandle) {
         logMessage("SQLExecuteImpl", query);
 
         if (query.empty) {
-            logMessage("Warning: Execiting an empty query!");
+            logMessage("Warning: Executing an empty query!");
             latestOdbcResult = makeWithoutGC!EmptyOdbcResult();
             executedQuery = true;
             return;
         }
 
-        auto client = runQuery(text(query));
+        import std.string;
+        auto queryText = text(query);
+        if(queryText.indexOf(';') != -1) {
+            logMessage("; found in queryText");
+            dllEnforce(false, "Please don't use a ; in your SQL statement");
+        }
+
+        auto client = runQuery(queryText);
         auto result = makeWithoutGC!PrestoResult();
         scope(exit) { latestOdbcResult = result;  }
         executedQuery = true;
